@@ -1,0 +1,451 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI-Powered Wildcard Generator (Expanded)</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+        details > summary {
+            list-style: none;
+        }
+        details > summary::-webkit-details-marker {
+            display: none;
+        }
+        details[open] summary .arrow-down {
+            transform: rotate(180deg);
+        }
+        .loader {
+            width: 20px;
+            height: 20px;
+            border: 3px solid #4f46e5;
+            border-bottom-color: transparent;
+            border-radius: 50%;
+            display: inline-block;
+            box-sizing: border-box;
+            animation: rotation 1s linear infinite;
+        }
+        @keyframes rotation {
+            0% {
+                transform: rotate(0deg);
+            }
+            100% {
+                transform: rotate(360deg);
+            }
+        }
+        /* Custom scrollbar for textarea */
+        textarea::-webkit-scrollbar {
+            width: 8px;
+        }
+        textarea::-webkit-scrollbar-track {
+            background: #2d3748; /* gray-800 */
+        }
+        textarea::-webkit-scrollbar-thumb {
+            background: #4a5568; /* gray-600 */
+            border-radius: 4px;
+        }
+        textarea::-webkit-scrollbar-thumb:hover {
+            background: #718096; /* gray-500 */
+        }
+    </style>
+</head>
+<body class="bg-gray-900 text-gray-200">
+
+    <!-- Notification Modal -->
+    <div id="notification-modal" class="fixed inset-0 bg-black bg-opacity-50 z-50 hidden items-center justify-center">
+        <div class="bg-gray-800 rounded-lg shadow-xl p-6 w-11/12 max-w-sm text-center">
+            <p id="notification-message" class="text-white mb-4"></p>
+            <button id="notification-close" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 px-4 rounded-lg">Close</button>
+        </div>
+    </div>
+
+    <div class="container mx-auto p-4 sm:p-6 lg:p-8">
+        <header class="text-center mb-8">
+            <h1 class="text-4xl sm:text-5xl font-bold text-white mb-2">AI-Powered Wildcard Generator</h1>
+            <p class="text-lg text-gray-400">Expand each category with AI-generated ideas and download the results.</p>
+            <div class="mt-6 flex flex-col sm:flex-row justify-center items-center gap-4">
+                <button id="batch-generate-btn" class="bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-6 rounded-lg shadow-lg transition-transform transform hover:scale-105 w-full sm:w-auto">
+                    Generate for Selected
+                </button>
+                <button id="download-all-zip" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 px-6 rounded-lg shadow-lg transition-transform transform hover:scale-105 w-full sm:w-auto">
+                    Download All as .zip
+                </button>
+            </div>
+        </header>
+
+        <main id="wildcard-container" class="space-y-4">
+            <!-- Wildcard categories will be injected here by JavaScript -->
+        </main>
+    </div>
+
+    <script>
+        // --- DATA & STATE ---
+        const initialWildcardData = {
+            "0_Prompt_Meta_Global": {
+                "AspectRatio": ["1:1", "16:9", "9:16", "2.39:1", "4:5", "3:2", "5:4", "2:1", "anamorphic", "fisheye lens effect", "360 equirectangular", "ultrawide", "cinematic widescreen", "mobile screen", "A4 paper ratio", "golden ratio"],
+                "ResolutionTag": ["4K", "8K", "12K", "IMAX", "High Resolution", "Ultra-High Definition", "Photorealistic", "Unreal Engine 5 render", "Octane render", "V-Ray render", "CryEngine", "award-winning photography", "tack sharp", "insanely detailed", "masterpiece", "best quality", "trending on ArtStation", "CGSociety", "hyperdetailed", "physically-based rendering"],
+                "Orientation": ["Portrait", "Landscape", "Square", "Panorama", "Tiny-Planet", "Vertical", "Horizontal", "ultrawide panorama", "360 panorama", "spherical panorama", "triptych", "diptych", "top-down view", "isometric view", "first-person view"],
+                "NegativePromptTokens": ["(blurry:1.6)", "watermark", "text", "lowres", "JPEG artifacts", "duplicate limbs", "disfigured", "bad art", "ugly", "extra limbs", "bad anatomy", "gross proportions", "bad hands", "missing fingers", "extra fingers", "mutated hands", "poorly drawn hands", "malformed limbs", "fused fingers", "too many fingers", "long neck", "username", "signature", "artist name", "boring", "cropped"],
+                "SamplingStyleTokens": ["DPM++ 2M Karras", "Euler-a", "analog style", "vivid colors", "cinematic", "dramatic", "hyperrealistic", "impressionistic", "concept art", "LMS", "PLMS", "DDIM", "Heun", "low-fi", "noir style", "monochromatic", "color splash", "synthwave", "vaporwave", "retrowave", "pixel art", "vector art", "cel-shaded"],
+                "Placeholders": ["seed-###", "cfg-##", "sampler-___", "steps-##", "model-checkpoint-___", "lora-strength-##", "prompt-weight-##"]
+            },
+            "1_Subject_Content": {
+                "People_Demographics": ["infant", "toddler", "child", "teenager", "young adult", "adult", "middle-aged", "elder", "Han Chinese", "Maasai", "Sámi", "Quechua", "Japanese", "Nigerian", "Russian", "Brazilian", "Aboriginal Australian", "androgynous", "non-binary", "femme", "masc", "genderfluid", "Inuit", "Berber", "Tibetan", "Maori", "Samoan", "Cherokee", "Navajo", "Bedouin", "Mongolian", "Persian", "Kurdish", "Filipino", "Vietnamese", "Thai", "Ethiopian", "Somali", "Jamaican", "Haitian"],
+                "People_Archetype_Role": ["The Innocent", "The Orphan", "The Hero", "The Caregiver", "The Explorer", "The Rebel", "The Lover", "The Creator", "The Jester", "The Sage", "The Magician", "The Ruler", "The Outlaw", "The Trickster", "The Mentor", "The Anti-Hero", "The Herald", "The Shapeshifter", "The Threshold Guardian", "The Shadow", "The Anarchist", "The Visionary", "The Peacemaker", "The Judge", "The Martyr", "The Wanderer", "The Hermit", "The Fool", "The Seductress", "The Child"],
+                "People_Occupation_Modern": ["Astronaut", "Doctor", "Programmer", "CEO", "DJ", "Influencer", "Scientist", "Urban Explorer", "Chef", "Fire-fighter", "Barista", "Urban Farmer", "Journalist", "Mechanic", "Pilot", "Software Engineer", "Data Scientist", "Biotech Researcher", "Ethical Hacker", "Drone Pilot", "VR Experience Designer", "Genealogist", "Podcaster", "Astrophysicist", "Marine Biologist", "Cryptographer", "Forensic Scientist", "Paramedic", "Air Traffic Controller", "Archivist", "Museum Curator", "Park Ranger", "Stunt Performer"],
+                "People_Occupation_Historical_Fantasy": ["Knight", "Alchemist", "Scribe", "Blacksmith", "Viking", "Samurai", "Pirate", "Pharaoh", "Gladiator", "Musketeer", "Court Jester", "Shaman", "Oracle", "Dragon Rider", "Sorcerer", "Guild Artisan", "Bard", "Monk", "Plague Doctor", "Executioner", "Town Crier", "Courtier", "Spymaster", "Cartographer", "Astrologer", "Templar Knight", "Valkyrie", "Druid", "Necromancer", "Beastmaster", "Golemancer", "Artificer", "Inquisitor", "Conquistador", "Gunslinger", "Ronin"],
+                "People_Physical_Attributes": ["Petite", "Towering", "Athletic build", "Slender frame", "Weathered skin", "Freckles", "Scars", "Wrinkles", "Crow's-feet", "Tattoos", "Piercings", "Cybernetic implants", "Glowing eyes", "Pointed ears", "Unusual hair color", "Heterochromia", "Vitiligo", "Albinism", "Bionic arm", "Cybernetic eye", "Ornate scars", "Tribal markings", "Elongated limbs", "Prosthetic leg", "Androgynous features", "Sharp cheekbones", "Broad shoulders", "Delicate hands", "Calloused hands", "Sun-kissed skin", "Pale complexion"],
+                "People_Clothing_Fashion": ["Contemporary Streetwear", "Techwear", "Haute Couture", "Gothic Lolita", "Steampunk attire", "Dieselpunk gear", "Solarpunk aesthetic", "Vintage 1950s", "Cyberpunk neon", "Powered Exosuit", "Traditional Kimono", "Roman Toga", "Viking Leathers", "Afrofuturism", "Goblincore", "Cottagecore", "Dark Academia", "Light Academia", "Biopunk fashion", "Post-apocalyptic scavenger gear", "Royal ceremonial robes", "Desert nomad attire", "Arctic survival gear", "Space marine armor", "Elven silk robes", "Dwarven forged armor", "Nomad chic", "Bohemian"],
+                "Creatures_Beings": ["Dragon", "Griffin", "Unicorn", "Phoenix", "Kraken", "Centaur", "Minotaur", "Fairy", "Elf", "Dwarf", "Orc", "Goblin", "Cosmic entity", "Interdimensional being", "AI consciousness", "Leviathan", "Behemoth", "Chimera", "Manticore", "Hydra", "Siren", "Harpy", "Gorgon", "Lich", "Revenant", "Djinn", "Ifrit", "Yokai", "Kitsune", "Oni", "Tengu", "Wendigo", "Angel", "Demon", "Nephilim"],
+                "Creatures_Mounts_Companions": ["Gryphon mount", "Cyber-horse", "Hover-bike", "Dragon companion", "Dire wolf steed", "Mechanized tiger", "Giant eagle", "Sentient starship", "Floating spirit guide", "Giant beetle", "Roc", "Hippogriff", "Wyvern", "Pterodactyl", "Sentient crystal golem", "Shadow panther", "Clockwork owl", "Miniature golem", "Tamed basilisk", "War elephant", "Battle-moose", "Hover-board", "Living ship", "Phase-shifting wolf"],
+                "Objects_Vehicles_Terrestrial": ["Sports Car", "Cybertruck", "Steam Locomotive", "Motorbike with side-car", "Tank", "Armored Personnel Carrier", "Monster Truck", "Rickshaw", "Tuk-tuk", "Maglev train", "Monowheel", "Segway", "All-terrain vehicle (ATV)", "Dune buggy", "Gyrocopter car", "Solar-powered car", "Amphibious vehicle", "Chariot", "Caravan", "Stagecoach", "Battle Mech"],
+                "Objects_Vehicles_Aerial": ["Biplane", "Dirigible", "Dragonfly-copter", "Ornithopter", "Jetpack", "Stealth Bomber", "Personal drone", "Flying saucer", "Solar-powered glider", "Fighter jet", "Cargo plane", "Hot air balloon", "Zeppelin", "Space plane", "VTOL aircraft", "Triplane", "Autogyro", "Personal jetpack", "Wing suit", "Flying carpet", "Attack helicopter"],
+                "Objects_Vehicles_Nautical": ["Pirate Ship", "Submarine", "Hydrofoil", "Venetian Gondola", "Aircraft Carrier", "Viking Longship", "Houseboat", "Icebreaker", "Catamaran", "Trimaran", "Galleon", "Caravel", "Dreadnought (battleship)", "Hovercraft", "Fan boat", "Junk ship", "Paddle steamer", "Glass-bottom boat", "Research vessel", "Nuclear submarine"],
+                "Objects_Vehicles_SciFi": ["Starfighter", "Ringworld Habitat", "Generation Ship", "Warp Gate", "Mecha Walker", "Speeder bike", "Teleportation pod", "Dreadnought", "Exo-suit", "Drop pod", "Asteroid miner", "Terraforming engine", "Von Neumann probe", "Solar sailer", "Dyson sphere segment", "Orbital ring", "Space tug", "Escape pod", "Land speeder", "Star-freighter"],
+                "Objects_Buildings_Structures": ["Lighthouse", "Pagoda", "Skyscraper", "Floating Castle", "Space Elevator", "Megastructure Dyson Swarm", "Underground bunker", "Treehouse city", "Crystal spire", "Geodesic dome", "Arcology", "Panopticon", "Ziggurat", "Mausoleum", "Observatory", "Aqueduct", "Cliffside dwelling", "Ice palace", "Sandcastle fortress", "Sunken temple", "Monastery on a mountain peak", "Hadron collider"],
+                "Abstract_Concepts": ["Hope", "Despair", "Joy", "Solitude", "Chaos", "Order", "Memory", "Dream", "Infinity", "Eternity", "Freedom", "Love", "Hate", "Nostalgia", "Serendipity", "Ambiguity", "Cognitive Dissonance", "Deja Vu", "Synchronicity", "Anarchy", "Nihilism", "Existentialism", "Transcendence", "Liminality", "Saudade", "Wabi-sabi", "Kismet"],
+                "Historical_Eras_Cultures": ["Prehistoric", "Bronze Age", "Classical Antiquity", "Medieval", "Renaissance", "Baroque", "Victorian", "Roaring Twenties", "1960s Psychedelia", "1980s Neon", "Y2K", "Ancient Egypt", "Aztec Empire", "Edo Japan", "Ottoman Empire", "Polynesian Voyagers", "Nordic Vikings", "Maasai Culture", "Celtic Tribes", "Babylonian Civilization", "Stone Age", "Iron Age", "Age of Enlightenment", "Industrial Revolution", "Gilded Age", "Atomic Age", "Space Age", "Information Age", "Ancient Greece", "Roman Empire", "Byzantine Empire", "Inca Empire", "Persian Empire", "Mughal Empire", "Khmer Empire", "Scythian nomads", "Minoan civilization"]
+            },
+            "2_Action_Pose_Emotion": {
+                "Action_General": ["Running", "Jumping", "Sitting", "Standing", "Fighting", "Dancing", "Singing", "Crying", "Laughing", "Thinking", "Meditating", "Sleeping", "Eating", "Drinking", "Reading", "Writing", "Painting", "Building", "Exploring", "Hiding", "Climbing", "Swimming"],
+                "Action_Dynamic": ["Leaping across a chasm", "Dodging an explosion", "Casting a spell", "Piloting a starship", "Mid-air combat", "Surfing a giant wave", "Parrying a sword strike", "Unleashing a shockwave", "Teleporting", "Grappling onto a ledge", "Sprinting through a collapsing building", "Riding a beast", "Conducting an orchestra", "Giving a powerful speech", "Solving a complex puzzle"],
+                "Emotion": ["Happy", "Sad", "Angry", "Surprised", "Fearful", "Disgusted", "Content", "Serene", "Anxious", "Determined", "Melancholy", "Euphoric", "Confused", "Curious", "Proud", "Ashamed", "Envious", "Hopeful", "Apathetic", "Ecstatic", "Terrified", "Grieving"],
+                "Group_Interactions": ["Duelling", "Embracing", "Rallying a crowd", "Teaching circle", "Dance troupe formation", "Arguing", "Celebrating", "Conspiring", "Mourning together", "Performing a ritual", "Playing a board game", "Building a shelter", "Standing back-to-back", "Charging into battle", "Sharing a meal", "Navigating a map", "Holding a council"],
+                "Micro_Gestures": ["Subtle smile", "Eyebrow raise", "Finger guns", "Hair flip", "Wink", "Nod", "Shrug", "Tapping fingers", "Clenched fist", "Biting lip", "Crossed arms", "Hands on hips", "Facepalm", "Adjusting glasses", "Smirking", "Rolling eyes", "Tilting head", "Pointing"]
+            },
+            "3_Environment_Setting": {
+                "Location": ["Inside a colossal organism", "Pocket dimension library", "Event horizon of a black hole", "Cyberpunk city alley", "Enchanted forest", "Volcanic wasteland", "Underwater city", "Floating sky island", "Alien marketplace", "Ruins of a lost civilization", "Inside a giant crystal cave", "A city made of clouds", "The heart of a nebula", "A library containing all possible books", "A desert of black sand", "A jungle of glowing flora", "A mechanical forest", "A planet-sized computer core", "A battlefield of giants"],
+                "Time_Weather": ["Golden hour", "Blue hour", "Midnight", "Dawn", "Dusk", "Sunny", "Rainy", "Snowy", "Foggy", "Stormy", "Cherry-blossom Spring", "Monsoon season", "Harvest Autumn", "Endless winter", "Twin suns setting", "Green sky", "Acid rain", "Crystal hail", "Perpetual twilight", "A sky full of auroras", "Meteor shower", "Sandstorm", "Blizzard"],
+                "Architecture_Vernacular": ["Swiss Chalet", "Fujian Tulou", "Moroccan Riad", "Pueblo adobe", "Japanese Ryokan", "Gothic Cathedral", "Brutalist complex", "Art Deco skyscraper", "Neoclassical palace", "Bauhaus building", "Deconstructivist architecture", "Byzantine mosaics", "Shinto shrine", "Viking longhouse", "Roman villa", "Egyptian temple", "Tudor-style house", "Baroque palace"],
+                "Natural_Phenomena": ["Super-cell tornado", "Volcanic eruption", "Bioluminescent tide", "Lightning storm over desert", "Solar eclipse", "Aurora borealis", "Meteor shower", "Geyser eruption", "Total solar eclipse", "Lunar eclipse", "Ball lightning", "Firenado", "Light pillars", "Sun dog", "Double rainbow", "Tsunami", "Earthquake fissure", "Magnetic storm"]
+            },
+            "4_Composition_Cinematography": {
+                "Shot_Type": ["Close-up", "Medium shot", "Long shot", "Extreme close-up", "Establishing shot", "Full body shot", "Cowboy shot", "Two-shot", "Group shot", "Point-of-view (POV)", "Over-the-shoulder shot", "Insert shot", "Macro shot", "Wide shot", "Master shot"],
+                "Angle": ["Low angle", "High angle", "Dutch angle", "Eye-level", "Bird's-eye view", "Worm's-eye view", "Canted angle", "Aerial view", "Ground-level shot", "Three-quarters view", "Profile shot", "Frontal view"],
+                "Composition": ["Rule of thirds", "Leading lines", "Symmetry", "Golden ratio", "Framing", "Center composition", "Asymmetry", "Negative space", "Fill the frame", "Rule of odds", "Dynamic tension", "Pattern and repetition", "Depth of field", "Foreground interest"],
+                "Aspect_Canvas": ["Square (1:1)", "Instagram Post (4:5)", "Vertical Video (9:16)", "Widescreen (16:9)", "Ultrawide (21:9)", "Cinemascope (2.39:1)", "Triptych", "32:9 Super Ultrawide", "Diptych", "Polyptych", "Circular frame (tondo)", "Anamorphic aspect ratio", "IMAX format", "Academy ratio (4:3)"],
+                "Movement_Techniques": ["Long exposure light trails", "Time-slice", "Panoramic stitch", "Bullet-time freeze", "Motion blur", "Zoom burst", "Kinetic typography", "Rack focus", "Dolly zoom (Vertigo effect)", "Whip pan", "Slow motion", "Time-lapse", "Hyperlapse", "Tracking shot", "Crane shot"]
+            },
+            "5_Style_Aesthetics": {
+                "Art_Style": ["Impressionism", "Expressionism", "Surrealism", "Pop Art", "Minimalism", "Art Nouveau", "Cubism", "Abstract", "Realism", "Romanticism", "Baroque art", "Rococo", "Futurism", "Dadaism", "Fauvism", "Pointillism", "Ukiyo-e", "Tribal art", "Street art"],
+                "Artist_Influence": ["by Greg Rutkowski", "by Alphonse Mucha", "by H.R. Giger", "by Hayao Miyazaki", "by Zdzisław Beksiński", "by James Gurney", "by Syd Mead", "by Moebius", "by Frank Frazetta", "by Salvador Dalí", "by Vincent van Gogh", "by Leonardo da Vinci", "by Caravaggio", "by Rembrandt", "by J.M.W. Turner", "by Banksy", "by Shepard Fairey"],
+                "Medium": ["Oil painting", "Watercolor", "Charcoal sketch", "Digital painting", "Sculpture", "3D render", "Collage", "Ink drawing", "Pencil sketch", "Pastel drawing", "Gouache", "Acrylic painting", "Bronze sculpture", "Marble sculpture", "Woodcut print", "Linocut", "Etching", "Airbrush art"],
+                "Film_Techniques": ["Infrared Film", "Cross-processing", "Double Exposure", "Multiple Exposure", "Tilt-Shift Miniature", "Cyanotype", "Lomography", "Solarization", "Bleach bypass", "Pushed film", "Pulled film", "Day for night", "Forced perspective", "Matte painting", "Schüfftan process", "Split-screen"],
+                "Post_Processing_FX": ["Glitch effect", "VHS static", "Light leaks", "Color bleed", "Dust & Scratches", "Halation", "Film grain overlay", "Chromatic aberration", "Anamorphic lens flare", "Bloom", "God rays", "Vignette", "Scan lines", "Pixel sorting", "Dithering", "Posterization", "Lens distortion"],
+                "Cultural_Motifs": ["Maori Kōwhaiwhai", "Islamic Arabesque", "Celtic Knotwork", "Swiss Papier-Scherenschnitt", "Aboriginal Dot Painting", "Art Deco patterns", "Mayan glyphs", "Persian rug design", "Aztec patterns", "Egyptian hieroglyphs", "Greek key pattern (meander)", "Chinese calligraphy", "Indian paisley", "African tribal patterns", "Nordic runes", "Gothic tracery"]
+            },
+            "6_Technical_Attributes_Rendering": {
+                "Lighting": ["Cinematic lighting", "Volumetric lighting", "Rim lighting", "Soft light", "Hard light", "Studio lighting", "Natural light", "Backlight", "Practical lighting (neon, candles, LEDs)", "Chiaroscuro", "Rembrandt lighting", "Butterfly lighting", "Split lighting", "Caustics", "Global illumination", "Ambient occlusion", "Subsurface scattering", "Gobo lighting"],
+                "Detail_Quality": ["Highly detailed", "Intricate", "Sharp focus", "Masterpiece", "Best quality", "trending on Artstation", "Unreal Engine 5", "8K resolution", "photorealistic", "hyperrealistic", "professional photography", "detailed texture", "fine details", "award-winning", "insanely detailed", "complex", "meticulous"],
+                "Camera_Sensor_Format": ["Full-Frame", "Medium-Format", "Large-Format 8x10", "Super-8 film", "IMAX 65mm", "35mm film", "LIDAR scan", "APS-C sensor", "Micro Four Thirds", "16mm film", "70mm film", "Digital Bolex", "RED Digital Cinema camera", "Arri Alexa camera", "Phase One digital back"],
+                "Camera_Focal_Length": ["14mm ultra-wide", "35mm", "50mm standard", "85mm portrait", "200mm telephoto", "600mm super-telephoto", "8000mm lunar telephoto", "Macro lens", "24mm wide-angle", "135mm telephoto", "400mm wildlife lens", "Lensbaby", "Petzval lens", "Fisheye lens", "Tilt-shift lens"],
+                "Camera_Aperture_DoF": ["f/1.2 dreamy bokeh", "f/2.8 shallow depth of field", "f/5.6 balanced", "f/16 deep focus", "f/22 landscape", "pinhole infinite DoF", "f/0.95 noctilucent", "f/4 portrait", "f/8 street photography", "f/11 group shot", "f/32 maximum depth", "Bokehlicious", "Swirly bokeh", "Cinematic depth of field"],
+                "Camera_Shutter_Speed": ["1/8000s action freeze", "1/60s standard", "30s star-trails", "Intentional camera movement (ICM)", "Bulb mode", "1/250s flash sync", "1/1000s sports photography", "1s silky water", "15s light painting", "High-speed photography", "Panning shot", "Pinhole camera exposure"],
+                "Rendering_Engine": ["Arnold", "Cycles X", "Redshift", "KeyShot", "OctaneRender", "V-Ray", "DALL-E 'vivid'", "SDXL 'turbo'", "Blender Cycles", "Corona Renderer", "Maxwell Render", "Mental Ray", "LuxCoreRender", "POV-Ray", "Marmoset Toolbag", "Unity HDRP"],
+                "File_Aesthetics": ["Sketchfab real-time viewer", "NFT preview", "Album-cover crop", "Trading-card border", "Magazine spread", "Polaroid photo", "Instax photo", "Film strip", "Contact sheet", "Concept art sheet", "Anatomical diagram", "Blueprint schematic", "Field guide illustration", "Vintage postcard"]
+            },
+            "7_Special_FX_Particles": {
+                "Elements": ["Sparks", "Ember shower", "Snow particles", "Floating petals", "Dust motes", "Lens-flare orbs", "Magic sigils", "Data stream glyphs", "Glowing runes", "Confetti", "Bubbles", "Fireflies", "Pollen", "Ash fall", "Glitter", "Musical notes", "Holographic particles", "Floating geometric shapes", "Blood spatter"],
+                "Fluid_Energy": ["Smoke plume", "Electric arcs", "Plasma whip", "Water splash crown", "Fire ring", "Black-hole accretion disk", "Wisps of fog", "Energy shield", "Aura of light", "Tendrils of shadow", "Liquid metal", "Viscous slime", "Ectoplasm", "Force field", "Heat haze", "Light beam", "Particle beam", "Tornado of souls"],
+                "Destruction": ["Debris field", "Shattered glass", "Exploding rubble", "Cracked ground fissures", "Building collapse", "Shockwave", "Implosion", "Crumbling stone", "Peeling paint", "Rusted metal", "Decay and rot", "Cosmic rift", "Planetary destruction", "Matter disintegration", "Distortion in reality"]
+            },
+            "8_Narrative_Theme": {
+                "Genres": ["Coming-of-Age", "Revenge Tragedy", "Cosmic Horror", "Hero's Journey", "Slice-of-Life", "Political Satire", "Film Noir", "Cyberpunk", "Steampunk", "Biopunk", "Solarpunk", "Dieselpunk", "Mythpunk", "Hard Science Fiction", "Space Opera", "Fantasy Epic", "Urban Fantasy", "Gothic Romance", "Whodunit mystery"],
+                "Emotions_as_Theme": ["Triumph", "Melancholy", "Yearning", "Foreboding", "Euphoria", "Nostalgia", "Ambition", "Betrayal", "Redemption", "Sacrifice", "Wonder", "Hubris", "Paranoia", "Innocence Lost", "Courage", "Resilience", "Obsession", "Acceptance"],
+                "Moral_Tone": ["Utopian", "Dystopian", "Anti-heroic", "Satirical", "Optimistic", "Pessimistic", "Grimdark", "Hopeful", "Noblebright", "Gray morality", "Nihilistic", "Idealistic", "Cautionary tale", "Allegorical", "Didactic", "Ironic"],
+                "Story_Devices": ["Foreshadowing symbol", "Chekhov's Gun", "MacGuffin", "Cliff-hanger", "Deus Ex Machina", "Red Herring", "Plot Twist", "In medias res", "Unreliable narrator", "Breaking the fourth wall", "Amnesia plot", "Time loop", "Prophecy", "The Chosen One trope", "A hero's welcome"]
+            }
+        };
+
+        // Create a deep copy for modification, this will hold the expanded lists
+        const expandedWildcardData = JSON.parse(JSON.stringify(initialWildcardData));
+
+        // --- DOM ELEMENTS ---
+        const container = document.getElementById('wildcard-container');
+        const modal = document.getElementById('notification-modal');
+        const modalMessage = document.getElementById('notification-message');
+        const modalCloseBtn = document.getElementById('notification-close');
+
+        // --- HELPER FUNCTIONS ---
+
+        function showNotification(message) {
+            modalMessage.textContent = message;
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+        }
+
+        modalCloseBtn.addEventListener('click', () => {
+            modal.classList.add('hidden');
+            modal.classList.remove('flex');
+        });
+        
+        function downloadTxtFile(filename, content) {
+            const element = document.createElement('a');
+            const file = new Blob([content], {type: 'text/plain;charset=utf-8'});
+            element.href = URL.createObjectURL(file);
+            element.download = filename;
+            document.body.appendChild(element);
+            element.click();
+            document.body.removeChild(element);
+        }
+
+        // --- GEMINI API CALL ---
+        async function generateMoreWildcards(categoryName, subCategoryName, existingWords) {
+            const prompt = `You are a creative assistant for generating wildcards for AI image prompts. The main category is '${categoryName.replace(/_/g, ' ')}' and the sub-category is '${subCategoryName.replace(/_/g, ' ')}'.
+Here is a list of existing wildcards: ${existingWords.slice(0, 20).join(', ')}.
+Generate 20 more diverse and creative wildcards that fit this sub-category. Do not repeat any from the existing list. Return ONLY the new wildcards as a JSON array of strings.`;
+
+            const chatHistory = [{ role: "user", parts: [{ text: prompt }] }];
+            const payload = {
+                contents: chatHistory,
+                generationConfig: {
+                    responseMimeType: "application/json",
+                    responseSchema: {
+                        type: "ARRAY",
+                        items: { type: "STRING" }
+                    }
+                }
+            };
+            
+            const apiKey = ""; // API key will be automatically managed by the environment
+            const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`;
+
+            try {
+                const response = await fetch(apiUrl, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+
+                if (!response.ok) {
+                    const errorBody = await response.text();
+                    throw new Error(`API request failed with status ${response.status}: ${errorBody}`);
+                }
+
+                const result = await response.json();
+                
+                if (result.candidates && result.candidates[0].content && result.candidates[0].content.parts[0]) {
+                    const text = result.candidates[0].content.parts[0].text;
+                    return JSON.parse(text);
+                } else {
+                    console.error("Unexpected API response structure:", result);
+                    throw new Error("Could not parse the response from the AI.");
+                }
+            } catch (error) {
+                console.error("Error calling Gemini API:", error);
+                throw error;
+            }
+        }
+
+        // --- UI RENDERING & EVENT HANDLING ---
+
+        function updateCardUI(card, category, subCategory) {
+            const wildcards = expandedWildcardData[category][subCategory];
+            const textarea = card.querySelector('textarea');
+            textarea.value = wildcards.join('\n');
+            // NOTE: Height adjustment is removed to keep the list scrollable at a fixed size.
+        }
+
+        function buildUI() {
+            container.innerHTML = ''; 
+            for (const category in expandedWildcardData) {
+                const categoryWrapper = document.createElement('div');
+                categoryWrapper.className = 'bg-gray-800 rounded-lg shadow-md';
+                
+                const details = document.createElement('details');
+                details.className = 'group';
+
+                const summary = document.createElement('summary');
+                summary.className = 'flex justify-between items-center p-4 cursor-pointer';
+                
+                const title = document.createElement('h2');
+                title.className = 'text-xl sm:text-2xl font-semibold text-indigo-400';
+                title.textContent = category.replace(/_/g, ' ');
+                
+                const arrow = document.createElement('span');
+                arrow.className = 'arrow-down transition-transform duration-300 text-indigo-400';
+                arrow.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" /></svg>`;
+
+                summary.appendChild(title);
+                summary.appendChild(arrow);
+                
+                const contentWrapper = document.createElement('div');
+                contentWrapper.className = 'p-4 border-t border-gray-700 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4';
+
+                for (const subCategory in expandedWildcardData[category]) {
+                    const wildcards = expandedWildcardData[category][subCategory];
+
+                    const card = document.createElement('div');
+                    card.className = 'bg-gray-700/50 p-4 rounded-lg flex flex-col';
+                    card.dataset.category = category;
+                    card.dataset.subCategory = subCategory;
+
+                    const cardHeader = document.createElement('div');
+                    cardHeader.className = 'flex items-center mb-3 gap-3';
+
+                    const checkbox = document.createElement('input');
+                    checkbox.type = 'checkbox';
+                    checkbox.id = `check-${category}-${subCategory}`;
+                    checkbox.dataset.category = category;
+                    checkbox.dataset.subCategory = subCategory;
+                    checkbox.className = 'batch-checkbox h-5 w-5 rounded bg-gray-600 border-gray-500 text-indigo-600 focus:ring-indigo-500 cursor-pointer';
+
+                    const cardTitle = document.createElement('label');
+                    cardTitle.htmlFor = `check-${category}-${subCategory}`;
+                    cardTitle.className = 'font-bold text-lg text-gray-100 cursor-pointer';
+                    cardTitle.textContent = subCategory.replace(/_/g, ' ');
+
+                    cardHeader.appendChild(checkbox);
+                    cardHeader.appendChild(cardTitle);
+                    
+                    const cardContent = document.createElement('textarea');
+                    cardContent.className = 'text-sm text-gray-300 flex-grow bg-gray-800 rounded-md p-2 w-full resize-none border border-gray-600';
+                    cardContent.value = wildcards.join('\n');
+                    cardContent.readOnly = true;
+                    cardContent.style.height = '150px'; // Fixed height for ~10 lines, forcing scroll
+
+                    const cardFooter = document.createElement('div');
+                    cardFooter.className = 'flex justify-between items-center mt-3';
+
+                    const generateBtn = document.createElement('button');
+                    generateBtn.innerHTML = `
+                        <span class="btn-text">Generate More</span>
+                        <div class="loader hidden"></div>`;
+                    generateBtn.title = `Use AI to generate more wildcards`;
+                    generateBtn.className = 'generate-btn bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold py-2 px-3 rounded-md flex items-center gap-2';
+                    
+                    const downloadBtn = document.createElement('button');
+                    downloadBtn.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-gray-400 hover:text-white transition-colors"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>`;
+                    downloadBtn.title = `Download ${subCategory}.txt`;
+                    
+                    cardFooter.appendChild(generateBtn);
+                    cardFooter.appendChild(downloadBtn);
+
+                    card.appendChild(cardHeader);
+                    card.appendChild(cardContent);
+                    card.appendChild(cardFooter);
+                    contentWrapper.appendChild(card);
+
+                    // Event Listeners
+                    downloadBtn.addEventListener('click', (e) => {
+                        e.stopPropagation();
+                        const currentContent = expandedWildcardData[category][subCategory].join('\n');
+                        downloadTxtFile(`${subCategory}.txt`, currentContent);
+                    });
+
+                    generateBtn.addEventListener('click', async (e) => {
+                        e.stopPropagation();
+                        const btnText = generateBtn.querySelector('.btn-text');
+                        const loader = generateBtn.querySelector('.loader');
+
+                        btnText.classList.add('hidden');
+                        loader.classList.remove('hidden');
+                        generateBtn.disabled = true;
+
+                        try {
+                            const newWildcards = await generateMoreWildcards(category, subCategory, expandedWildcardData[category][subCategory]);
+                            const uniqueNew = newWildcards.filter(w => w && !expandedWildcardData[category][subCategory].includes(w));
+                            expandedWildcardData[category][subCategory].push(...uniqueNew);
+                            updateCardUI(card, category, subCategory);
+                            showNotification(`Added ${uniqueNew.length} new wildcards to ${subCategory.replace(/_/g, ' ')}!`);
+                        } catch (error) {
+                            showNotification(`Error generating wildcards: ${error.message}`);
+                        } finally {
+                            btnText.classList.remove('hidden');
+                            loader.classList.add('hidden');
+                            generateBtn.disabled = false;
+                        }
+                    });
+                }
+
+                details.appendChild(summary);
+                details.appendChild(contentWrapper);
+                categoryWrapper.appendChild(details);
+                container.appendChild(categoryWrapper);
+            }
+        }
+
+        // Download all as zip
+        document.getElementById('download-all-zip').addEventListener('click', () => {
+            const zip = new JSZip();
+            for (const category in expandedWildcardData) {
+                for (const subCategory in expandedWildcardData[category]) {
+                    const content = expandedWildcardData[category][subCategory].join('\n');
+                    zip.file(`${subCategory}.txt`, content);
+                }
+            }
+
+            zip.generateAsync({type:"blob"})
+            .then(function(content) {
+                const element = document.createElement('a');
+                element.href = URL.createObjectURL(content);
+                element.download = "wildcard_collection_expanded.zip";
+                document.body.appendChild(element);
+                element.click();
+                document.body.removeChild(element);
+            });
+        });
+
+        // Batch Generate for Selected
+        document.getElementById('batch-generate-btn').addEventListener('click', async () => {
+            const selectedCheckboxes = document.querySelectorAll('.batch-checkbox:checked');
+            if (selectedCheckboxes.length === 0) {
+                showNotification('Please select at least one category to generate wildcards for.');
+                return;
+            }
+
+            const batchBtn = document.getElementById('batch-generate-btn');
+            const originalText = batchBtn.textContent;
+            batchBtn.disabled = true;
+            batchBtn.innerHTML = `<div class="loader inline-block"></div> Generating (${selectedCheckboxes.length})...`;
+
+            const promises = [];
+            selectedCheckboxes.forEach(box => {
+                const category = box.dataset.category;
+                const subCategory = box.dataset.subCategory;
+                const card = box.closest('.flex.flex-col');
+                
+                const promise = generateMoreWildcards(category, subCategory, expandedWildcardData[category][subCategory])
+                    .then(newWildcards => ({ status: 'fulfilled', value: { newWildcards, category, subCategory, card } }))
+                    .catch(error => ({ status: 'rejected', reason: { error, category, subCategory, card } }));
+                promises.push(promise);
+            });
+
+            const results = await Promise.all(promises);
+
+            let successCount = 0;
+            let failureCount = 0;
+
+            results.forEach(result => {
+                const { category, subCategory, card } = result.status === 'fulfilled' ? result.value : result.reason;
+                
+                if (result.status === 'fulfilled') {
+                    successCount++;
+                    const { newWildcards } = result.value;
+                    const uniqueNew = newWildcards.filter(w => w && !expandedWildcardData[category][subCategory].includes(w));
+                    expandedWildcardData[category][subCategory].push(...uniqueNew);
+                    updateCardUI(card, category, subCategory);
+                } else {
+                    failureCount++;
+                    console.error(`Failed to generate for ${subCategory}:`, result.reason.error);
+                }
+            });
+
+            batchBtn.disabled = false;
+            batchBtn.innerHTML = originalText;
+
+            showNotification(`Batch generation complete. Success: ${successCount}, Failed: ${failureCount}.`);
+        });
+
+
+        buildUI();
+    </script>
+</body>
+</html>
