@@ -1,0 +1,614 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI-Powered Wildcard Generator (Revised)</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+        details > summary {
+            list-style: none;
+        }
+        details > summary::-webkit-details-marker {
+            display: none;
+        }
+        details[open] summary .arrow-down {
+            transform: rotate(180deg);
+        }
+        .loader {
+            width: 20px;
+            height: 20px;
+            border: 3px solid #4f46e5;
+            border-bottom-color: transparent;
+            border-radius: 50%;
+            display: inline-block;
+            box-sizing: border-box;
+            animation: rotation 1s linear infinite;
+        }
+        @keyframes rotation {
+            0% {
+                transform: rotate(0deg);
+            }
+            100% {
+                transform: rotate(360deg);
+            }
+        }
+        .chip-container::-webkit-scrollbar, textarea::-webkit-scrollbar { width: 8px; }
+        .chip-container::-webkit-scrollbar-track, textarea::-webkit-scrollbar-track { background: #2d3748; }
+        .chip-container::-webkit-scrollbar-thumb, textarea::-webkit-scrollbar-thumb { background: #4a5568; border-radius: 4px; }
+        .chip-container::-webkit-scrollbar-thumb:hover, textarea::-webkit-scrollbar-thumb:hover { background: #718096; }
+    </style>
+</head>
+<body class="bg-gray-900 text-gray-200">
+
+    <!-- Notification Modal -->
+    <div id="notification-modal" aria-live="polite" class="fixed inset-0 bg-black bg-opacity-70 z-50 hidden items-center justify-center p-4">
+        <div class="bg-gray-800 rounded-lg shadow-xl p-6 w-full max-w-md text-center">
+            <p id="notification-message" class="text-white mb-6 whitespace-pre-wrap"></p>
+            <div id="confirmation-buttons" class="hidden justify-center gap-4">
+                 <button id="confirm-btn" class="bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded-lg">Confirm</button>
+                 <button id="cancel-btn" class="bg-gray-600 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded-lg">Cancel</button>
+            </div>
+            <button id="notification-close" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 px-4 rounded-lg">Close</button>
+        </div>
+    </div>
+
+    <div class="container mx-auto p-4 sm:p-6 lg:p-8">
+        <header class="text-center mb-8">
+            <h1 class="text-4xl sm:text-5xl font-bold text-white mb-2">AI-Powered Wildcard Generator</h1>
+            <p class="text-lg text-gray-400">Expand categories with AI-generated ideas. Your changes are saved automatically.</p>
+            
+            <div class="mt-6 text-left max-w-4xl mx-auto">
+                <label for="global-prompt" class="block text-lg font-semibold text-indigo-300 mb-2">Global System Prompt</label>
+                <textarea id="global-prompt" class="w-full bg-gray-800 border border-gray-600 rounded-md p-2 text-sm focus:ring-indigo-500 focus:border-indigo-500" rows="4"></textarea>
+            </div>
+
+            <div class="mt-6 flex flex-col sm:flex-row justify-center items-center gap-4">
+                <button id="download-all-zip" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 px-6 rounded-lg shadow-lg transition-transform transform hover:scale-105 w-full sm:w-auto">
+                    Download All as .zip
+                </button>
+                 <button id="reset-btn" class="bg-red-800 hover:bg-red-700 text-white font-bold py-3 px-6 rounded-lg shadow-lg transition-transform transform hover:scale-105 w-full sm:w-auto">
+                    Reset to Defaults
+                </button>
+            </div>
+        </header>
+
+        <main id="wildcard-container" class="space-y-4">
+            <!-- Wildcard categories will be injected here by JavaScript -->
+        </main>
+    </div>
+
+    <script type="module">
+        // =================================================================================
+        // --- PHASE 1 & 2: CORE REFACTOR, PERSISTENCE & UX POLISH ---
+        // =================================================================================
+
+        // --- /src/state.js ---
+        const STORAGE_KEY = 'wildcardGeneratorState_v2'; // v2 to avoid conflicts with old structure
+
+        const defaultSystemPrompt = `You are a creative assistant for generating wildcards for AI image prompts. You will be given a main category, a sub-category, a list of existing wildcards, and optional custom instructions. Your task is to generate 20 more diverse and creative wildcards that fit the sub-category. Do not repeat any from the existing list. Follow all custom instructions. Return ONLY the new wildcards as a JSON array of strings.`;
+
+        const initialWildcardData = {
+            "0_Prompt_Meta_Global": {
+                "AspectRatio": { instruction: "Suggest technical or unusual aspect ratios.", wildcards: ["1:1", "16:9", "9:16", "2.39:1", "4:5", "3:2", "5:4", "2:1", "anamorphic", "fisheye lens effect", "360 equirectangular", "ultrawide", "cinematic widescreen", "mobile screen", "A4 paper ratio", "golden ratio"] },
+                "ResolutionTag": { instruction: "Focus on rendering engines and high-end quality terms.", wildcards: ["4K", "8K", "12K", "IMAX", "High Resolution", "Ultra-High Definition", "Photorealistic", "Unreal Engine 5 render", "Octane render", "V-Ray render", "CryEngine", "award-winning photography", "tack sharp", "insanely detailed", "masterpiece", "best quality", "trending on ArtStation", "CGSociety", "hyperdetailed", "physically-based rendering"] },
+                "Orientation": { instruction: "Think about camera perspectives and multi-panel layouts.", wildcards: ["Portrait", "Landscape", "Square", "Panorama", "Tiny-Planet", "Vertical", "Horizontal", "ultrawide panorama", "360 panorama", "spherical panorama", "triptych", "diptych", "top-down view", "isometric view", "first-person view"] },
+                "NegativePromptTokens": { instruction: "Add more common image artifacts and anatomical errors.", wildcards: ["(blurry:1.6)", "watermark", "text", "lowres", "JPEG artifacts", "duplicate limbs", "disfigured", "bad art", "ugly", "extra limbs", "bad anatomy", "gross proportions", "bad hands", "missing fingers", "extra fingers", "mutated hands", "poorly drawn hands", "malformed limbs", "fused fingers", "too many fingers", "long neck", "username", "signature", "artist name", "boring", "cropped"] },
+                "SamplingStyleTokens": { instruction: "Include specific samplers and niche aesthetic styles.", wildcards: ["DPM++ 2M Karras", "Euler-a", "analog style", "vivid colors", "cinematic", "dramatic", "hyperrealistic", "impressionistic", "concept art", "LMS", "PLMS", "DDIM", "Heun", "low-fi", "noir style", "monochromatic", "color splash", "synthwave", "vaporwave", "retrowave", "pixel art", "vector art", "cel-shaded"] },
+                "Placeholders": { instruction: "Add placeholders for other common model or prompt parameters.", wildcards: ["seed-###", "cfg-##", "sampler-___", "steps-##", "model-checkpoint-___", "lora-strength-##", "prompt-weight-##"] }
+            },
+             "1_Subject_Content": {
+                "People_Demographics": { instruction: "Focus on less common ethnicities and cultural groups.", wildcards: ["infant", "toddler", "child", "teenager", "young adult", "adult", "middle-aged", "elder", "Han Chinese", "Maasai", "Sámi", "Quechua", "Japanese", "Nigerian", "Russian", "Brazilian", "Aboriginal Australian", "androgynous", "non-binary", "femme", "masc", "genderfluid", "Inuit", "Berber", "Tibetan", "Maori", "Samoan", "Cherokee", "Navajo", "Bedouin", "Mongolian", "Persian", "Kurdish", "Filipino", "Vietnamese", "Thai", "Ethiopian", "Somali", "Jamaican", "Haitian"] },
+                "People_Archetype_Role": { instruction: "Include more nuanced or classical archetypes.", wildcards: ["The Innocent", "The Orphan", "The Hero", "The Caregiver", "The Explorer", "The Rebel", "The Lover", "The Creator", "The Jester", "The Sage", "The Magician", "The Ruler", "The Outlaw", "The Trickster", "The Mentor", "The Anti-Hero", "The Herald", "The Shapeshifter", "The Threshold Guardian", "The Shadow", "The Anarchist", "The Visionary", "The Peacemaker", "The Judge", "The Martyr", "The Wanderer", "The Hermit", "The Fool", "The Seductress", "The Child"] },
+                "People_Occupation_Modern": { instruction: "Focus on niche, futuristic, or internet-related jobs.", wildcards: ["Astronaut", "Doctor", "Programmer", "CEO", "DJ", "Influencer", "Scientist", "Urban Explorer", "Chef", "Fire-fighter", "Barista", "Urban Farmer", "Journalist", "Mechanic", "Pilot", "Software Engineer", "Data Scientist", "Biotech Researcher", "Ethical Hacker", "Drone Pilot", "VR Experience Designer", "Genealogist", "Podcaster", "Astrophysicist", "Marine Biologist", "Cryptographer", "Forensic Scientist", "Paramedic", "Air Traffic Controller", "Archivist", "Museum Curator", "Park Ranger", "Stunt Performer"] },
+                "People_Occupation_Historical_Fantasy": { instruction: "Combine historical roles with fantasy elements.", wildcards: ["Knight", "Alchemist", "Scribe", "Blacksmith", "Viking", "Samurai", "Pirate", "Pharaoh", "Gladiator", "Musketeer", "Court Jester", "Shaman", "Oracle", "Dragon Rider", "Sorcerer", "Guild Artisan", "Bard", "Monk", "Plague Doctor", "Executioner", "Town Crier", "Courtier", "Spymaster", "Cartographer", "Astrologer", "Templar Knight", "Valkyrie", "Druid", "Necromancer", "Beastmaster", "Golemancer", "Artificer", "Inquisitor", "Conquistador", "Gunslinger", "Ronin"] },
+                "People_Physical_Attributes": { instruction: "Add more cybernetic and fantasy-based attributes.", wildcards: ["Petite", "Towering", "Athletic build", "Slender frame", "Weathered skin", "Freckles", "Scars", "Wrinkles", "Crow's-feet", "Tattoos", "Piercings", "Cybernetic implants", "Glowing eyes", "Pointed ears", "Unusual hair color", "Heterochromia", "Vitiligo", "Albinism", "Bionic arm", "Cybernetic eye", "Ornate scars", "Tribal markings", "Elongated limbs", "Prosthetic leg", "Androgynous features", "Sharp cheekbones", "Broad shoulders", "Delicate hands", "Calloused hands", "Sun-kissed skin", "Pale complexion"] },
+                "People_Clothing_Fashion": { instruction: "Mix historical fashion with modern subcultures.", wildcards: ["Contemporary Streetwear", "Techwear", "Haute Couture", "Gothic Lolita", "Steampunk attire", "Dieselpunk gear", "Solarpunk aesthetic", "Vintage 1950s", "Cyberpunk neon", "Powered Exosuit", "Traditional Kimono", "Roman Toga", "Viking Leathers", "Afrofuturism", "Goblincore", "Cottagecore", "Dark Academia", "Light Academia", "Biopunk fashion", "Post-apocalyptic scavenger gear", "Royal ceremonial robes", "Desert nomad attire", "Arctic survival gear", "Space marine armor", "Elven silk robes", "Dwarven forged armor", "Nomad chic", "Bohemian"] },
+                "Creatures_Beings": { instruction: "Focus on mythological creatures from non-European cultures.", wildcards: ["Dragon", "Griffin", "Unicorn", "Phoenix", "Kraken", "Centaur", "Minotaur", "Fairy", "Elf", "Dwarf", "Orc", "Goblin", "Cosmic entity", "Interdimensional being", "AI consciousness", "Leviathan", "Behemoth", "Chimera", "Manticore", "Hydra", "Siren", "Harpy", "Gorgon", "Lich", "Revenant", "Djinn", "Ifrit", "Yokai", "Kitsune", "Oni", "Tengu", "Wendigo", "Angel", "Demon", "Nephilim"] },
+                "Creatures_Mounts_Companions": { instruction: "Invent hybrid mechanical and organic mounts.", wildcards: ["Gryphon mount", "Cyber-horse", "Hover-bike", "Dragon companion", "Dire wolf steed", "Mechanized tiger", "Giant eagle", "Sentient starship", "Floating spirit guide", "Giant beetle", "Roc", "Hippogriff", "Wyvern", "Pterodactyl", "Sentient crystal golem", "Shadow panther", "Clockwork owl", "Miniature golem", "Tamed basilisk", "War elephant", "Battle-moose", "Hover-board", "Living ship", "Phase-shifting wolf"] },
+                "Objects_Vehicles_Terrestrial": { instruction: "Suggest more unusual or historical land vehicles.", wildcards: ["Sports Car", "Cybertruck", "Steam Locomotive", "Motorbike with side-car", "Tank", "Armored Personnel Carrier", "Monster Truck", "Rickshaw", "Tuk-tuk", "Maglev train", "Monowheel", "Segway", "All-terrain vehicle (ATV)", "Dune buggy", "Gyrocopter car", "Solar-powered car", "Amphibious vehicle", "Chariot", "Caravan", "Stagecoach", "Battle Mech"] },
+                "Objects_Vehicles_Aerial": { instruction: "Focus on speculative and sci-fi aircraft.", wildcards: ["Biplane", "Dirigible", "Dragonfly-copter", "Ornithopter", "Jetpack", "Stealth Bomber", "Personal drone", "Flying saucer", "Solar-powered glider", "Fighter jet", "Cargo plane", "Hot air balloon", "Zeppelin", "Space plane", "VTOL aircraft", "Triplane", "Autogyro", "Personal jetpack", "Wing suit", "Flying carpet", "Attack helicopter"] },
+                "Objects_Vehicles_Nautical": { instruction: "Add more historical and specialized watercraft.", wildcards: ["Pirate Ship", "Submarine", "Hydrofoil", "Venetian Gondola", "Aircraft Carrier", "Viking Longship", "Houseboat", "Icebreaker", "Catamaran", "Trimaran", "Galleon", "Caravel", "Dreadnought (battleship)", "Hovercraft", "Fan boat", "Junk ship", "Paddle steamer", "Glass-bottom boat", "Research vessel", "Nuclear submarine"] },
+                "Objects_Vehicles_SciFi": { instruction: "Think about non-combat or utility spacecraft.", wildcards: ["Starfighter", "Ringworld Habitat", "Generation Ship", "Warp Gate", "Mecha Walker", "Speeder bike", "Teleportation pod", "Dreadnought", "Exo-suit", "Drop pod", "Asteroid miner", "Terraforming engine", "Von Neumann probe", "Solar sailer", "Dyson sphere segment", "Orbital ring", "Space tug", "Escape pod", "Land speeder", "Star-freighter"] },
+                "Objects_Buildings_Structures": { instruction: "Suggest impossible or mega-scale structures.", wildcards: ["Lighthouse", "Pagoda", "Skyscraper", "Floating Castle", "Space Elevator", "Megastructure Dyson Swarm", "Underground bunker", "Treehouse city", "Crystal spire", "Geodesic dome", "Arcology", "Panopticon", "Ziggurat", "Mausoleum", "Observatory", "Aqueduct", "Cliffside dwelling", "Ice palace", "Sandcastle fortress", "Sunken temple", "Monastery on a mountain peak", "Hadron collider"] },
+                "Abstract_Concepts": { instruction: "Focus on philosophical or psychological concepts.", wildcards: ["Hope", "Despair", "Joy", "Solitude", "Chaos", "Order", "Memory", "Dream", "Infinity", "Eternity", "Freedom", "Love", "Hate", "Nostalgia", "Serendipity", "Ambiguity", "Cognitive Dissonance", "Deja Vu", "Synchronicity", "Anarchy", "Nihilism", "Existentialism", "Transcendence", "Liminality", "Saudade", "Wabi-sabi", "Kismet"] },
+                "Historical_Eras_Cultures": { instruction: "Add more specific, lesser-known historical periods.", wildcards: ["Prehistoric", "Bronze Age", "Classical Antiquity", "Medieval", "Renaissance", "Baroque", "Victorian", "Roaring Twenties", "1960s Psychedelia", "1980s Neon", "Y2K", "Ancient Egypt", "Aztec Empire", "Edo Japan", "Ottoman Empire", "Polynesian Voyagers", "Nordic Vikings", "Maasai Culture", "Celtic Tribes", "Babylonian Civilization", "Stone Age", "Iron Age", "Age of Enlightenment", "Industrial Revolution", "Gilded Age", "Atomic Age", "Space Age", "Information Age", "Ancient Greece", "Roman Empire", "Byzantine Empire", "Inca Empire", "Persian Empire", "Mughal Empire", "Khmer Empire", "Scythian nomads", "Minoan civilization"] }
+            },
+            "2_Action_Pose_Emotion": {
+                "Action_General": { instruction: "Add more subtle or passive actions.", wildcards: ["Running", "Jumping", "Sitting", "Standing", "Fighting", "Dancing", "Singing", "Crying", "Laughing", "Thinking", "Meditating", "Sleeping", "Eating", "Drinking", "Reading", "Writing", "Painting", "Building", "Exploring", "Hiding", "Climbing", "Swimming"] },
+                "Action_Dynamic": { instruction: "Focus on supernatural or physics-defying actions.", wildcards: ["Leaping across a chasm", "Dodging an explosion", "Casting a spell", "Piloting a starship", "Mid-air combat", "Surfing a giant wave", "Parrying a sword strike", "Unleashing a shockwave", "Teleporting", "Grappling onto a ledge", "Sprinting through a collapsing building", "Riding a beast", "Conducting an orchestra", "Giving a powerful speech", "Solving a complex puzzle"] },
+                "Emotion": { instruction: "Suggest more complex or mixed emotions.", wildcards: ["Happy", "Sad", "Angry", "Surprised", "Fearful", "Disgusted", "Content", "Serene", "Anxious", "Determined", "Melancholy", "Euphoric", "Confused", "Curious", "Proud", "Ashamed", "Envious", "Hopeful", "Apathetic", "Ecstatic", "Terrified", "Grieving"] },
+                "Group_Interactions": { instruction: "Think about both cooperative and conflicting interactions.", wildcards: ["Duelling", "Embracing", "Rallying a crowd", "Teaching circle", "Dance troupe formation", "Arguing", "Celebrating", "Conspiring", "Mourning together", "Performing a ritual", "Playing a board game", "Building a shelter", "Standing back-to-back", "Charging into battle", "Sharing a meal", "Navigating a map", "Holding a council"] },
+                "Micro_Gestures": { instruction: "Focus on non-verbal cues and subtle body language.", wildcards: ["Subtle smile", "Eyebrow raise", "Finger guns", "Hair flip", "Wink", "Nod", "Shrug", "Tapping fingers", "Clenched fist", "Biting lip", "Crossed arms", "Hands on hips", "Facepalm", "Adjusting glasses", "Smirking", "Rolling eyes", "Tilting head", "Pointing"] }
+            },
+            "3_Environment_Setting": {
+                "Location": { instruction: "Invent surreal or impossible locations.", wildcards: ["Inside a colossal organism", "Pocket dimension library", "Event horizon of a black hole", "Cyberpunk city alley", "Enchanted forest", "Volcanic wasteland", "Underwater city", "Floating sky island", "Alien marketplace", "Ruins of a lost civilization", "Inside a giant crystal cave", "A city made of clouds", "The heart of a nebula", "A library containing all possible books", "A desert of black sand", "A jungle of glowing flora", "A mechanical forest", "A planet-sized computer core", "A battlefield of giants"] },
+                "Time_Weather": { instruction: "Suggest more extreme or fantasy weather conditions.", wildcards: ["Golden hour", "Blue hour", "Midnight", "Dawn", "Dusk", "Sunny", "Rainy", "Snowy", "Foggy", "Stormy", "Cherry-blossom Spring", "Monsoon season", "Harvest Autumn", "Endless winter", "Twin suns setting", "Green sky", "Acid rain", "Crystal hail", "Perpetual twilight", "A sky full of auroras", "Meteor shower", "Sandstorm", "Blizzard"] },
+                "Architecture_Vernacular": { instruction: "Focus on architectural styles from specific, non-mainstream cultures.", wildcards: ["Swiss Chalet", "Fujian Tulou", "Moroccan Riad", "Pueblo adobe", "Japanese Ryokan", "Gothic Cathedral", "Brutalist complex", "Art Deco skyscraper", "Neoclassical palace", "Bauhaus building", "Deconstructivist architecture", "Byzantine mosaics", "Shinto shrine", "Viking longhouse", "Roman villa", "Egyptian temple", "Tudor-style house", "Baroque palace"] },
+                "Natural_Phenomena": { instruction: "Add more rare atmospheric or geological events.", wildcards: ["Super-cell tornado", "Volcanic eruption", "Bioluminescent tide", "Lightning storm over desert", "Solar eclipse", "Aurora borealis", "Meteor shower", "Geyser eruption", "Total solar eclipse", "Lunar eclipse", "Ball lightning", "Firenado", "Light pillars", "Sun dog", "Double rainbow", "Tsunami", "Earthquake fissure", "Magnetic storm"] }
+            },
+            "4_Composition_Cinematography": {
+                "Shot_Type": { instruction: "Add more specific cinematography terms.", wildcards: ["Close-up", "Medium shot", "Long shot", "Extreme close-up", "Establishing shot", "Full body shot", "Cowboy shot", "Two-shot", "Group shot", "Point-of-view (POV)", "Over-the-shoulder shot", "Insert shot", "Macro shot", "Wide shot", "Master shot"] },
+                "Angle": { instruction: "Focus on angles that create a specific mood (e.g., power, vulnerability).", wildcards: ["Low angle", "High angle", "Dutch angle", "Eye-level", "Bird's-eye view", "Worm's-eye view", "Canted angle", "Aerial view", "Ground-level shot", "Three-quarters view", "Profile shot", "Frontal view"] },
+                "Composition": { instruction: "Add more advanced or artistic composition rules.", wildcards: ["Rule of thirds", "Leading lines", "Symmetry", "Golden ratio", "Framing", "Center composition", "Asymmetry", "Negative space", "Fill the frame", "Rule of odds", "Dynamic tension", "Pattern and repetition", "Depth of field", "Foreground interest"] },
+                "Aspect_Canvas": { instruction: "Suggest more multi-panel or unusually shaped formats.", wildcards: ["Square (1:1)", "Instagram Post (4:5)", "Vertical Video (9:16)", "Widescreen (16:9)", "Ultrawide (21:9)", "Cinemascope (2.39:1)", "Triptych", "32:9 Super Ultrawide", "Diptych", "Polyptych", "Circular frame (tondo)", "Anamorphic aspect ratio", "IMAX format", "Academy ratio (4:3)"] },
+                "Movement_Techniques": { instruction: "Add more camera movement techniques from filmmaking.", wildcards: ["Long exposure light trails", "Time-slice", "Panoramic stitch", "Bullet-time freeze", "Motion blur", "Zoom burst", "Kinetic typography", "Rack focus", "Dolly zoom (Vertigo effect)", "Whip pan", "Slow motion", "Time-lapse", "Hyperlapse", "Tracking shot", "Crane shot"] }
+            },
+            "5_Style_Aesthetics": {
+                "Art_Style": { instruction: "Add more modern or digital art styles.", wildcards: ["Impressionism", "Expressionism", "Surrealism", "Pop Art", "Minimalism", "Art Nouveau", "Cubism", "Abstract", "Realism", "Romanticism", "Baroque art", "Rococo", "Futurism", "Dadaism", "Fauvism", "Pointillism", "Ukiyo-e", "Tribal art", "Street art"] },
+                "Artist_Influence": { instruction: "Suggest artists known for specific styles (e.g., sci-fi, fantasy).", wildcards: ["by Greg Rutkowski", "by Alphonse Mucha", "by H.R. Giger", "by Hayao Miyazaki", "by Zdzisław Beksiński", "by James Gurney", "by Syd Mead", "by Moebius", "by Frank Frazetta", "by Salvador Dalí", "by Vincent van Gogh", "by Leonardo da Vinci", "by Caravaggio", "by Rembrandt", "by J.M.W. Turner", "by Banksy", "by Shepard Fairey"] },
+                "Medium": { instruction: "Add more non-traditional or mixed media.", wildcards: ["Oil painting", "Watercolor", "Charcoal sketch", "Digital painting", "Sculpture", "3D render", "Collage", "Ink drawing", "Pencil sketch", "Pastel drawing", "Gouache", "Acrylic painting", "Bronze sculpture", "Marble sculpture", "Woodcut print", "Linocut", "Etching", "Airbrush art"] },
+                "Film_Techniques": { instruction: "Focus on experimental or analog film techniques.", wildcards: ["Infrared Film", "Cross-processing", "Double Exposure", "Multiple Exposure", "Tilt-Shift Miniature", "Cyanotype", "Lomography", "Solarization", "Bleach bypass", "Pushed film", "Pulled film", "Day for night", "Forced perspective", "Matte painting", "Schüfftan process", "Split-screen"] },
+                "Post_Processing_FX": { instruction: "Add more digital glitch and distortion effects.", wildcards: ["Glitch effect", "VHS static", "Light leaks", "Color bleed", "Dust & Scratches", "Halation", "Film grain overlay", "Chromatic aberration", "Anamorphic lens flare", "Bloom", "God rays", "Vignette", "Scan lines", "Pixel sorting", "Dithering", "Posterization", "Lens distortion"] },
+                "Cultural_Motifs": { instruction: "Suggest more specific patterns from various cultures.", wildcards: ["Maori Kōwhaiwhai", "Islamic Arabesque", "Celtic Knotwork", "Swiss Papier-Scherenschnitt", "Aboriginal Dot Painting", "Art Deco patterns", "Mayan glyphs", "Persian rug design", "Aztec patterns", "Egyptian hieroglyphs", "Greek key pattern (meander)", "Chinese calligraphy", "Indian paisley", "African tribal patterns", "Nordic runes", "Gothic tracery"] }
+            },
+            "6_Technical_Attributes_Rendering": {
+                "Lighting": { instruction: "Add more professional photography lighting setups.", wildcards: ["Cinematic lighting", "Volumetric lighting", "Rim lighting", "Soft light", "Hard light", "Studio lighting", "Natural light", "Backlight", "Practical lighting (neon, candles, LEDs)", "Chiaroscuro", "Rembrandt lighting", "Butterfly lighting", "Split lighting", "Caustics", "Global illumination", "Ambient occlusion", "Subsurface scattering", "Gobo lighting"] },
+                "Detail_Quality": { instruction: "Focus on terms used on art portfolio websites.", wildcards: ["Highly detailed", "Intricate", "Sharp focus", "Masterpiece", "Best quality", "trending on Artstation", "Unreal Engine 5", "8K resolution", "photorealistic", "hyperrealistic", "professional photography", "detailed texture", "fine details", "award-winning", "insanely detailed", "complex", "meticulous"] },
+                "Camera_Sensor_Format": { instruction: "Add more professional cinema camera formats.", wildcards: ["Full-Frame", "Medium-Format", "Large-Format 8x10", "Super-8 film", "IMAX 65mm", "35mm film", "LIDAR scan", "APS-C sensor", "Micro Four Thirds", "16mm film", "70mm film", "Digital Bolex", "RED Digital Cinema camera", "Arri Alexa camera", "Phase One digital back"] },
+                "Camera_Focal_Length": { instruction: "Suggest more artistic or unconventional lenses.", wildcards: ["14mm ultra-wide", "35mm", "50mm standard", "85mm portrait", "200mm telephoto", "600mm super-telephoto", "8000mm lunar telephoto", "Macro lens", "24mm wide-angle", "135mm telephoto", "400mm wildlife lens", "Lensbaby", "Petzval lens", "Fisheye lens", "Tilt-shift lens"] },
+                "Camera_Aperture_DoF": { instruction: "Add terms that describe the quality of the bokeh.", wildcards: ["f/1.2 dreamy bokeh", "f/2.8 shallow depth of field", "f/5.6 balanced", "f/16 deep focus", "f/22 landscape", "pinhole infinite DoF", "f/0.95 noctilucent", "f/4 portrait", "f/8 street photography", "f/11 group shot", "f/32 maximum depth", "Bokehlicious", "Swirly bokeh", "Cinematic depth of field"] },
+                "Camera_Shutter_Speed": { instruction: "Focus on shutter speeds that create motion effects.", wildcards: ["1/8000s action freeze", "1/60s standard", "30s star-trails", "Intentional camera movement (ICM)", "Bulb mode", "1/250s flash sync", "1/1000s sports photography", "1s silky water", "15s light painting", "High-speed photography", "Panning shot", "Pinhole camera exposure"] },
+                "Rendering_Engine": { instruction: "Add more 3D rendering engines.", wildcards: ["Arnold", "Cycles X", "Redshift", "KeyShot", "OctaneRender", "V-Ray", "DALL-E 'vivid'", "SDXL 'turbo'", "Blender Cycles", "Corona Renderer", "Maxwell Render", "Mental Ray", "LuxCoreRender", "POV-Ray", "Marmoset Toolbag", "Unity HDRP"] },
+                "File_Aesthetics": { instruction: "Suggest formats related to physical or printed media.", wildcards: ["Sketchfab real-time viewer", "NFT preview", "Album-cover crop", "Trading-card border", "Magazine spread", "Polaroid photo", "Instax photo", "Film strip", "Contact sheet", "Concept art sheet", "Anatomical diagram", "Blueprint schematic", "Field guide illustration", "Vintage postcard"] }
+            },
+            "7_Special_FX_Particles": {
+                "Elements": { instruction: "Add more magical or elemental particles.", wildcards: ["Sparks", "Ember shower", "Snow particles", "Floating petals", "Dust motes", "Lens-flare orbs", "Magic sigils", "Data stream glyphs", "Glowing runes", "Confetti", "Bubbles", "Fireflies", "Pollen", "Ash fall", "Glitter", "Musical notes", "Holographic particles", "Floating geometric shapes", "Blood spatter"] },
+                "Fluid_Energy": { instruction: "Focus on abstract or cosmic energy effects.", wildcards: ["Smoke plume", "Electric arcs", "Plasma whip", "Water splash crown", "Fire ring", "Black-hole accretion disk", "Wisps of fog", "Energy shield", "Aura of light", "Tendrils of shadow", "Liquid metal", "Viscous slime", "Ectoplasm", "Force field", "Heat haze", "Light beam", "Particle beam", "Tornado of souls"] },
+                "Destruction": { instruction: "Add more large-scale or reality-bending destruction effects.", wildcards: ["Debris field", "Shattered glass", "Exploding rubble", "Cracked ground fissures", "Building collapse", "Shockwave", "Implosion", "Crumbling stone", "Peeling paint", "Rusted metal", "Decay and rot", "Cosmic rift", "Planetary destruction", "Matter disintegration", "Distortion in reality"] }
+            },
+            "8_Narrative_Theme": {
+                "Genres": { instruction: "Add more '-punk' subgenres and literary genres.", wildcards: ["Coming-of-Age", "Revenge Tragedy", "Cosmic Horror", "Hero's Journey", "Slice-of-Life", "Political Satire", "Film Noir", "Cyberpunk", "Steampunk", "Biopunk", "Solarpunk", "Dieselpunk", "Mythpunk", "Hard Science Fiction", "Space Opera", "Fantasy Epic", "Urban Fantasy", "Gothic Romance", "Whodunit mystery"] },
+                "Emotions_as_Theme": { instruction: "Focus on more abstract or complex emotional themes.", wildcards: ["Triumph", "Melancholy", "Yearning", "Foreboding", "Euphoria", "Nostalgia", "Ambition", "Betrayal", "Redemption", "Sacrifice", "Wonder", "Hubris", "Paranoia", "Innocence Lost", "Courage", "Resilience", "Obsession", "Acceptance"] },
+                "Moral_Tone": { instruction: "Add more nuanced moral alignments.", wildcards: ["Utopian", "Dystopian", "Anti-heroic", "Satirical", "Optimistic", "Pessimistic", "Grimdark", "Hopeful", "Noblebright", "Gray morality", "Nihilistic", "Idealistic", "Cautionary tale", "Allegorical", "Didactic", "Ironic"] },
+                "Story_Devices": { instruction: "Add more literary devices and narrative tropes.", wildcards: ["Foreshadowing symbol", "Chekhov's Gun", "MacGuffin", "Cliff-hanger", "Deus Ex Machina", "Red Herring", "Plot Twist", "In medias res", "Unreliable narrator", "Breaking the fourth wall", "Amnesia plot", "Time loop", "Prophecy", "The Chosen One trope", "A hero's welcome"] }
+            }
+        };
+
+        let appState = {
+            systemPrompt: defaultSystemPrompt,
+            wildcards: {}
+        };
+
+        function debounce(func, delay) {
+            let timeout;
+            return function(...args) {
+                const context = this;
+                clearTimeout(timeout);
+                timeout = setTimeout(() => func.apply(context, args), delay);
+            };
+        }
+
+        const debouncedSaveState = debounce(saveState, 500);
+
+        function saveState() {
+            try {
+                const stateString = JSON.stringify(appState);
+                localStorage.setItem(STORAGE_KEY, stateString);
+                console.log("State saved.");
+            } catch (error) {
+                console.error("Failed to save state to localStorage", error);
+            }
+        }
+
+        function loadState() {
+            try {
+                const savedState = localStorage.getItem(STORAGE_KEY);
+                if (savedState) {
+                    const parsedState = JSON.parse(savedState);
+                    // Ensure both keys exist before assigning
+                    if (parsedState.systemPrompt && parsedState.wildcards) {
+                        appState = parsedState;
+                        return;
+                    }
+                }
+                // Fallback to initial data if saved state is missing or malformed
+                appState.wildcards = JSON.parse(JSON.stringify(initialWildcardData));
+                appState.systemPrompt = defaultSystemPrompt;
+
+            } catch (error) {
+                console.error("Failed to load state from localStorage, using defaults.", error);
+                appState.wildcards = JSON.parse(JSON.stringify(initialWildcardData));
+                appState.systemPrompt = defaultSystemPrompt;
+            }
+        }
+
+        function resetState() {
+            localStorage.removeItem(STORAGE_KEY);
+            loadState();
+        }
+
+        // --- /src/ai.js ---
+        let activeAIController;
+
+        async function generateMoreWildcards(globalPrompt, categoryName, subCategoryName, existingWords, customInstructions = "") {
+            activeAIController = new AbortController();
+            const signal = activeAIController.signal;
+
+            // The AI prompt is now constructed from the global prompt + the specific request details
+            let userPrompt = `Main Category: '${categoryName.replace(/_/g, ' ')}'\nSub-Category: '${subCategoryName.replace(/_/g, ' ')}'\nExisting Wildcards: ${existingWords.slice(0, 20).join(', ')}`;
+
+            if (customInstructions.trim()) {
+                userPrompt += `\nCustom Instructions: "${customInstructions.trim()}"`;
+            }
+
+            const chatHistory = [
+                { role: "user", parts: [{ text: globalPrompt }] },
+                { role: "model", parts: [{ text: "Understood. I am ready to generate wildcards based on your instructions." }] },
+                { role: "user", parts: [{ text: userPrompt }] }
+            ];
+
+            const payload = {
+                contents: chatHistory,
+                generationConfig: {
+                    responseMimeType: "application/json",
+                    responseSchema: {
+                        type: "ARRAY",
+                        items: { type: "STRING" }
+                    }
+                }
+            };
+            
+            const apiKey = "";
+            const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`;
+
+            try {
+                const response = await fetch(apiUrl, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload),
+                    signal: signal
+                });
+
+                if (!response.ok) {
+                    const errorBody = await response.text();
+                    throw new Error(`API request failed with status ${response.status}: ${errorBody}`);
+                }
+
+                const result = await response.json();
+                
+                if (result.candidates && result.candidates[0].content && result.candidates[0].content.parts[0]) {
+                    const text = result.candidates[0].content.parts[0].text;
+                    return JSON.parse(text);
+                } else {
+                    console.error("Unexpected API response structure:", result);
+                    throw new Error("Could not parse the response from the AI.");
+                }
+            } catch (error) {
+                if (error.name === 'AbortError') {
+                    console.log('Fetch aborted');
+                    return null;
+                }
+                console.error("Error calling Gemini API:", error);
+                throw error;
+            } finally {
+                activeAIController = null;
+            }
+        }
+
+        // --- /src/ui.js ---
+        const modal = document.getElementById('notification-modal');
+        const modalMessage = document.getElementById('notification-message');
+        const closeBtn = document.getElementById('notification-close');
+        const confirmBtn = document.getElementById('confirm-btn');
+        const cancelBtn = document.getElementById('cancel-btn');
+        const confirmationButtons = document.getElementById('confirmation-buttons');
+
+        function showNotification(message, isConfirmation = false, onConfirm = () => {}) {
+            modalMessage.textContent = message;
+            if (isConfirmation) {
+                confirmationButtons.classList.remove('hidden');
+                confirmationButtons.classList.add('flex');
+                closeBtn.classList.add('hidden');
+                
+                const newConfirmBtn = confirmBtn.cloneNode(true);
+                confirmBtn.parentNode.replaceChild(newConfirmBtn, confirmBtn);
+                newConfirmBtn.addEventListener('click', () => {
+                    onConfirm();
+                    hideNotification();
+                });
+
+            } else {
+                confirmationButtons.classList.add('hidden');
+                closeBtn.classList.remove('hidden');
+            }
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+        }
+
+        function hideNotification() {
+            modal.classList.add('hidden');
+            modal.classList.remove('flex');
+        }
+
+        function renderChip(wildcard, index, category, subCategory) {
+            const chip = document.createElement('div');
+            chip.className = 'chip bg-indigo-500/50 text-white text-sm px-2 py-1 rounded-md flex items-center gap-2 whitespace-nowrap';
+            chip.dataset.index = index;
+
+            const deleteBtn = document.createElement('button');
+            deleteBtn.innerHTML = '&times;';
+            deleteBtn.className = 'text-indigo-200 hover:text-white font-bold text-lg leading-none';
+            deleteBtn.title = "Delete wildcard";
+            deleteBtn.addEventListener('click', () => {
+                appState.wildcards[category][subCategory].wildcards.splice(index, 1);
+                debouncedSaveState();
+                const card = document.querySelector(`[data-category="${category}"][data-sub-category="${subCategory}"]`);
+                renderChipsInContainer(card.querySelector('.chip-container'), category, subCategory);
+            });
+
+            const textSpan = document.createElement('span');
+            textSpan.textContent = wildcard;
+            textSpan.contentEditable = "true";
+            textSpan.className = "outline-none focus:bg-indigo-400/50 rounded px-1";
+            textSpan.addEventListener('blur', (e) => {
+                const newText = e.target.textContent.trim();
+                if (newText && newText !== wildcard) {
+                    appState.wildcards[category][subCategory].wildcards[index] = newText;
+                    debouncedSaveState();
+                } else {
+                    e.target.textContent = wildcard;
+                }
+            });
+            textSpan.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    e.target.blur();
+                }
+            });
+
+            chip.appendChild(deleteBtn); // X button at the start
+            chip.appendChild(textSpan);
+            return chip;
+        }
+
+        function renderChipsInContainer(container, category, subCategory) {
+            container.innerHTML = '';
+            const wildcards = appState.wildcards[category][subCategory].wildcards;
+            wildcards.forEach((wildcard, index) => {
+                container.appendChild(renderChip(wildcard, index, category, subCategory));
+            });
+            container.scrollTop = container.scrollHeight;
+        }
+
+        function buildUI() {
+            const container = document.getElementById('wildcard-container');
+            container.innerHTML = '';
+            document.getElementById('global-prompt').value = appState.systemPrompt;
+
+            for (const category in appState.wildcards) {
+                const categoryWrapper = document.createElement('div');
+                categoryWrapper.className = 'bg-gray-800 rounded-lg shadow-md';
+                
+                const details = document.createElement('details');
+                details.className = 'group';
+
+                const summary = document.createElement('summary');
+                summary.className = 'flex justify-between items-center p-4 cursor-pointer';
+                
+                const title = document.createElement('h2');
+                title.className = 'text-xl sm:text-2xl font-semibold text-indigo-400';
+                title.textContent = category.replace(/_/g, ' ');
+                
+                const arrow = document.createElement('span');
+                arrow.className = 'arrow-down transition-transform duration-300 text-indigo-400';
+                arrow.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" /></svg>`;
+
+                summary.appendChild(title);
+                summary.appendChild(arrow);
+                
+                const contentWrapper = document.createElement('div');
+                contentWrapper.className = 'p-4 border-t border-gray-700 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4';
+
+                for (const subCategory in appState.wildcards[category]) {
+                    const card = document.createElement('div');
+                    card.className = 'bg-gray-700/50 p-4 rounded-lg flex flex-col';
+                    card.dataset.category = category;
+                    card.dataset.subCategory = subCategory;
+
+                    const cardHeader = document.createElement('div');
+                    cardHeader.className = 'flex justify-between items-center mb-2';
+                    const cardTitle = document.createElement('h3');
+                    cardTitle.className = 'font-bold text-lg text-gray-100';
+                    cardTitle.textContent = subCategory.replace(/_/g, ' ');
+                    cardHeader.appendChild(cardTitle);
+
+                    const customInstructionsInput = document.createElement('input');
+                    customInstructionsInput.type = 'text';
+                    customInstructionsInput.value = appState.wildcards[category][subCategory].instruction;
+                    customInstructionsInput.className = 'custom-instructions-input bg-gray-800 text-sm border border-gray-600 rounded-md px-2 py-1 w-full my-2 focus:ring-indigo-500 focus:border-indigo-500';
+                    
+                    const chipContainer = document.createElement('div');
+                    chipContainer.className = 'chip-container flex flex-wrap gap-2 bg-gray-800 rounded-md p-2 w-full border border-gray-600 overflow-y-auto';
+                    chipContainer.style.height = '150px';
+                    renderChipsInContainer(chipContainer, category, subCategory);
+
+                    const addWildcardContainer = document.createElement('div');
+                    addWildcardContainer.className = 'flex gap-2 mt-2';
+                    const addWildcardInput = document.createElement('input');
+                    addWildcardInput.type = 'text';
+                    addWildcardInput.placeholder = 'Add new wildcard...';
+                    addWildcardInput.className = 'flex-grow bg-gray-800 border border-gray-600 rounded-md px-2 py-1 text-sm';
+                    const addWildcardBtn = document.createElement('button');
+                    addWildcardBtn.textContent = '+';
+                    addWildcardBtn.className = 'bg-indigo-600 hover:bg-indigo-700 text-white font-bold px-3 rounded-md';
+                    addWildcardContainer.appendChild(addWildcardInput);
+                    addWildcardContainer.appendChild(addWildcardBtn);
+
+                    const cardFooter = document.createElement('div');
+                    cardFooter.className = 'flex justify-between items-center mt-3';
+
+                    const generateBtn = document.createElement('button');
+                    generateBtn.innerHTML = `<span class="btn-text">Generate More</span><div class="loader hidden"></div>`;
+                    generateBtn.title = `Use AI to generate more wildcards`;
+                    generateBtn.className = 'generate-btn bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold py-2 px-3 rounded-md flex items-center gap-2';
+                    
+                    const copyBtn = document.createElement('button');
+                    copyBtn.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-gray-400 hover:text-white transition-colors"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>`;
+                    copyBtn.title = `Copy all wildcards in this category`;
+
+                    cardFooter.appendChild(generateBtn);
+                    cardFooter.appendChild(copyBtn);
+
+                    card.appendChild(cardHeader);
+                    card.appendChild(customInstructionsInput);
+                    card.appendChild(chipContainer);
+                    card.appendChild(addWildcardContainer);
+                    card.appendChild(cardFooter);
+                    contentWrapper.appendChild(card);
+                }
+
+                details.appendChild(summary);
+                details.appendChild(contentWrapper);
+                categoryWrapper.appendChild(details);
+                container.appendChild(categoryWrapper);
+            }
+        }
+
+        // --- /src/main.js (Glue Code) ---
+        function init() {
+            loadState();
+            buildUI();
+
+            closeBtn.addEventListener('click', hideNotification);
+            cancelBtn.addEventListener('click', hideNotification);
+
+            document.getElementById('global-prompt').addEventListener('input', (e) => {
+                appState.systemPrompt = e.target.value;
+                debouncedSaveState();
+            });
+
+            document.getElementById('download-all-zip').addEventListener('click', () => {
+                const zip = new JSZip();
+                for (const category in appState.wildcards) {
+                    for (const subCategory in appState.wildcards[category]) {
+                        const content = appState.wildcards[category][subCategory].wildcards.join('\n');
+                        zip.file(`${subCategory}.txt`, content);
+                    }
+                }
+                zip.generateAsync({type:"blob"}).then(content => {
+                    const element = document.createElement('a');
+                    element.href = URL.createObjectURL(content);
+                    element.download = "wildcard_collection.zip";
+                    document.body.appendChild(element);
+                    element.click();
+                    document.body.removeChild(element);
+                });
+            });
+
+            document.getElementById('reset-btn').addEventListener('click', () => {
+                showNotification(
+                    'Are you sure you want to reset all categories to their default values? All generated wildcards and custom prompts will be lost.',
+                    true,
+                    () => {
+                        resetState();
+                        buildUI();
+                        showNotification('All categories have been reset to default.');
+                    }
+                );
+            });
+
+            document.getElementById('wildcard-container').addEventListener('click', async (e) => {
+                const card = e.target.closest('.flex.flex-col');
+                if (!card) return;
+                
+                const { category, subCategory } = card.dataset;
+                const generateBtn = e.target.closest('.generate-btn');
+                const copyBtn = e.target.closest('button[title^="Copy all"]');
+                const addBtn = e.target.closest('button');
+
+                if (generateBtn) {
+                    const btnText = generateBtn.querySelector('.btn-text');
+                    const loader = generateBtn.querySelector('.loader');
+                    const customInstructions = card.querySelector('.custom-instructions-input').value;
+
+                    if (activeAIController) activeAIController.abort();
+
+                    btnText.textContent = 'Cancel';
+                    loader.classList.remove('hidden');
+                    generateBtn.classList.replace('bg-indigo-600', 'bg-yellow-600');
+                    
+                    try {
+                        const newWildcards = await generateMoreWildcards(appState.systemPrompt, category, subCategory, appState.wildcards[category][subCategory].wildcards, customInstructions);
+                        
+                        if (newWildcards) {
+                            const existingSet = new Set(appState.wildcards[category][subCategory].wildcards);
+                            const uniqueNew = newWildcards.filter(w => w && !existingSet.has(w));
+                            
+                            appState.wildcards[category][subCategory].wildcards.push(...uniqueNew);
+                            debouncedSaveState();
+                            
+                            renderChipsInContainer(card.querySelector('.chip-container'), category, subCategory);
+                            showNotification(`Added ${uniqueNew.length} new wildcards to ${subCategory.replace(/_/g, ' ')}!`);
+                        }
+                    } catch (error) {
+                        if (error.name !== 'AbortError') {
+                            showNotification(`Error generating wildcards: ${error.message}`);
+                        }
+                    } finally {
+                        btnText.textContent = 'Generate More';
+                        loader.classList.add('hidden');
+                        generateBtn.classList.replace('bg-yellow-600', 'bg-indigo-600');
+                    }
+                }
+
+                if (copyBtn) {
+                    const content = appState.wildcards[category][subCategory].wildcards.join('\n');
+                    const textArea = document.createElement("textarea");
+                    textArea.value = content;
+                    textArea.style.position = "fixed";
+                    textArea.style.left = "-9999px";
+                    document.body.appendChild(textArea);
+                    textArea.focus();
+                    textArea.select();
+                    try {
+                        document.execCommand('copy');
+                        showNotification(`Copied all wildcards for ${subCategory.replace(/_/g, ' ')}!`);
+                    } catch (err) {
+                        showNotification('Failed to copy.');
+                        console.error('Copy failed', err);
+                    }
+                    document.body.removeChild(textArea);
+                }
+
+                if (addBtn && addBtn.textContent === '+') {
+                    const input = card.querySelector('input[type="text"][placeholder="Add new wildcard..."]');
+                    const value = input.value.trim();
+                    if (value) {
+                        appState.wildcards[category][subCategory].wildcards.push(value);
+                        debouncedSaveState();
+                        renderChipsInContainer(card.querySelector('.chip-container'), category, subCategory);
+                        input.value = '';
+                    }
+                }
+            });
+            
+            document.getElementById('wildcard-container').addEventListener('input', (e) => {
+                 if (e.target.matches('.custom-instructions-input')) {
+                    const card = e.target.closest('.flex.flex-col');
+                    const { category, subCategory } = card.dataset;
+                    appState.wildcards[category][subCategory].instruction = e.target.value;
+                    debouncedSaveState();
+                 }
+            });
+
+            document.getElementById('wildcard-container').addEventListener('keydown', (e) => {
+                if (e.key === 'Enter' && e.target.matches('input[placeholder="Add new wildcard..."]')) {
+                    e.preventDefault();
+                    e.target.nextElementSibling.click();
+                }
+            });
+        }
+
+        document.addEventListener('DOMContentLoaded', init);
+
+    </script>
+</body>
+</html>
