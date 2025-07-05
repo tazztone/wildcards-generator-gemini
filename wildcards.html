@@ -382,12 +382,9 @@
             // SECURITY NOTE: API key should not be hardcoded in client-side code.
             // Use environment variables or user input for secure key management.
             // Attempt to use LLM_KEY from environment if available, otherwise fallback to user input.
-            let apiKey = "";
-            if (typeof process !== 'undefined' && process.env && process.env.LLM_KEY) {
-                apiKey = process.env.LLM_KEY;
-            } else {
-                apiKey = document.getElementById('api-key').value.trim();
-            }
+            // NOTE: process.env is not available in a browser context.
+            // This code is left as a reference for a potential future Node.js version.
+            let apiKey = document.getElementById('api-key').value.trim();
             if (!apiKey) {
                 throw new Error("API key is not provided. Please enter it in the API Key field or set LLM_KEY environment variable.");
             }
@@ -478,7 +475,12 @@
                 } else {
                     if (result.candidates && result.candidates[0].content && result.candidates[0].content.parts[0]) {
                         const text = result.candidates[0].content.parts[0].text;
-                        return JSON.parse(text);
+                        try {
+                            return JSON.parse(text);
+                        } catch (e) {
+                            console.error("Failed to parse AI response as JSON:", text);
+                            throw new Error("The AI returned a malformed response. Please try again.");
+                        }
                     } else {
                         console.error("Unexpected API response structure:", result);
                         throw new Error("Could not parse the response from the AI. The response structure might have changed or there was an API error.");
@@ -651,6 +653,16 @@
                 title.className = 'text-xl sm:text-2xl font-semibold text-indigo-400';
                 title.textContent = category.replace(/_/g, ' ');
                 
+                // Calculate total wildcards for this category
+                let totalWildcards = 0;
+                for (const subCat in appState.wildcards[category]) {
+                    totalWildcards += appState.wildcards[category][subCat].wildcards.length;
+                }
+                const counter = document.createElement('span');
+                counter.className = 'text-indigo-200 text-sm ml-2';
+                counter.textContent = `(${totalWildcards})`;
+                title.appendChild(counter);
+                
                 const addSubCategoryBtn = document.createElement('button');
                 addSubCategoryBtn.textContent = '+';
                 addSubCategoryBtn.className = 'bg-green-600 hover:bg-green-700 text-white font-bold py-1 px-2 rounded-md';
@@ -725,6 +737,13 @@
                     const cardTitle = document.createElement('h3');
                     cardTitle.className = 'font-bold text-lg text-gray-100';
                     cardTitle.textContent = subCategory.replace(/_/g, ' ');
+                    
+                    // Add live counter for subcategory
+                    const subCounter = document.createElement('span');
+                    subCounter.className = 'text-gray-400 text-sm ml-2';
+                    subCounter.textContent = `(${appState.wildcards[category][subCategory].wildcards.length})`;
+                    cardTitle.appendChild(subCounter);
+                    
                     const deleteSubCategoryBtn = document.createElement('button');
                     deleteSubCategoryBtn.innerHTML = '&times;';
                     deleteSubCategoryBtn.className = 'text-red-400 hover:text-red-300 font-bold text-lg leading-none absolute right-0 top-0';
@@ -737,16 +756,14 @@
                                 saveStateToHistory();
                                 delete appState.wildcards[category][subCategory];
                                 debouncedSaveState();
-                                // Prevent collapse by ensuring the details element remains open
+                                // Remove the specific sub-category card directly to prevent UI collapse
+                                const cardToRemove = deleteSubCategoryBtn.closest('[data-category][data-sub-category]');
+                                if (cardToRemove) {
+                                    cardToRemove.remove();
+                                }
+                                // Ensure the details element remains open
                                 details.open = true;
                                 details.setAttribute('aria-expanded', 'true');
-                                buildUI();
-                                // Ensure the details element remains open after rebuild
-                                const updatedDetails = document.querySelector(`summary[aria-controls="${category.replace(/_/g, '-')}"]`).parentElement;
-                                if (updatedDetails) {
-                                    updatedDetails.open = true;
-                                    updatedDetails.setAttribute('aria-expanded', 'true');
-                                }
                                 showNotification(`Deleted sub-category ${subCategory.replace(/_/g, ' ')}.`);
                             }
                         );
@@ -1063,31 +1080,24 @@
 
                 if (copyBtn) {
                     const content = appState.wildcards[category][subCategory].wildcards.join('\n');
-                    const textArea = document.createElement("textarea");
-                    textArea.value = content;
-                    textArea.style.position = "fixed";
-                    textArea.style.left = "-9999px";
-                    document.body.appendChild(textArea);
-                    textArea.focus();
-                    textArea.select();
-                    try {
-                        document.execCommand('copy');
+                    navigator.clipboard.writeText(content).then(() => {
                         showNotification(`Copied all wildcards for ${subCategory.replace(/_/g, ' ')}!`);
-                    } catch (err) {
+                    }).catch(err => {
                         showNotification('Failed to copy.');
                         console.error('Copy failed', err);
-                    }
-                    document.body.removeChild(textArea);
+                    });
                 }
 
                 if (addBtn && addBtn.textContent === '+') {
                     const input = card.querySelector('input[type="text"][placeholder="Add new wildcard..."]');
                     const value = input.value.trim();
                     if (value) {
+                        saveStateToHistory();
                         appState.wildcards[category][subCategory].wildcards.push(value);
                         debouncedSaveState();
                         renderChipsInContainer(card.querySelector('.chip-container'), category, subCategory);
                         input.value = '';
+                        input.focus();
                     }
                 }
             });
