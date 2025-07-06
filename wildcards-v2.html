@@ -1,0 +1,545 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI-Powered Wildcard Generator (Enhanced)</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-primary: #111827; /* gray-900 */
+            --bg-secondary: #1f2937; /* gray-800 */
+            --bg-tertiary: #374151; /* gray-700 */
+            --border-primary: #4b5563; /* gray-600 */
+            --text-primary: #f3f4f6; /* gray-100 */
+            --text-secondary: #d1d5db; /* gray-300 */
+            --accent-primary: #4f46e5; /* indigo-600 */
+            --accent-hover: #4338ca; /* indigo-700 */
+        }
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg-primary);
+            color: var(--text-primary);
+        }
+        details > summary { list-style: none; }
+        details > summary::-webkit-details-marker { display: none; }
+        details[open] summary .arrow-down { transform: rotate(180deg); }
+        .loader {
+            width: 20px; height: 20px; border: 3px solid var(--accent-primary);
+            border-bottom-color: transparent; border-radius: 50%;
+            display: inline-block; box-sizing: border-box;
+            animation: rotation 1s linear infinite;
+        }
+        @keyframes rotation { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        .custom-scrollbar::-webkit-scrollbar { width: 8px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: var(--bg-secondary); }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: var(--bg-tertiary); border-radius: 4px; }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #4a5568; }
+        :focus-visible { outline: 2px solid var(--accent-primary); outline-offset: 2px; border-radius: 4px; }
+        
+        /* Styles for the native <dialog> element */
+        dialog {
+            background-color: transparent;
+            border: none;
+            padding: 0;
+            max-width: 90vw;
+            max-height: 90vh;
+        }
+        dialog::backdrop {
+            background: rgba(0, 0, 0, 0.7);
+            backdrop-filter: blur(2px);
+        }
+        /* Visually hidden class for accessibility */
+        .sr-only {
+            position: absolute; width: 1px; height: 1px;
+            padding: 0; margin: -1px; overflow: hidden;
+            clip: rect(0, 0, 0, 0); white-space: nowrap; border-width: 0;
+        }
+    </style>
+</head>
+<body class="antialiased">
+
+    <!-- Accessible Live Region for Screen Reader Announcements -->
+    <div id="aria-live-region" class="sr-only" role="status" aria-live="polite" aria-atomic="true"></div>
+
+    <!-- Enhanced Notification Dialog -->
+    <dialog id="notification-dialog">
+        <div class="bg-gray-800 rounded-lg shadow-xl p-6 w-full max-w-md text-center">
+            <div id="notification-message" class="text-white mb-6 whitespace-pre-wrap"></div>
+            <div id="confirmation-buttons" class="hidden justify-center gap-4">
+                 <button id="confirm-btn" class="bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded-lg transition-colors">Confirm</button>
+                 <button id="cancel-btn" class="bg-gray-600 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded-lg transition-colors" value="cancel">Cancel</button>
+            </div>
+            <button id="notification-close" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 px-4 rounded-lg transition-colors" value="default">Close</button>
+        </div>
+    </dialog>
+
+    <div class="container mx-auto p-4 sm:p-6 lg:p-8">
+        <header class="text-center mb-8">
+            <h1 class="text-4xl sm:text-5xl font-bold text-white mb-2">AI-Powered Wildcard Generator</h1>
+            <p class="text-lg text-gray-400">Expand categories with AI-generated ideas. Changes are auto-saved.</p>
+            
+            <details class="max-w-4xl mx-auto mt-6 bg-gray-800 rounded-lg text-left">
+                <summary class="flex justify-between items-center p-4 cursor-pointer">
+                    <h2 class="text-xl font-semibold text-indigo-400">Global Settings</h2>
+                    <span class="arrow-down transition-transform duration-300 text-indigo-400"><svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg></span>
+                </summary>
+                <div class="p-4 border-t border-gray-700 space-y-4">
+                    <div>
+                        <label for="global-prompt" class="block text-lg font-semibold text-indigo-300 mb-2">Global System Prompt</label>
+                        <textarea id="global-prompt" class="w-full bg-gray-900 border border-gray-600 rounded-md p-2 text-sm focus:ring-indigo-500 focus:border-indigo-500 custom-scrollbar" rows="4"></textarea>
+                    </div>
+                    <div>
+                        <label for="api-key" class="block text-lg font-semibold text-indigo-300 mb-2">API Key</label>
+                        <input type="password" id="api-key" class="w-full bg-gray-900 border border-gray-600 rounded-md p-2 text-sm focus:ring-indigo-500 focus:border-indigo-500" placeholder="Enter your API key" autocomplete="off">
+                        <p class="text-xs text-yellow-400 mt-2">⚠️ For your security, this key is stored in your browser's local storage. Avoid using this tool on public or shared computers.</p>
+                    </div>
+                    <div>
+                        <label for="api-endpoint" class="block text-lg font-semibold text-indigo-300 mb-2">API Endpoint</label>
+                        <select id="api-endpoint" class="w-full bg-gray-900 border border-gray-600 rounded-md p-2 text-sm focus:ring-indigo-500 focus:border-indigo-500">
+                            <option value="gemini" selected>Gemini API (Default)</option>
+                            <option value="openrouter">OpenRouter API</option>
+                        </select>
+                    </div>
+                    <div id="model-selector-container">
+                        <label for="model-selector" class="block text-lg font-semibold text-indigo-300 mb-2">Model Name</label>
+                        <input type="text" id="model-selector" class="w-full bg-gray-900 border border-gray-600 rounded-md p-2 text-sm focus:ring-indigo-500 focus:border-indigo-500" placeholder="e.g., gemini-2.0-flash, openai/gpt-4o" value="gemini-2.0-flash">
+                    </div>
+                </div>
+            </details>
+
+            <div class="mt-6 text-left max-w-4xl mx-auto">
+                <label for="search-wildcards" class="block text-lg font-semibold text-indigo-300 mb-2">Search Wildcards</label>
+                <input type="text" id="search-wildcards" class="w-full bg-gray-800 border border-gray-600 rounded-md p-2 text-sm focus:ring-indigo-500 focus:border-indigo-500" placeholder="Search for wildcards...">
+            </div>
+            <div class="mt-6 flex flex-wrap justify-center items-center gap-4">
+                <button id="add-category-btn" class="bg-teal-600 hover:bg-teal-700 text-white font-bold py-3 px-6 rounded-lg shadow-lg transition-transform transform hover:scale-105">Add New Category</button>
+                <button id="download-all-zip" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 px-6 rounded-lg shadow-lg transition-transform transform hover:scale-105">Download All (.zip)</button>
+                <button id="export-state" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-6 rounded-lg shadow-lg transition-transform transform hover:scale-105">Export State</button>
+                <button id="import-state" class="bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-6 rounded-lg shadow-lg transition-transform transform hover:scale-105">Import State</button>
+                <button id="undo-btn" class="bg-gray-600 hover:bg-gray-700 text-white font-bold py-3 px-6 rounded-lg shadow-lg transition-transform transform hover:scale-105">Undo (Ctrl+Z)</button>
+                <button id="redo-btn" class="bg-gray-600 hover:bg-gray-700 text-white font-bold py-3 px-6 rounded-lg shadow-lg transition-transform transform hover:scale-105">Redo (Ctrl+Y)</button>
+                <button id="help-btn" class="bg-purple-600 hover:bg-purple-700 text-white font-bold py-3 px-6 rounded-lg shadow-lg transition-transform transform hover:scale-105">Help</button>
+                <button id="reset-btn" class="bg-red-600 hover:bg-red-500 text-white font-bold py-3 px-6 rounded-lg shadow-lg transition-transform transform hover:scale-105">Reset All</button>
+            </div>
+        </header>
+
+        <main id="wildcard-container" class="space-y-4"></main>
+    </div>
+
+    <script type="module">
+        // =================================================================================
+        // --- CONFIGURATION & CONSTANTS
+        // =================================================================================
+        const Config = {
+            STORAGE_KEY: 'wildcardGeneratorState_v5',
+            HISTORY_KEY: 'wildcardGeneratorHistory_v5',
+            HISTORY_LIMIT: 20,
+            AUTOSAVE_INTERVAL: 500,
+            SEARCH_DEBOUNCE_DELAY: 300,
+            DEFAULT_SYSTEM_PROMPT: `You are a creative assistant for generating wildcards for AI image prompts. You will be given a main category, a sub-category, a list of existing wildcards, and optional custom instructions. Your task is to generate 20 more diverse and creative wildcards that fit the sub-category. Do not repeat any from the existing list. Follow all custom instructions. Return ONLY the new wildcards as a JSON array of strings.`,
+            INITIAL_WILDCARD_DATA: { "0_PROMPT_META_&_GLOBAL": { "AspectRatio": { instruction: "", wildcards: ["1:1", "4:5", "3:2", "16:9", "9:16", "2.39:1", "panorama", "tiny-planet"] }, "Resolution": { instruction: "", wildcards: ["4K", "8K", "12K", "IMAX"] }, "Orientation": { instruction: "", wildcards: ["portrait", "landscape", "square", "panorama"] }, "Negative-Prompt_Tokens": { instruction: "", wildcards: ["(blurry:1.6)", "watermark", "text", "low-res", "jpeg artefacts", "duplicate limbs", "flat lighting"] }, "Sampler_Style_Tokens": { instruction: "", wildcards: ["Euler a", "DPM++ 2M Karras", "“analog style”", "“vivid”", "“cinematic”"] }, "Seed_CFG_Place-holders": { instruction: "", wildcards: ["seed-###", "cfg-##"] } }, "1_SUBJECT_&_CONTENT": { "PEOPLE": { instruction: "age (infant-elder) - ethnicity (Han, Maasai, Sámi…) - gender (masc, femme, androgynous…)", wildcards: [] }, "CREATURES_&_BEINGS": { instruction: "mammals, birds, reptiles, amphibians, fish, insects…", wildcards: [] }, "OBJECTS_&_ITEMS": { instruction: "smartphone, ray-gun, teleporter…", wildcards: [] }, "ABSTRACT_&_CONCEPTS": { instruction: "geometric (fractal, tesseract) - ethereal (soul, dream) - emotions personified (hope, despair…)", wildcards: [] }, "HISTORICAL_ERAS_&_CULTURES": { instruction: "prehistoric, medieval, victorian, 1980s neon, Y2K…", wildcards: [] } }, "2_ACTION_POSE_&_EMOTION": { "Dynamic_Actions": { instruction: "locomotion - combat - interaction", wildcards: [] }, "Static_Poses": { instruction: "standing - sitting - reclining - hand poses", wildcards: [] }, "Facial_Expressions": { instruction: "", wildcards: ["pensive", "ecstatic", "enraged"] }, "Group_Interactions": { instruction: "", wildcards: ["duelling", "embracing", "rallying crowd"] }, "Micro-Gestures": { instruction: "", wildcards: ["subtle smile", "eyebrow raise", "hair flip"] } }, "3_ENVIRONMENT_&_SETTING": { "Location": { instruction: "Interior, Exterior Man-Made, Exterior Natural", wildcards: [] }, "Time_&_Weather": { instruction: "Time of Day, Weather, Celestial, Season", wildcards: [] }, "Architecture": { instruction: "Style, Materials, Vernacular", wildcards: [] }, "Flora_&_Fauna_Details": { instruction: "", wildcards: ["glowing moss", "flock of birds"] }, "Natural_Phenomena": { instruction: "", wildcards: ["super-cell tornado", "bioluminescent tide"] } }, "4_COMPOSITION_&_CINEMATOGRAPHY": { "Shot_&_Framing": { instruction: "", wildcards: ["establishing", "POV", "extreme close-up"] }, "Angle_&_Perspective": { instruction: "", wildcards: ["dutch angle", "bird’s-eye", "forced perspective"] }, "Focus_&_Depth": { instruction: "", wildcards: ["deep focus", "bokeh", "motion blur"] }, "Aspect_&_Canvas": { instruction: "", wildcards: ["square", "4:5", "21:9", "triptych"] }, "Movement_Techniques": { instruction: "", wildcards: ["long-exposure trails", "bullet-time freeze"] } }, "5_STYLE_&_AESTHETICS": { "Art_Movements": { instruction: "", wildcards: ["surrealism", "pop art", "futurism"] }, "Medium_&_Technique": { instruction: "digital (3D render, glitch art) - traditional (oil paint, woodcut)…", wildcards: [] }, "Aesthetic_Genres": { instruction: "", wildcards: ["cyberpunk", "ghibli-esque", "vaporwave"] }, "Color_Schemes": { instruction: "", wildcards: ["monochromatic", "neon", "earthy"] }, "Textures_&_Patterns": { instruction: "", wildcards: ["celtic knot", "rusted metal", "polka dots"] }, "Mood_&_Atmosphere": { instruction: "", wildcards: ["ethereal", "ominous", "whimsical"] }, "In-Camera_Film_Techniques": { instruction: "", wildcards: ["infra-red", "double exposure", "cyanotype"] }, "Post-Processing_FX": { instruction: "", wildcards: ["glitch overlay", "VHS static", "halation"] }, "Cultural_Motifs": { instruction: "", wildcards: ["Maori kōwhaiwhai", "Islamic arabesque", "Swiss paper-cut"] } }, "6_TECHNICAL_ATTRIBUTES_&_RENDERING": { "Lighting": { instruction: "", wildcards: ["volumetric", "rim", "candlelight", "RGB strips"] }, "Detail_&_Quality": { instruction: "", wildcards: ["photorealistic", "minimalist", "hyper-real"] }, "Camera_&_Film": { instruction: "Type, Lens Effects, Film Stock, Sensor/Format, Focal Length, Aperture/DoF, Shutter Speed", wildcards: [] }, "Rendering_Engines": { instruction: "", wildcards: ["Octane", "Unreal 5", "Arnold", "Redshift"] }, "File_Aesthetics": { instruction: "", wildcards: ["Sketchfab preview", "album-cover crop", "trading-card border"] } }, "7_SPECIAL_FX_&_PARTICLES": { "Elements": { instruction: "", wildcards: ["sparks", "snow particles", "falling petals"] }, "Fluid_Energy": { instruction: "", wildcards: ["smoke plume", "plasma whip", "water splash crown"] }, "Destruction": { instruction: "", wildcards: ["shattered glass", "debris field", "ground fissures"] } }, "8_NARRATIVE_&_THEME": { "Genres": { instruction: "", wildcards: ["coming-of-age", "cosmic horror", "space opera"] }, "Emotional_Themes": { instruction: "", wildcards: ["triumph", "melancholy", "yearning"] }, "Moral_Tone": { instruction: "", wildcards: ["utopian", "dystopian", "anti-heroic"] }, "Story_Devices": { instruction: "", wildcards: ["foreshadowing symbol", "Chekhov’s gun", "cliff-hanger"] } } }
+        };
+
+        // =================================================================================
+        // --- UTILITY FUNCTIONS
+        // =================================================================================
+        /**
+         * Sanitizes a string to prevent XSS by converting it to text content.
+         * @param {string} input - The string to sanitize.
+         * @returns {string} The sanitized string.
+         */
+        const sanitize = (input) => {
+            const temp = document.createElement('div');
+            temp.textContent = input;
+            return temp.innerHTML;
+        };
+
+        /**
+         * Creates a debounced function that delays invoking func until after wait milliseconds.
+         * @param {Function} func The function to debounce.
+         * @param {number} wait The number of milliseconds to delay.
+         * @returns {Function} Returns the new debounced function.
+         */
+        const debounce = (func, wait) => {
+            let timeout;
+            return function executedFunction(...args) {
+                const later = () => {
+                    clearTimeout(timeout);
+                    func(...args);
+                };
+                clearTimeout(timeout);
+                timeout = setTimeout(later, wait);
+            };
+        };
+
+        // =================================================================================
+        // --- STATE MANAGEMENT MODULE
+        // =================================================================================
+        const State = {
+            appState: { systemPrompt: '', wildcards: {} },
+            history: [],
+            historyIndex: -1,
+            _debounceTimeout: null,
+            init() { this.loadHistory(); this.loadState(); },
+            loadState() {
+                try {
+                    const savedState = localStorage.getItem(Config.STORAGE_KEY);
+                    if (savedState) {
+                        const parsed = JSON.parse(savedState);
+                        if (parsed.systemPrompt && parsed.wildcards && Object.keys(parsed.wildcards).length > 0) {
+                            this.appState = parsed; return;
+                        }
+                    }
+                } catch (error) { console.error("Failed to load state, using defaults.", error); }
+                this.appState.wildcards = JSON.parse(JSON.stringify(Config.INITIAL_WILDCARD_DATA));
+                this.appState.systemPrompt = Config.DEFAULT_SYSTEM_PROMPT;
+                this.saveState(true);
+            },
+            saveState(immediate = false) {
+                if (immediate) {
+                    this._save();
+                    UI.announce("State saved.");
+                } else {
+                    clearTimeout(this._debounceTimeout);
+                    this._debounceTimeout = setTimeout(() => {
+                        this._save();
+                        UI.announce("State auto-saved.");
+                    }, Config.AUTOSAVE_INTERVAL);
+                }
+            },
+            _save() { try { localStorage.setItem(Config.STORAGE_KEY, JSON.stringify(this.appState)); } catch (e) { console.error("Failed to save state", e); } },
+            resetState() { this.appState = { wildcards: JSON.parse(JSON.stringify(Config.INITIAL_WILDCARD_DATA)), systemPrompt: Config.DEFAULT_SYSTEM_PROMPT }; this.saveState(true); this.clearHistory(); this.saveStateToHistory(); },
+            saveStateToHistory() {
+                if (this.historyIndex < this.history.length - 1) this.history = this.history.slice(0, this.historyIndex + 1);
+                this.history.push(JSON.stringify(this.appState));
+                if (this.history.length > Config.HISTORY_LIMIT) this.history.shift();
+                this.historyIndex = this.history.length - 1;
+                this._saveHistory();
+            },
+            loadHistory() {
+                try {
+                    const savedHistory = localStorage.getItem(Config.HISTORY_KEY);
+                    const savedIndex = localStorage.getItem(`historyIndex_${Config.HISTORY_KEY}`);
+                    if (savedHistory) { this.history = JSON.parse(savedHistory); this.historyIndex = savedIndex ? parseInt(savedIndex, 10) : this.history.length - 1; }
+                    else this.saveStateToHistory();
+                } catch (e) { console.error("Failed to load history", e); this.history = []; this.historyIndex = -1; }
+            },
+            _saveHistory() { localStorage.setItem(Config.HISTORY_KEY, JSON.stringify(this.history)); localStorage.setItem(`historyIndex_${Config.HISTORY_KEY}`, this.historyIndex); },
+            clearHistory() { this.history = []; this.historyIndex = -1; localStorage.removeItem(Config.HISTORY_KEY); localStorage.removeItem(`historyIndex_${Config.HISTORY_KEY}`); },
+            undo() { if (this.historyIndex > 0) { this.historyIndex--; this.appState = JSON.parse(this.history[this.historyIndex]); this._saveHistory(); this.saveState(true); return true; } return false; },
+            redo() { if (this.historyIndex < this.history.length - 1) { this.historyIndex++; this.appState = JSON.parse(this.history[this.historyIndex]); this._saveHistory(); this.saveState(true); return true; } return false; }
+        };
+
+        // =================================================================================
+        // --- API MODULE
+        // =================================================================================
+        const Api = {
+            activeController: null,
+            async generateWildcards(globalPrompt, categoryName, subCategoryName, existingWords, customInstructions) {
+                if (this.activeController) this.activeController.abort();
+                this.activeController = new AbortController();
+                try {
+                    const { url, payload, headers } = this._prepareRequest(globalPrompt, categoryName, subCategoryName, existingWords, customInstructions);
+                    const response = await fetch(url, { method: 'POST', headers, body: JSON.stringify(payload), signal: this.activeController.signal });
+                    if (!response.ok) {
+                        const errorText = await response.text();
+                        throw new Error(`API request failed: ${response.status} - ${errorText}`);
+                    }
+                    return this._parseResponse(await response.json());
+                } catch (error) {
+                    if (error.name === 'AbortError') return null;
+                    console.error("Error calling LLM API:", error); throw error;
+                } finally { this.activeController = null; }
+            },
+            _prepareRequest(globalPrompt, categoryName, subCategoryName, existingWords, customInstructions) {
+                const apiKey = document.getElementById('api-key').value.trim();
+                if (!apiKey) throw new Error("API key is not provided.");
+                const endpoint = document.getElementById('api-endpoint').value;
+                const model = document.getElementById('model-selector').value.trim();
+                let url, payload, headers = { 'Content-Type': 'application/json' };
+                const userPrompt = `Main Category: '${categoryName.replace(/_/g, ' ')}'\nSub-Category: '${subCategoryName.replace(/_/g, ' ')}'\nExisting Wildcards: ${existingWords.slice(0, 50).join(', ')}\nCustom Instructions: "${customInstructions.trim()}"`;
+                switch (endpoint) {
+                    case 'gemini':
+                        url = `https://generativelanguage.googleapis.com/v1beta/models/${model || 'gemini-2.0-flash'}:generateContent?key=${apiKey}`;
+                        payload = { contents: [{ role: "user", parts: [{ text: globalPrompt }] }, { role: "model", parts: [{ text: "Understood." }] }, { role: "user", parts: [{ text: userPrompt }] }], generationConfig: { responseMimeType: "application/json", responseSchema: { type: "ARRAY", items: { type: "STRING" } } } };
+                        break;
+                    case 'openrouter':
+                        url = `https://openrouter.ai/api/v1/chat/completions`;
+                        headers['Authorization'] = `Bearer ${apiKey}`;
+                        payload = { model: model || "openai/gpt-4o", messages: [{ role: "system", content: globalPrompt }, { role: "user", content: userPrompt }], response_format: { type: "json_object" } };
+                        break;
+                    default: throw new Error("Invalid API endpoint.");
+                }
+                return { url, payload, headers };
+            },
+            _parseResponse(result) {
+                const endpoint = document.getElementById('api-endpoint').value;
+                try {
+                    if (endpoint === 'gemini') return JSON.parse(result.candidates[0].content.parts[0].text);
+                    if (endpoint === 'openrouter') {
+                        let contentStr = result.choices[0].message.content;
+                        const match = /```(?:json)?\s*([\s\S]*?)\s*```/.exec(contentStr);
+                        if (match) contentStr = match[1];
+                        const content = JSON.parse(contentStr);
+                        return Array.isArray(content) ? content : content.wildcards || [];
+                    }
+                    return [];
+                } catch (e) {
+                    console.error("Failed to parse AI response:", result, e);
+                    throw new Error("The AI returned a malformed response.");
+                }
+            }
+        };
+
+        // =================================================================================
+        // --- UI MODULE
+        // =================================================================================
+        const UI = {
+            elements: {},
+            init() {
+                this.elements = {
+                    container: document.getElementById('wildcard-container'),
+                    globalPrompt: document.getElementById('global-prompt'),
+                    apiKeyInput: document.getElementById('api-key'),
+                    apiEndpoint: document.getElementById('api-endpoint'),
+                    search: document.getElementById('search-wildcards'),
+                    dialog: document.getElementById('notification-dialog'),
+                    dialogMessage: document.getElementById('notification-message'),
+                    dialogConfirm: document.getElementById('confirm-btn'),
+                    dialogCancel: document.getElementById('cancel-btn'),
+                    dialogClose: document.getElementById('notification-close'),
+                    dialogConfirmButtons: document.getElementById('confirmation-buttons'),
+                    ariaLive: document.getElementById('aria-live-region')
+                };
+                this.elements.dialog.addEventListener('close', () => {
+                    const input = this.elements.dialog.querySelector('input');
+                    if (input) input.remove();
+                });
+            },
+            renderAll() {
+                const { wildcards, systemPrompt } = State.appState;
+                this.elements.globalPrompt.value = systemPrompt;
+                this.elements.apiKeyInput.value = localStorage.getItem('temp_api_key') || '';
+                this.elements.container.innerHTML = '';
+                const fragment = document.createDocumentFragment();
+                for (const category in wildcards) {
+                    fragment.appendChild(this.createCategory(category, wildcards[category]));
+                }
+                this.elements.container.appendChild(fragment);
+            },
+            createCategory(categoryName, subCategories) {
+                const categoryWrapper = document.createElement('div');
+                categoryWrapper.className = 'bg-gray-800 rounded-lg shadow-md';
+                categoryWrapper.dataset.categoryName = categoryName;
+                let totalWildcards = Object.values(subCategories).reduce((acc, sub) => acc + (sub.wildcards?.length || 0), 0);
+                categoryWrapper.innerHTML = `
+                    <details class="group">
+                        <summary class="flex justify-between items-center p-4 cursor-pointer">
+                            <div class="flex items-center gap-3">
+                                <h2 class="text-xl sm:text-2xl font-semibold text-indigo-400">${sanitize(categoryName.replace(/_/g, ' '))} <span class="text-indigo-200 text-sm ml-2">(${totalWildcards})</span></h2>
+                                <button class="add-subcategory-btn bg-green-600 hover:bg-green-700 text-white font-bold py-1 px-2 text-sm rounded-md" title="Add new sub-category">+</button>
+                            </div>
+                            <span class="arrow-down transition-transform duration-300 text-indigo-400"><svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg></span>
+                        </summary>
+                        <div class="p-4 border-t border-gray-700 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                            ${Object.entries(subCategories).map(([subName, subData]) => this.createSubCategoryCard(categoryName, subName, subData)).join('')}
+                        </div>
+                    </details>`;
+                return categoryWrapper;
+            },
+            createSubCategoryCard(categoryName, subCategoryName, subCategoryData) {
+                return `
+                    <div class="bg-gray-700/50 p-4 rounded-lg flex flex-col" data-category="${categoryName}" data-sub-category="${subCategoryName}">
+                        <div class="flex justify-between items-center mb-2">
+                            <h3 class="font-bold text-lg text-gray-100">${sanitize(subCategoryName.replace(/_/g, ' '))} <span class="text-gray-400 text-sm ml-2">(${(subCategoryData.wildcards || []).length})</span></h3>
+                            <button class="delete-subcategory-btn text-red-400 hover:text-red-300 font-bold text-xl leading-none" title="Delete sub-category">&times;</button>
+                        </div>
+                        <input type="text" value="${sanitize(subCategoryData.instruction || '')}" class="custom-instructions-input bg-gray-800 text-sm border border-gray-600 rounded-md px-2 py-1 w-full my-2 focus:ring-indigo-500 focus:border-indigo-500" placeholder="Custom generation instructions...">
+                        <div class="chip-container custom-scrollbar flex flex-wrap gap-2 bg-gray-800 rounded-md p-2 w-full border border-gray-600 overflow-y-auto" style="height: 150px;">
+                            ${(subCategoryData.wildcards || []).map((wc, i) => this.createChip(wc, i)).join('')}
+                        </div>
+                        <div class="flex gap-2 mt-2">
+                            <input type="text" placeholder="Add new wildcard..." class="add-wildcard-input flex-grow bg-gray-800 border border-gray-600 rounded-md px-2 py-1 text-sm">
+                            <button class="add-wildcard-btn bg-indigo-600 hover:bg-indigo-700 text-white font-bold px-3 rounded-md">+</button>
+                        </div>
+                        <div class="flex justify-between items-center mt-3 flex-wrap gap-2">
+                            <button class="generate-btn bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold py-2 px-3 rounded-md flex items-center gap-2"><span class="btn-text">Generate More</span><div class="loader hidden"></div></button>
+                            <button class="copy-btn text-gray-400 hover:text-white" title="Copy all wildcards"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg></button>
+                            <button class="select-all-btn bg-gray-600 hover:bg-gray-700 text-white text-xs font-bold py-2 px-3 rounded-md">Select All</button>
+                            <button class="batch-delete-btn bg-red-600 hover:bg-red-700 text-white text-xs font-bold py-2 px-3 rounded-md">Delete Selected</button>
+                        </div>
+                    </div>`;
+            },
+            createChip(wildcard, index) { return `<div class="chip bg-indigo-500/50 text-white text-sm px-2 py-1 rounded-md flex items-center gap-2 whitespace-nowrap" data-index="${index}"><input type="checkbox" class="batch-select bg-gray-700 border-gray-500 text-indigo-600 focus:ring-indigo-500"><span contenteditable="true" class="outline-none focus:bg-indigo-400/50 rounded px-1">${sanitize(wildcard)}</span></div>`; },
+            updateSubCategory(categoryName, subCategoryName) {
+                const card = this.elements.container.querySelector(`[data-category="${categoryName}"][data-sub-category="${subCategoryName}"]`);
+                if (!card) return;
+                const data = State.appState.wildcards[categoryName][subCategoryName];
+                card.querySelector('h3 span').textContent = `(${data.wildcards.length})`;
+                card.querySelector('.chip-container').innerHTML = data.wildcards.map((wc, i) => this.createChip(wc, i)).join('');
+            },
+            showNotification(message, isConfirmation = false, onConfirm = null, withInput = false) {
+                this.elements.dialogMessage.innerHTML = '';
+                const p = document.createElement('p'); p.textContent = message; this.elements.dialogMessage.appendChild(p);
+                let inputElement = null;
+                if (withInput) {
+                    inputElement = document.createElement('input'); inputElement.type = 'text';
+                    inputElement.className = 'bg-gray-900 border border-gray-600 rounded-md p-2 text-sm w-full mt-4';
+                    this.elements.dialogMessage.appendChild(inputElement);
+                }
+                this.elements.dialogConfirmButtons.classList.toggle('hidden', !isConfirmation);
+                this.elements.dialogClose.classList.toggle('hidden', isConfirmation);
+                this.elements.dialog.showModal();
+                if (withInput) inputElement.focus();
+                
+                const handleConfirm = () => { if (onConfirm) onConfirm(inputElement ? inputElement.value : null); this.elements.dialog.close('confirm'); };
+                this.elements.dialogConfirm.onclick = handleConfirm;
+                this.elements.dialogCancel.onclick = () => this.elements.dialog.close('cancel');
+                this.elements.dialogClose.onclick = () => this.elements.dialog.close('close');
+            },
+            announce(message) { this.elements.ariaLive.textContent = message; },
+            toggleGenerateButton(btn, isLoading) {
+                const btnText = btn.querySelector('.btn-text'); const loader = btn.querySelector('.loader');
+                btnText.textContent = isLoading ? 'Cancel' : 'Generate More';
+                loader.classList.toggle('hidden', !isLoading);
+                btn.classList.toggle('bg-indigo-600', !isLoading); btn.classList.toggle('hover:bg-indigo-700', !isLoading);
+                btn.classList.toggle('bg-yellow-600', isLoading); btn.classList.toggle('hover:bg-yellow-700', isLoading);
+            }
+        };
+
+        // =================================================================================
+        // --- MAIN APPLICATION MODULE (CONTROLLER)
+        // =================================================================================
+        const App = {
+            init() {
+                UI.init(); // Initialize UI elements first
+                State.init(); // Then initialize state
+                UI.renderAll();
+                this.bindEventListeners();
+                this.debouncedSearch = debounce(this.handleSearch, Config.SEARCH_DEBOUNCE_DELAY);
+            },
+            bindEventListeners() {
+                UI.elements.globalPrompt.addEventListener('input', e => { State.appState.systemPrompt = e.target.value; State.saveState(); });
+                UI.elements.apiKeyInput.addEventListener('input', e => localStorage.setItem('temp_api_key', e.target.value.trim()));
+                UI.elements.search.addEventListener('input', e => this.debouncedSearch(e.target.value));
+                document.addEventListener('keydown', this.handleKeyboardShortcuts.bind(this));
+                document.getElementById('add-category-btn').addEventListener('click', this.handleAddNewCategory.bind(this));
+                document.getElementById('download-all-zip').addEventListener('click', this.handleDownloadZip);
+                document.getElementById('export-state').addEventListener('click', this.handleExportState);
+                document.getElementById('import-state').addEventListener('click', this.handleImportState);
+                document.getElementById('undo-btn').addEventListener('click', this.handleUndo.bind(this));
+                document.getElementById('redo-btn').addEventListener('click', this.handleRedo.bind(this));
+                document.getElementById('help-btn').addEventListener('click', this.handleHelp);
+                document.getElementById('reset-btn').addEventListener('click', this.handleReset);
+                UI.elements.container.addEventListener('click', this.handleContainerClick.bind(this));
+                UI.elements.container.addEventListener('input', e => { if (e.target.matches('.custom-instructions-input')) { const { category, subCategory } = e.target.closest('[data-category]').dataset; State.appState.wildcards[category][subCategory].instruction = e.target.value; State.saveState(); } });
+                UI.elements.container.addEventListener('keydown', e => { if (e.key === 'Enter') { if (e.target.matches('.add-wildcard-input')) { e.preventDefault(); e.target.nextElementSibling.click(); } if (e.target.matches('[contenteditable="true"]')) { e.preventDefault(); e.target.blur(); } } });
+                UI.elements.container.addEventListener('blur', e => { if (e.target.matches('[contenteditable="true"]')) { const chip = e.target.closest('.chip'); const { category, subCategory } = chip.closest('[data-category]').dataset; const index = parseInt(chip.dataset.index, 10); const originalText = State.appState.wildcards[category][subCategory].wildcards[index]; const newText = e.target.textContent.trim(); if (newText && newText !== originalText) { State.saveStateToHistory(); State.appState.wildcards[category][subCategory].wildcards[index] = newText; State.saveState(); } else { e.target.textContent = originalText; } } }, true);
+            },
+            handleKeyboardShortcuts(e) {
+                if (e.ctrlKey || e.metaKey) {
+                    switch (e.key.toLowerCase()) {
+                        case 's': e.preventDefault(); State.saveState(true); break;
+                        case 'z': e.preventDefault(); this.handleUndo(); break;
+                        case 'y': e.preventDefault(); this.handleRedo(); break;
+                    }
+                }
+            },
+            handleContainerClick(e) {
+                const target = e.target;
+                if (target.closest('.add-subcategory-btn')) { const categoryName = target.closest('[data-category-name]').dataset.categoryName; this.handleAddSubCategory(categoryName); return; }
+                const card = target.closest('[data-category][data-sub-category]'); if (!card) return;
+                const { category, subCategory } = card.dataset;
+                if (target.closest('.generate-btn')) this.handleGenerate(target.closest('.generate-btn'), category, subCategory);
+                if (target.closest('.copy-btn')) this.handleCopy(category, subCategory);
+                if (target.closest('.add-wildcard-btn')) this.handleAddWildcard(card, category, subCategory);
+                if (target.closest('.batch-delete-btn')) this.handleBatchDelete(card, category, subCategory);
+                if (target.closest('.delete-subcategory-btn')) this.handleDeleteSubCategory(card, category, subCategory);
+                if (target.closest('.select-all-btn')) this.handleSelectAll(card, target.closest('.select-all-btn'));
+            },
+            async handleGenerate(btn, category, subCategory) {
+                if (Api.activeController) { Api.activeController.abort(); UI.toggleGenerateButton(btn, false); return; }
+                UI.toggleGenerateButton(btn, true);
+                try {
+                    const { wildcards, instruction } = State.appState.wildcards[category][subCategory];
+                    const newWildcards = await Api.generateWildcards(State.appState.systemPrompt, category, subCategory, wildcards, instruction);
+                    if (newWildcards) {
+                        State.saveStateToHistory();
+                        const existingSet = new Set(wildcards);
+                        const uniqueNew = newWildcards.filter(w => w && !existingSet.has(w));
+                        State.appState.wildcards[category][subCategory].wildcards.push(...uniqueNew);
+                        State.saveState(true); UI.updateSubCategory(category, subCategory);
+                        UI.announce(`Added ${uniqueNew.length} new wildcards.`);
+                    }
+                } catch (error) { UI.showNotification(`Error: ${error.message}`); }
+                finally { if (!Api.activeController) UI.toggleGenerateButton(btn, false); }
+            },
+            handleCopy(category, subCategory) { const content = State.appState.wildcards[category][subCategory].wildcards.join('\n'); navigator.clipboard.writeText(content).then(() => UI.showNotification('Copied!')).catch(() => UI.showNotification('Failed to copy.')); },
+            handleAddWildcard(card, category, subCategory) {
+                const input = card.querySelector('.add-wildcard-input'); const value = input.value.trim();
+                if (value) { State.saveStateToHistory(); State.appState.wildcards[category][subCategory].wildcards.push(value); State.saveState(true); UI.updateSubCategory(category, subCategory); input.value = ''; input.focus(); }
+            },
+            handleBatchDelete(card, category, subCategory) {
+                const checkboxes = card.querySelectorAll('.batch-select:checked'); if (checkboxes.length === 0) return;
+                State.saveStateToHistory();
+                const indicesToDelete = Array.from(checkboxes).map(cb => parseInt(cb.closest('.chip').dataset.index, 10));
+                State.appState.wildcards[category][subCategory].wildcards = State.appState.wildcards[category][subCategory].wildcards.filter((_, i) => !indicesToDelete.includes(i));
+                State.saveState(true); UI.updateSubCategory(category, subCategory); UI.announce(`Deleted ${indicesToDelete.length} wildcards.`);
+            },
+            handleDeleteSubCategory(card, category, subCategory) { UI.showNotification(`Delete "${subCategory.replace(/_/g, ' ')}"?`, true, () => { State.saveStateToHistory(); delete State.appState.wildcards[category][subCategory]; State.saveState(true); card.remove(); UI.announce(`Sub-category deleted.`); }); },
+            handleSelectAll(card, button) { const checkboxes = card.querySelectorAll('.batch-select'); const isSelectAll = button.textContent === 'Select All'; checkboxes.forEach(cb => cb.checked = isSelectAll); button.textContent = isSelectAll ? 'Deselect All' : 'Select All'; },
+            handleAddNewCategory() {
+                UI.showNotification('Enter a name for the new main category:', true, (inputValue) => {
+                    if (inputValue && inputValue.trim()) {
+                        const sanitizedName = inputValue.trim().replace(/\s+/g, '_');
+                        if (State.appState.wildcards[sanitizedName]) { UI.showNotification(`Category "${sanitizedName}" already exists.`); return; }
+                        State.saveStateToHistory(); State.appState.wildcards[sanitizedName] = {}; State.saveState(true); UI.renderAll();
+                    }
+                }, true);
+            },
+            handleAddSubCategory(categoryName) {
+                UI.showNotification(`Enter new sub-category name for "${categoryName.replace(/_/g, ' ')}":`, true, (inputValue) => {
+                    if (inputValue && inputValue.trim()) {
+                        const sanitizedName = inputValue.trim().replace(/\s+/g, '_');
+                        if (State.appState.wildcards[categoryName][sanitizedName]) { UI.showNotification(`Sub-category "${sanitizedName}" already exists.`); return; }
+                        State.saveStateToHistory(); State.appState.wildcards[categoryName][sanitizedName] = { instruction: '', wildcards: [] }; State.saveState(true);
+                        const openCategories = [...document.querySelectorAll('details[open]')].map(d => d.parentElement.dataset.categoryName);
+                        if (!openCategories.includes(categoryName)) openCategories.push(categoryName);
+                        UI.renderAll();
+                        openCategories.forEach(name => { const catElement = UI.elements.container.querySelector(`[data-category-name="${name}"] details`); if (catElement) catElement.open = true; });
+                    }
+                }, true);
+            },
+            handleSearch(searchTerm) {
+                const term = searchTerm.toLowerCase().trim();
+                document.querySelectorAll('[data-category-name]').forEach(categoryWrapper => {
+                    let categoryHasMatch = false;
+                    categoryWrapper.querySelectorAll('[data-sub-category]').forEach(card => {
+                        const { category, subCategory } = card.dataset;
+                        const wildcards = State.appState.wildcards[category][subCategory].wildcards;
+                        const hasMatch = term === '' || wildcards.some(wc => wc.toLowerCase().includes(term));
+                        card.style.display = hasMatch ? 'flex' : 'none';
+                        if(hasMatch) categoryHasMatch = true;
+                    });
+                    categoryWrapper.style.display = categoryHasMatch || term === '' ? 'block' : 'none';
+                });
+            },
+            handleDownloadZip() { const zip = new JSZip(); const { wildcards } = State.appState; for (const c in wildcards) { for (const s in wildcards[c]) { zip.file(`${s}.txt`, wildcards[c][s].wildcards.join('\n')); } } zip.generateAsync({ type:"blob" }).then(content => { const a = document.createElement('a'); a.href = URL.createObjectURL(content); a.download = "wildcard_collection.zip"; a.click(); URL.revokeObjectURL(a.href); }); },
+            handleExportState() { const stateString = JSON.stringify(State.appState, null, 2); const blob = new Blob([stateString], { type: 'application/json' }); const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = "wildcard_generator_state.json"; a.click(); URL.revokeObjectURL(a.href); UI.showNotification('Application state exported.'); },
+            handleImportState() { const input = document.createElement('input'); input.type = 'file'; input.accept = '.json'; input.onchange = e => { const file = e.target.files[0]; if (!file) return; const reader = new FileReader(); reader.onload = re => { try { const importedState = JSON.parse(re.target.result); if (importedState.systemPrompt && importedState.wildcards) { State.appState = importedState; State.saveState(true); State.clearHistory(); State.saveStateToHistory(); UI.renderAll(); UI.showNotification('State imported successfully.'); } else { UI.showNotification('Invalid state file format.'); } } catch (error) { UI.showNotification(`Error importing: ${error.message}`); } }; reader.readAsText(file); }; input.click(); },
+            handleUndo() { const openCategories = [...UI.elements.container.querySelectorAll('details[open]')].map(d => d.parentElement.dataset.categoryName); if (State.undo()) { UI.renderAll(); openCategories.forEach(name => { const catElement = UI.elements.container.querySelector(`[data-category-name="${name}"] details`); if (catElement) catElement.open = true; }); UI.announce("Undo complete."); } },
+            handleRedo() { const openCategories = [...UI.elements.container.querySelectorAll('details[open]')].map(d => d.parentElement.dataset.categoryName); if (State.redo()) { UI.renderAll(); openCategories.forEach(name => { const catElement = UI.elements.container.querySelector(`[data-category-name="${name}"] details`); if (catElement) catElement.open = true; }); UI.announce("Redo complete."); } },
+            handleReset() { UI.showNotification('Reset all categories to default? This cannot be undone.', true, () => { State.resetState(); UI.renderAll(); UI.showNotification('All categories have been reset.'); }); },
+            handleHelp() { UI.showNotification(`Welcome!\n\nKey Features:\n- Global Settings: Customize AI behavior, API key, and endpoint.\n- Generate More: Use AI to create new wildcards.\n- Edit & Delete: Click text to edit. Use checkboxes for batch removal.\n- Export/Import: Save and load your entire setup.\n- Undo/Redo: Revert or re-apply changes.`); }
+        };
+
+        // --- Initialize the Application ---
+        document.addEventListener('DOMContentLoaded', () => App.init());
+    </script>
+</body>
+</html>
