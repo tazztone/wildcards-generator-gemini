@@ -40,6 +40,7 @@
         .custom-scrollbar::-webkit-scrollbar-thumb { background: var(--bg-tertiary); border-radius: 4px; }
         .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #4a5568; }
         :focus-visible { outline: 2px solid var(--accent-primary); outline-offset: 2px; border-radius: 4px; }
+        .highlight { background-color: #ffff00; color: #000000; }
         
         /* Styles for the native <dialog> element */
         dialog {
@@ -670,7 +671,23 @@
                         const wildcards = State.appState.wildcards[category][subCategory].wildcards;
                         const hasMatch = term === '' || wildcards.some(wc => wc.toLowerCase().includes(term));
                         card.style.display = hasMatch ? 'flex' : 'none';
-                        if(hasMatch) categoryHasMatch = true;
+                        if (hasMatch) {
+                            categoryHasMatch = true;
+                            card.querySelectorAll('.chip span[contenteditable="true"]').forEach(span => {
+                                const originalText = span.textContent;
+                                if (term && originalText.toLowerCase().includes(term)) {
+                                    const regex = new RegExp(`(${term.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')})`, 'gi');
+                                    span.innerHTML = originalText.replace(regex, '<span class="highlight">$1</span>');
+                                } else {
+                                    span.innerHTML = sanitize(originalText);
+                                }
+                            });
+                        } else {
+                            card.querySelectorAll('.chip span[contenteditable="true"]').forEach(span => {
+                                const originalText = span.textContent;
+                                span.innerHTML = sanitize(originalText);
+                            });
+                        }
                     });
                     categoryWrapper.style.display = categoryHasMatch || term === '' ? 'block' : 'none';
                 });
