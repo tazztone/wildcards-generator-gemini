@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AI-Powered Wildcard Generator (v2.2)</title>
+    <title>AI-Powered Wildcard Generator (v2.3)</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -177,7 +177,7 @@
             AUTOSAVE_INTERVAL: 500,
             SEARCH_DEBOUNCE_DELAY: 300,
             DEFAULT_SYSTEM_PROMPT: `You are a creative assistant for generating wildcards for AI image prompts. You will be given a category path, a list of existing wildcards, and optional custom instructions. Your task is to generate 20 more diverse and creative wildcards that fit the category. Do not repeat any from the existing list. Follow all custom instructions. Return ONLY the new wildcards as a JSON array of strings. Example of expected output format: ["wildcard1", "wildcard2", "wildcard3", ..., "wildcard20"] Ensure that your response is a valid JSON array of strings, containing exactly 20 unique entries relevant to the category provided.`,
-            SUGGEST_CATEGORY_PROMPT: `You are a creative assistant helping to organize a collection of wildcards for AI image generation. Based on the provided list of existing top-level categories, please suggest 5 more diverse but related categories that would complement them. Do not repeat any from the existing list. Format the names to be suitable as file names (e.g., use underscores instead of spaces). Return ONLY the new categories as a JSON array of strings. Example of expected output format: ["new_category_1", "new_category_2", "new_category_3"]`
+            SUGGEST_ITEM_PROMPT: `You are a creative assistant helping to organize a collection of wildcards for AI image generation. You will be given a parent category path and a list of all existing item names in the entire collection. Your task is to suggest 5 new items (either sub-folders or wildcard lists) that would fit well inside the parent category: '{parentPath}'. Do not repeat any names from the provided list of existing items. Format the names to be suitable as file names (e.g., use underscores instead of spaces). Return ONLY the new names as a JSON array of strings. Example: ["new_item_1", "new_item_2"]`
         };
 
         // =================================================================================
@@ -364,12 +364,13 @@
                     this.activeController = null;
                 }
             },
-            async suggestCategories(existingCategories) {
+            async suggestItems(parentPath, allExistingKeys) {
                 if (this.activeController) this.activeController.abort();
                 this.activeController = new AbortController();
                 try {
-                    const globalPrompt = Config.SUGGEST_CATEGORY_PROMPT;
-                    const userPrompt = `Existing Categories: ${existingCategories.join(', ')}`;
+                    const readablePath = parentPath ? parentPath.replace(/\//g, ' > ').replace(/_/g, ' ') : 'Top-Level';
+                    const globalPrompt = Config.SUGGEST_ITEM_PROMPT.replace('{parentPath}', readablePath);
+                    const userPrompt = `All Existing Item Names: ${allExistingKeys.join(', ')}`;
                     const generationConfig = { responseMimeType: "application/json", responseSchema: { type: "ARRAY", items: { type: "STRING" } } };
 
                     const { url, payload, headers } = this._prepareRequest(globalPrompt, userPrompt, generationConfig);
@@ -432,7 +433,7 @@
                         const match = /```(?:json)?\s*([\s\S]*?)\s*```/.exec(contentStr);
                         if (match) contentStr = match[1];
                         const content = JSON.parse(contentStr);
-                        return Array.isArray(content) ? content : content.wildcards || content.categories || [];
+                        return Array.isArray(content) ? content : content.wildcards || content.categories || content.items || [];
                     }
                     return [];
                 } catch (e) {
@@ -550,12 +551,15 @@
             getCategoryFolderHtml(name, path) {
                 return `
                     <summary class="flex justify-between items-center p-4 cursor-pointer">
-                        <div class="flex items-center gap-3">
+                        <div class="flex items-center gap-3 flex-wrap">
                             <h2 class="text-xl font-semibold text-indigo-400"><span contenteditable="true" class="outline-none focus:bg-indigo-400/50 rounded px-1">${sanitize(name.replace(/_/g, ' '))}</span></h2>
-                            <button class="add-subcategory-btn bg-green-600 hover:bg-green-700 text-white font-bold py-1 px-2 text-sm rounded-md" title="Add new sub-category">+</button>
                             <button class="delete-btn text-red-400 hover:text-red-300 font-bold text-xl leading-none" title="Delete this category">&times;</button>
                         </div>
-                        <span class="arrow-down transition-transform duration-300 text-indigo-400"><svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg></span>
+                        <div class="flex items-center gap-2">
+                            <button class="suggest-subcategory-btn bg-purple-600 hover:bg-purple-700 text-white font-bold py-1 px-2 text-sm rounded-md" title="Suggest new items for this category">Suggest</button>
+                            <button class="add-subcategory-btn bg-green-600 hover:bg-green-700 text-white font-bold py-1 px-2 text-sm rounded-md" title="Add new sub-category">+</button>
+                            <span class="arrow-down transition-transform duration-300 text-indigo-400"><svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg></span>
+                        </div>
                     </summary>
                     <div class="content-wrapper p-4 border-t border-gray-700 grid grid-cols-1 gap-4"></div>`;
             },
@@ -587,7 +591,7 @@
                     <div class="p-4 flex flex-wrap justify-between items-center gap-4">
                         <h2 class="text-xl sm:text-2xl font-semibold text-indigo-400">Add New Top-Level Category</h2>
                         <div class="flex items-center gap-2">
-                            <button id="suggest-categories-btn" class="bg-purple-600 hover:bg-purple-700 text-white font-bold py-2 px-4 rounded-md" title="Suggest new categories using AI">Suggest</button>
+                            <button id="suggest-toplevel-btn" class="bg-purple-600 hover:bg-purple-700 text-white font-bold py-2 px-4 rounded-md" title="Suggest new categories using AI">Suggest</button>
                             <button id="add-category-placeholder-btn" class="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded-md" title="Add new category">+</button>
                         </div>
                     </div>`;
@@ -703,10 +707,9 @@
                 UI.elements.search.addEventListener('input', e => this.debouncedSearch(e.target.value));
                 document.addEventListener('keydown', this.handleKeyboardShortcuts.bind(this));
                 
-                // Delegated event listeners for dynamic content
                 document.addEventListener('click', e => {
                     if (e.target.matches('#add-category-placeholder-btn')) this.handleAddNewCategory();
-                    if (e.target.matches('#suggest-categories-btn')) this.handleSuggestCategories();
+                    if (e.target.matches('#suggest-toplevel-btn')) this.handleSuggestItems(null);
                     if (e.target.matches('#download-all-zip')) this.handleDownloadZip();
                     if (e.target.matches('#export-state')) this.handleExportState();
                     if (e.target.matches('#import-state')) this.handleImportState();
@@ -728,8 +731,22 @@
                 container.addEventListener('drop', this.handleDrop.bind(this));
                 container.addEventListener('dragend', this.handleDragEnd.bind(this));
             },
+            getAllKeys(obj) {
+                const keys = [];
+                function recurse(currentObj) {
+                    for (const key in currentObj) {
+                        keys.push(key);
+                        const value = currentObj[key];
+                        if (typeof value === 'object' && !Array.isArray(value.wildcards)) {
+                            recurse(value);
+                        }
+                    }
+                }
+                recurse(obj);
+                return keys;
+            },
             getObjectByPath(path) {
-                if (!path) return undefined;
+                if (!path) return State.appState.wildcards;
                 return path.split('/').reduce((obj, key) => (obj && obj[key] !== undefined) ? obj[key] : undefined, State.appState.wildcards);
             },
             getParentObjectByPath(path) {
@@ -749,13 +766,14 @@
             handleContainerClick(e) {
                 const target = e.target;
                 const pathElement = target.closest('[data-path]');
-                
-                if (target.closest('.add-subcategory-btn')) { e.preventDefault(); this.handleAddSubCategory(pathElement.dataset.path); return; }
-                if (target.closest('.delete-btn')) { e.preventDefault(); this.handleDelete(pathElement.dataset.path); return; }
-                
-                if (!pathElement) return;
-                const path = pathElement.dataset.path;
+                if (!pathElement && !target.closest('.suggest-subcategory-btn')) return;
 
+                const path = pathElement ? pathElement.dataset.path : null;
+
+                if (target.closest('.add-subcategory-btn')) { e.preventDefault(); this.handleAddSubCategory(path); return; }
+                if (target.closest('.suggest-subcategory-btn')) { e.preventDefault(); this.handleSuggestItems(path); return; }
+                if (target.closest('.delete-btn')) { e.preventDefault(); this.handleDelete(path); return; }
+                
                 if (target.closest('.generate-btn')) {
                     const endpoint = document.getElementById('api-endpoint').value;
                     const key = endpoint === 'gemini' ? UI.elements.geminiApiKey.value : UI.elements.openrouterApiKey.value;
@@ -836,7 +854,7 @@
                     if (!Api.activeController) UI.toggleGenerateButton(btn, false);
                 }
             },
-            async handleSuggestCategories() {
+            async handleSuggestItems(path) {
                 const endpoint = document.getElementById('api-endpoint').value;
                 const key = endpoint === 'gemini' ? UI.elements.geminiApiKey.value : UI.elements.openrouterApiKey.value;
                 if (!key.trim()) {
@@ -844,28 +862,23 @@
                     return;
                 }
 
-                const existingCategories = Object.keys(State.appState.wildcards);
-                if (existingCategories.length === 0) {
-                    UI.showNotification('Please add at least one category before asking for suggestions.');
-                    return;
-                }
-
-                UI.showNotification('Asking AI for category suggestions...');
+                const allKeys = this.getAllKeys(State.appState.wildcards);
+                UI.showNotification('Asking AI for suggestions...');
                 
                 try {
-                    const suggestions = await Api.suggestCategories(existingCategories);
+                    const suggestions = await Api.suggestItems(path, allKeys);
                     if (!suggestions || suggestions.length === 0) {
                         UI.showNotification('The AI did not return any suggestions. Please try again.');
                         return;
                     }
 
                     const suggestionHtml = `
-                        <p class="mb-4 text-left">Here are some suggested categories. Select the ones you want to add:</p>
+                        <p class="mb-4 text-left">Here are some suggested items. Select the ones you want to add:</p>
                         <div id="suggestion-list" class="space-y-2 text-left max-h-60 overflow-y-auto custom-scrollbar p-2 bg-gray-900 rounded-md border border-gray-600">
                             ${suggestions.map((s, i) => `
                                 <label for="suggestion-${i}" class="flex items-center p-2 rounded-md hover:bg-gray-700 cursor-pointer">
                                     <input type="checkbox" id="suggestion-${i}" value="${sanitize(s)}" class="suggestion-checkbox h-4 w-4 bg-gray-700 border-gray-500 text-indigo-600 focus:ring-indigo-500 rounded mr-3" checked>
-                                    <span>${sanitize(s)}</span>
+                                    <span>${sanitize(s.replace(/_/g, ' '))}</span>
                                 </label>
                             `).join('')}
                         </div>
@@ -876,17 +889,20 @@
                         if (selected.length > 0) {
                             State.saveStateToHistory();
                             let addedCount = 0;
+                            const parentObject = this.getObjectByPath(path);
+
                             selected.forEach(name => {
                                 const sanitizedName = name.trim().replace(/\s+/g, '_');
-                                if (sanitizedName && !State.appState.wildcards[sanitizedName]) {
-                                    State.appState.wildcards[sanitizedName] = {};
+                                if (sanitizedName && !parentObject[sanitizedName]) {
+                                    // For now, all suggested items are folders. A more complex UI could ask.
+                                    parentObject[sanitizedName] = {};
                                     addedCount++;
                                 }
                             });
                             if (addedCount > 0) {
                                 State.saveState(true);
                                 UI.renderAll();
-                                UI.announce(`${addedCount} new categories added.`);
+                                UI.announce(`${addedCount} new items added.`);
                             }
                         }
                     });
