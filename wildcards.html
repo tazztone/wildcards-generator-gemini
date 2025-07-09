@@ -1522,51 +1522,21 @@
                 return yamlString;
             },
 
-            preprocessYamlForImport(text) {
-                const lines = text.replace(/\r\n/g, '\n').split('\n');
-                let processedText = '';
-                let i = 0;
+            preprocessYamlForImport(raw) {
+                // First pass: handle instruction comments
+                const pattern1 = /^(\s*)([^:\n]+):\s*#\s*instruction:\s*(.+)$/gm;
+                const text1 = raw.replace(pattern1, (_m, indent, key, desc) => {
+                    return `${indent}${key}:\n${indent}  instruction: ${desc}`;
+                });
 
-                while (i < lines.length) {
-                    const line = lines[i];
-                    const instructionMatch = line.match(/^(\s*)((?:[a-zA-Z0-9_.-]|"[^"]+"|'[^']+'|[^:{\[\],#\s])+):\s*#\s*instruction:\s*(.*)$/);
+                // Second pass: add 'wildcards:' key for lists that are siblings of 'instruction:'
+                const pattern2 = /^(\s*instruction:.*)(\n(\s*)-.+(\n\s*-.+)*)/gm;
+                const text2 = text1.replace(pattern2, (match, instructionPart, listPart, listIndent) => {
+                    const indent = instructionPart.match(/^\s*/)[0];
+                    return `${instructionPart}\n${indent}wildcards:\n${listPart}`;
+                });
 
-                    if (instructionMatch) {
-                        const indent = instructionMatch[1];
-                        const key = instructionMatch[2];
-                        const instruction = instructionMatch[3].trim();
-
-                        let nextLineIndex = i + 1;
-                        while (nextLineIndex < lines.length && lines[nextLineIndex].trim() === '') {
-                            nextLineIndex++;
-                        }
-                        
-                        const isWildcardList = nextLineIndex < lines.length && lines[nextLineIndex].trim().startsWith('-');
-
-                        processedText += `${indent}${key}:\n`;
-                        processedText += `${indent}  instruction: ${jsyaml.dump(instruction)}\n`;
-
-                        if (isWildcardList) {
-                            processedText += `${indent}  wildcards:\n`;
-                            i++;
-                            while (i < lines.length) {
-                                const currentLine = lines[i];
-                                if (currentLine.trim().startsWith('-')) {
-                                    processedText += `${indent}    ${currentLine.trim()}\n`;
-                                    i++;
-                                } else {
-                                    break;
-                                }
-                            }
-                        } else {
-                            i++;
-                        }
-                    } else {
-                        processedText += line + '\n';
-                        i++;
-                    }
-                }
-                return processedText;
+                return text2;
             },
 
             handleExportYaml() {
@@ -1594,9 +1564,9 @@
                     if (!file) return;
                     const reader = new FileReader();
                     reader.onload = re => {
+                        const rawText = re.target.result;
+                        const processedYaml = this.preprocessYamlForImport(rawText);
                         try {
-                            const rawText = re.target.result;
-                            const processedYaml = this.preprocessYamlForImport(rawText);
                             const yamlData = jsyaml.load(processedYaml);
                             const importedData = this.convertYamlToState(yamlData);
 
@@ -1610,7 +1580,13 @@
                             });
 
                         } catch (error) {
-                            UI.showNotification(`Error importing: ${error.message}`);
+                            if (error.mark) {
+                                const line = error.mark.line;
+                                const snippet = processedYaml.split('\n').slice(Math.max(0, line - 2), line + 3).join('\n');
+                                UI.showNotification(`Error parsing YAML at line ${line + 1}:<br><b>${error.message}</b><br><br><pre class="text-left text-xs whitespace-pre-wrap custom-scrollbar" style="max-height: 200px; overflow-y: auto; background-color: var(--bg-primary); padding: 1rem;">${sanitize(snippet)}</pre>`);
+                            } else {
+                                UI.showNotification(`Error importing: ${error.message}`);
+                            }
                             console.error(error);
                         }
                     };
