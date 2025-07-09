@@ -5,7 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>AI-Powered Wildcard Generator (v2.8)</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/js-yaml@4.1.0/dist/js-yaml.min.js"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -314,13 +313,11 @@
                 <input type="text" id="search-wildcards" class="w-full bg-gray-800 border border-gray-600 rounded-md p-2 text-sm focus:ring-indigo-500 focus:border-indigo-500" placeholder="Search for wildcards...">
             </div>
             <div class="mt-6 flex flex-wrap justify-center items-center gap-4">
-                <button id="download-all-zip" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 px-6 rounded-lg shadow-lg transition-transform transform hover:scale-105">Download All (.zip)</button>
                 <button id="export-yaml" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-6 rounded-lg shadow-lg transition-transform transform hover:scale-105">Export YAML</button>
                 <button id="import-yaml" class="bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-6 rounded-lg shadow-lg transition-transform transform hover:scale-105">Import YAML</button>
                 <button id="undo-btn" class="bg-gray-600 hover:bg-gray-700 text-white font-bold py-3 px-6 rounded-lg shadow-lg transition-transform transform hover:scale-105">Undo (Ctrl+Z)</button>
                 <button id="redo-btn" class="bg-gray-600 hover:bg-gray-700 text-white font-bold py-3 px-6 rounded-lg shadow-lg transition-transform transform hover:scale-105">Redo (Ctrl+Y)</button>
                 <button id="help-btn" class="bg-purple-600 hover:bg-purple-700 text-white font-bold py-3 px-6 rounded-lg shadow-lg transition-transform transform hover:scale-105">Help</button>
-                <button id="reset-btn" class="bg-red-600 hover:bg-red-500 text-white font-bold py-3 px-6 rounded-lg shadow-lg transition-transform transform hover:scale-105">Reset All</button>
             </div>
         </header>
 
