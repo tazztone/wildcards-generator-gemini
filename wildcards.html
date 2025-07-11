@@ -259,9 +259,10 @@
                         <select id="api-endpoint" class="w-full bg-gray-900 border border-gray-600 rounded-md p-2 text-sm focus:ring-indigo-500 focus:border-indigo-500">
                             <option value="gemini" selected>Gemini API</option>
                             <option value="openrouter">OpenRouter API</option>
+                            <option value="custom">Custom (OpenAI-Compatible)</option>
                         </select>
                     </div>
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div id="default-api-settings" class="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <div class="space-y-4 p-4 bg-gray-900/50 rounded-lg border border-gray-700">
                             <h3 class="text-lg font-semibold text-indigo-300">Gemini API</h3>
                             <div>
@@ -280,6 +281,7 @@
                                 <p id="gemini-model-loading-indicator" class="text-xs text-gray-400 mt-1 hidden">Loading models...</p>
                                 <p id="gemini-model-error-indicator" class="text-xs text-red-400 mt-1 hidden"></p>
                             </div>
+                            <button class="test-connection-btn text-sm bg-blue-600 hover:bg-blue-700 text-white py-1 px-3 rounded-md" data-provider="gemini">Test Connection</button>
                         </div>
 
                         <div class="space-y-4 p-4 bg-gray-900/50 rounded-lg border border-gray-700">
@@ -300,7 +302,30 @@
                                 <p id="openrouter-model-loading-indicator" class="text-xs text-gray-400 mt-1 hidden">Loading models...</p>
                                 <p id="openrouter-model-error-indicator" class="text-xs text-red-400 mt-1 hidden"></p>
                             </div>
+                            <button class="test-connection-btn text-sm bg-blue-600 hover:bg-blue-700 text-white py-1 px-3 rounded-md" data-provider="openrouter">Test Connection</button>
                         </div>
+                    </div>
+                    <div id="custom-api-settings" class="hidden mt-6 space-y-4 p-4 bg-gray-900/50 rounded-lg border border-gray-700">
+                        <h3 class="text-lg font-semibold text-indigo-300">Custom OpenAI-Compatible API</h3>
+                        <div>
+                            <label for="custom-api-url" class="block text-sm font-medium text-gray-300 mb-1">API Base URL</label>
+                            <input type="text" id="custom-api-url" class="w-full bg-gray-700 border border-gray-600 rounded-md p-2 text-sm focus:ring-indigo-500 focus:border-indigo-500" placeholder="e.g., https://api.example.com/v1">
+                        </div>
+                        <div>
+                            <label for="custom-api-key" class="block text-sm font-medium text-gray-300 mb-1">API Key (Optional)</label>
+                            <div class="relative">
+                                <input type="password" id="custom-api-key" class="w-full bg-gray-700 border border-gray-600 rounded-md p-2 text-sm focus:ring-indigo-500 focus:border-indigo-500" placeholder="Enter Custom API key" autocomplete="off">
+                                <button class="toggle-api-key-visibility absolute inset-y-0 right-0 flex items-center pr-3 text-gray-400 hover:text-gray-100" title="Show API Key">
+                                    <svg class="eye-icon h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 5.943 7.523 2 12 2c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7S3.732 13.057 2.458 9c1.274-4.057 5.065-7 9.542-7z" /><path class="eye-slash" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17L7 7" style="display: block;"/></svg>
+                                </button>
+                            </div>
+                        </div>
+                        <div>
+                            <label for="custom-model-name" class="block text-sm font-medium text-gray-300 mb-1">Model Name</label>
+                            <input type="text" id="custom-model-name" list="custom-model-list" class="w-full bg-gray-700 border border-gray-600 rounded-md p-2 text-sm focus:ring-indigo-500 focus:border-indigo-500" placeholder="Enter model name">
+                            <datalist id="custom-model-list"></datalist>
+                        </div>
+                        <button class="test-connection-btn text-sm bg-blue-600 hover:bg-blue-700 text-white py-1 px-3 rounded-md" data-provider="custom">Test Connection</button>
                     </div>
                 </div>
             </details>
@@ -332,8 +357,11 @@
             STORAGE_KEY: 'wildcardGeneratorState_v11',
             API_KEY_GEMINI: 'gemini_api_key_v11',
             API_KEY_OPENROUTER: 'openrouter_api_key_v11',
+            API_KEY_CUSTOM: 'custom_api_key_v11',
+            API_URL_CUSTOM: 'custom_api_url_v11',
             MODEL_NAME_GEMINI: 'gemini_model_name_v11',
             MODEL_NAME_OPENROUTER: 'openrouter_model_name_v11',
+            MODEL_NAME_CUSTOM: 'custom_model_name_v11',
             HISTORY_KEY: 'wildcardGeneratorHistory_v11',
             HISTORY_LIMIT: 20,
             AUTOSAVE_INTERVAL: 500,
@@ -644,6 +672,69 @@
                     this.activeController = null;
                 }
             },
+            async testConnection(provider) {
+                UI.showNotification(`Testing connection to ${provider}...`);
+                try {
+                    let url, requestOptions = { method: 'GET' };
+
+                    if (provider === 'gemini') {
+                        const apiKey = document.getElementById('gemini-api-key').value.trim();
+                        if (!apiKey) throw new Error("Gemini API key not provided.");
+                        url = `https://generativelanguage.googleapis.com/v1beta/models?key=${apiKey}`;
+                    } else if (provider === 'openrouter') {
+                        url = `https://openrouter.ai/api/v1/models`;
+                    } else if (provider === 'custom') {
+                        const customUrl = document.getElementById('custom-api-url').value.trim();
+                        if (!customUrl) throw new Error("Custom API URL is not provided.");
+                        url = `${customUrl.replace(/\/$/, '')}/models`;
+                        const apiKey = document.getElementById('custom-api-key').value.trim();
+                        const headers = {};
+                        if (apiKey) {
+                            headers['Authorization'] = `Bearer ${apiKey}`;
+                        }
+                        if (Object.keys(headers).length > 0) {
+                            requestOptions.headers = headers;
+                        }
+                    }
+
+                    if (!url) throw new Error("Could not determine URL for testing.");
+
+                    const response = await fetch(url, requestOptions);
+                    if (!response.ok) {
+                        const errorText = await response.text().catch(() => 'Could not retrieve error details.');
+                        throw new Error(`Request failed: ${response.status} ${response.statusText}. Response: ${errorText}`);
+                    }
+                    const data = await response.json();
+
+                    let successMessage = '';
+                    if (provider === 'gemini') {
+                        if (!data.models) throw new Error('Invalid response from Gemini API.');
+                        successMessage = `Gemini connection successful! Found ${data.models.length} models.`;
+                    } else if (provider === 'openrouter') {
+                        if (!data.data) throw new Error('Invalid response from OpenRouter API.');
+                        successMessage = `OpenRouter connection successful! Found ${data.data.length} models.`;
+                    } else if (provider === 'custom') {
+                        if (!data.data) throw new Error('Invalid response from custom API. Expected a "data" array.');
+                        successMessage = `Custom API connection successful! Found ${data.data.length} models.`;
+                        const modelList = document.getElementById('custom-model-list');
+                        modelList.innerHTML = '';
+                        data.data.forEach(model => {
+                            const option = document.createElement('option');
+                            option.value = model.id;
+                            modelList.appendChild(option);
+                        });
+                    }
+                    UI.showNotification(successMessage);
+
+                } catch (error) {
+                    console.error("Connection Test Error:", error);
+                    let message = `Connection failed: ${error.message}`;
+                    if (error instanceof TypeError && error.message === 'Failed to fetch') {
+                        message += '\n\nThis is likely a Cross-Origin Resource Sharing (CORS) issue. The API server must send the `Access-Control-Allow-Origin` header for the browser to allow the request. Please check your API server\'s configuration.';
+                    }
+                    UI.showNotification(message);
+                }
+            },
             _prepareRequest(globalPrompt, userPrompt, generationConfig = {}) {
                 const endpoint = document.getElementById('api-endpoint').value;
                 let apiKey, url, payload, headers = { 'Content-Type': 'application/json' };
@@ -675,6 +766,21 @@
                         ],
                         response_format: { type: "json_object" }
                     };
+                } else if (endpoint === 'custom') {
+                    apiKey = document.getElementById('custom-api-key').value.trim();
+                    const model = document.getElementById('custom-model-name').value.trim();
+                    const customUrl = document.getElementById('custom-api-url').value.trim();
+                    if (!customUrl) throw new Error("Custom API URL is not provided.");
+                    url = `${customUrl.replace(/\/$/, '')}/chat/completions`;
+                    if(apiKey) headers['Authorization'] = `Bearer ${apiKey}`;
+                    payload = {
+                        model,
+                        messages: [
+                            { role: "system", content: globalPrompt },
+                            { role: "user", content: userPrompt }
+                        ],
+                        response_format: { type: "json_object" }
+                    };
                 } else {
                     throw new Error("Invalid API endpoint.");
                 }
@@ -684,7 +790,7 @@
                 const endpoint = document.getElementById('api-endpoint').value;
                 try {
                     if (endpoint === 'gemini') return JSON.parse(result.candidates[0].content.parts[0].text);
-                    if (endpoint === 'openrouter') {
+                    if (endpoint === 'openrouter' || endpoint === 'custom') {
                         let contentStr = result.choices[0].message.content;
                         const match = /```(?:json)?\s*([\s\S]*?)\s*```/.exec(contentStr);
                         if (match) contentStr = match[1];
@@ -706,13 +812,15 @@
             elements: {},
             init() {
                 this.elements = {
-                    container: document.getElementById('wildcard-container'),
                     globalPrompt: document.getElementById('global-prompt'),
                     suggestItemPrompt: document.getElementById('suggestion-prompt'),
                     geminiApiKey: document.getElementById('gemini-api-key'),
                     openrouterApiKey: document.getElementById('openrouter-api-key'),
+                    customApiKey: document.getElementById('custom-api-key'),
+                    customApiUrl: document.getElementById('custom-api-url'),
                     geminiModelName: document.getElementById('gemini-model-name'),
                     openrouterModelName: document.getElementById('openrouter-model-name'),
+                    customModelName: document.getElementById('custom-model-name'),
                     apiEndpoint: document.getElementById('api-endpoint'),
                     search: document.getElementById('search-wildcards'),
                     searchResultsCount: document.getElementById('search-results-count'),
@@ -735,8 +843,11 @@
                 this.elements.suggestItemPrompt.value = suggestItemPrompt || Config.DEFAULT_SUGGEST_ITEM_PROMPT;
                 this.elements.geminiApiKey.value = localStorage.getItem(Config.API_KEY_GEMINI) || '';
                 this.elements.openrouterApiKey.value = localStorage.getItem(Config.API_KEY_OPENROUTER) || '';
+                this.elements.customApiKey.value = localStorage.getItem(Config.API_KEY_CUSTOM) || '';
+                this.elements.customApiUrl.value = localStorage.getItem(Config.API_URL_CUSTOM) || '';
                 this.elements.geminiModelName.value = localStorage.getItem(Config.MODEL_NAME_GEMINI) || 'gemini-1.5-flash';
                 this.elements.openrouterModelName.value = localStorage.getItem(Config.MODEL_NAME_OPENROUTER) || ':free';
+                this.elements.customModelName.value = localStorage.getItem(Config.MODEL_NAME_CUSTOM) || '';
                 
                 const openPaths = [...this.elements.container.querySelectorAll('details[open]')].map(d => d.dataset.path);
 
@@ -959,8 +1070,23 @@
                     localStorage.setItem(Config.API_KEY_OPENROUTER, e.target.value.trim());
                     State.fetchOpenRouterModels();
                 });
+                elements.customApiKey.addEventListener('input', e => localStorage.setItem(Config.API_KEY_CUSTOM, e.target.value.trim()));
+                elements.customApiUrl.addEventListener('input', e => localStorage.setItem(Config.API_URL_CUSTOM, e.target.value.trim()));
                 elements.geminiModelName.addEventListener('input', e => localStorage.setItem(Config.MODEL_NAME_GEMINI, e.target.value.trim()));
                 elements.openrouterModelName.addEventListener('input', e => localStorage.setItem(Config.MODEL_NAME_OPENROUTER, e.target.value.trim()));
+                elements.customModelName.addEventListener('input', e => localStorage.setItem(Config.MODEL_NAME_CUSTOM, e.target.value.trim()));
+
+                elements.apiEndpoint.addEventListener('change', e => {
+                    const defaultSettings = document.getElementById('default-api-settings');
+                    const customSettings = document.getElementById('custom-api-settings');
+                    if (e.target.value === 'custom') {
+                        defaultSettings.classList.add('hidden');
+                        customSettings.classList.remove('hidden');
+                    } else {
+                        defaultSettings.classList.remove('hidden');
+                        customSettings.classList.add('hidden');
+                    }
+                });
 
 
                 document.querySelectorAll('.toggle-api-key-visibility').forEach(button => {
@@ -978,6 +1104,11 @@
                 document.addEventListener('keydown', this.handleKeyboardShortcuts.bind(this));
                 
                 document.addEventListener('click', e => {
+                    if (e.target.matches('.test-connection-btn')) {
+                        e.preventDefault();
+                        const provider = e.target.dataset.provider;
+                        Api.testConnection(provider);
+                    }
                     if (e.target.matches('#add-category-placeholder-btn')) this.handleAddNewCategory();
                     if (e.target.matches('#suggest-toplevel-btn')) this.handleSuggestItems(null, 'folder');
                     if (e.target.matches('#download-all-zip')) this.handleDownloadZip();
@@ -1701,7 +1832,20 @@
             generateSelectAllBtn.textContent = 'Select All';
         });
 
-        document.addEventListener('DOMContentLoaded', () => App.init());
+        document.addEventListener('DOMContentLoaded', () => {
+            App.init();
+            const apiEndpoint = document.getElementById('api-endpoint');
+            const defaultSettings = document.getElementById('default-api-settings');
+            const customSettings = document.getElementById('custom-api-settings');
+            if (apiEndpoint.value === 'custom') {
+                defaultSettings.classList.add('hidden');
+                customSettings.classList.remove('hidden');
+            } else {
+                defaultSettings.classList.remove('hidden');
+                customSettings.classList.add('hidden');
+            }
+        });
     </script>
 </body>
 </html>
+""
