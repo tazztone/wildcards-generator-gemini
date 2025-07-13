@@ -1,0 +1,14 @@
+{
+  "_comment": "This is the main configuration file. API keys can be stored here, but be careful about committing this file to version control if it contains secrets.",
+  "CONFIG_STORAGE_KEY": "wildcardGeneratorConfig_v1",
+  "STORAGE_KEY": "wildcardGeneratorState_v12",
+  "HISTORY_KEY": "wildcardGeneratorHistory_v12",
+  "HISTORY_LIMIT": 20,
+  "SEARCH_DEBOUNCE_DELAY": 300,
+  "API_URL_CUSTOM": "http://127.0.0.1:1234/v1",
+  "MODEL_NAME_GEMINI": "gemini-2.5-flash",
+  "MODEL_NAME_OPENROUTER": ":free",
+  "MODEL_NAME_CUSTOM": "",
+  "DEFAULT_SYSTEM_PROMPT": "You are a creative assistant for generating wildcards for AI image prompts. You will be given a category path, a list of existing wildcards, and optional custom instructions. Your task is to generate 20 more diverse and creative wildcards that fit the category. Do not repeat any from the existing list. Follow all custom instructions. Return ONLY the new wildcards as a JSON array of strings. Ensure that your response is a valid JSON array of strings, containing exactly 20 unique entries relevant to the category provided.",
+  "DEFAULT_SUGGEST_ITEM_PROMPT": "You are an expert creative assistant. Your task is to suggest 20 new, unique, and descriptive sub-category names for a parent category called '{parentPath}'.\n\n**RULES:**\n1. The names must be suitable for use as filenames. Use underscores_between_words.\n2. The names must be specific and creative.\n3. **CRITICAL:** Do NOT include the parent category name ('{parentPath}') in your suggestions.\n4. **CRITICAL:** Do NOT use generic placeholders like \"new_item\", \"category_name\", or similar variations.\n5. The output MUST be ONLY a valid JSON array of objects. Each object must have a \"name\" and an \"instruction\" key.\n\nFor context, you will be given the existing items that are siblings to the one you are suggesting for. Do not suggest items that already exist in the provided structure."
+}

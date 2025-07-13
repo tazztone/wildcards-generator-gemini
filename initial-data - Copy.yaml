@@ -1,44 +1,347 @@
-1_SUBJECT_and_CONTENT: # instruction: The main focus of the image. What the picture is of.
+1_SUBJECT_and_Content: # instruction: The main focus of the image. What the picture is of.
+
   PEOPLE: # instruction: Human subjects, their characteristics, roles, and attire.
+
     Demographics: # instruction: Human diversity characteristics
-      - infant
-      - toddler
-      - child
-      - teenager
-      - young adult
-      - middle-aged
-      - elderly
-      - Han Chinese
-      - Maasai
-      - Sámi
-      - Quechua
-      - Celtic
-      - Nordic
-      - masculine
-      - feminine
-      - androgynous
-      - non-binary
+
     Archetypes: # instruction: Character roles and personality types
-      - hero
-      - innocent
-      - sage
-      - explorer
-      - rebel
-      - lover
-      - creator
-      - ruler
-      - jester
-      - caregiver
-      - magician
-      - outlaw
-      - mentor
-      - warrior
-      - mystic
+
     Occupations: # instruction: Categorization of jobs and professions by time period.
+
       Modern: # instruction: Contemporary professions
-        - astronaut
-        - doctor
-        - programmer
-        - CEO
-        - DJ
-        
+
+      Historical_Fantasy: # instruction: Period and fantasy roles
+
+    Physical_Attributes: # instruction: Physical appearance characteristics
+
+    Clothing_Fashion: # instruction: Attire and fashion styles
+
+    Facial_Features: # instruction: Detailed facial characteristics and expressions
+
+    Body_Types: # instruction: Different human body shapes and sizes
+
+    Hair_Styles: # instruction: Various haircuts, colors, and styles
+
+    Accessories: # instruction: Personal adornments like jewelry, glasses, and hats
+
+  CREATURES_and_BEINGS: # instruction: Non-human subjects, including real animals, mythical beasts, and artificial life.
+
+    Animals_by_Class: # instruction: Biological classification groups
+
+    Animals_by_Biome: # instruction: Environment-specific animals
+
+    Mythical_Fantasy: # instruction: Legendary and fantasy creatures
+
+    Robots_Cyborgs: # instruction: Artificial and hybrid beings
+
+    Mounts_Companions: # instruction: Rideable creatures and animal companions
+
+    Insects: # instruction: Small arthropods and insects
+
+    Marine_Life: # instruction: Aquatic creatures and sea life
+
+    Fantasy_Races: # instruction: Distinct fantasy humanoid races
+
+  OBJECTS_and_ITEMS: # instruction: Inanimate objects, from everyday items to fantastical artifacts.
+
+    Technology: # instruction: Modern and futuristic devices
+
+    Weapons_Armor: # instruction: Combat equipment and protection
+
+    Vehicles_Transportation: # instruction: Modes of transport across different environments.
+
+      Terrestrial: # instruction: Land-based vehicles
+
+      Aerial: # instruction: Flying vehicles
+
+      Nautical: # instruction: Water vehicles
+
+      Space: # instruction: Spacecraft and space vehicles
+
+    Buildings_Structures: # instruction: Architectural subjects and landmarks
+
+    Containers_Vessels: # instruction: Storage and containment objects
+
+    Tools_Instruments: # instruction: Implements and equipment
+
+    Food_Drink: # instruction: Consumables and beverages
+
+    Furniture: # instruction: Household and decorative furniture
+
+    Clothing_Accessories: # instruction: Wearable accessories like bags, belts, and scarves
+
+    Musical_Instruments: # instruction: Instruments used for music creation
+
+    Books_Papers: # instruction: Written materials and documents
+
+  ABSTRACT_and_CONCEPTS: # instruction: Non-physical subjects, ideas, and emotions.
+
+    Geometric: # instruction: Mathematical and geometric forms
+
+    Ethereal: # instruction: Intangible and spiritual concepts
+
+    Emotions_Personified: # instruction: Emotions as visual entities
+
+    Symbols_Icons: # instruction: Visual symbols and iconography
+
+    Patterns: # instruction: Repeating visual motifs and designs
+
+  HISTORICAL_ERAS_and_CULTURES: # instruction: Themes related to specific time periods and societies.
+
+    Time_Periods: # instruction: Historical time periods and eras
+
+    Civilizations_Regions: # instruction: Cultural and geographical origins
+
+    Cultural_Practices: # instruction: Traditional customs and rituals
+
+    Mythologies: # instruction: Mythological stories and beliefs
+
+2_ACTION_POSE_and_EMOTION: # instruction: Describes what the subject is doing, feeling, or how they are positioned.
+
+  Dynamic_Actions: # instruction: Actions involving significant movement or interaction.
+
+    Locomotion: # instruction: Movement and travel actions
+
+    Combat: # instruction: Fighting and battle actions
+
+    Interaction: # instruction: Social and environmental interactions
+
+    Athletic_Sports: # instruction: Sports and athletic movements
+
+    Dance: # instruction: Dance styles and movements
+
+  Static_Poses: # instruction: Stationary positions for a subject.
+
+    Standing: # instruction: Upright stationary positions
+
+    Sitting: # instruction: Seated positions
+
+    Reclining: # instruction: Lying down positions
+
+    Kneeling: # instruction: Kneeling or crouching positions
+
+    Leaning: # instruction: Leaning or resting poses
+
+  Hand_Gestures: # instruction: Hand and arm positions
+
+    Sign_Language: # instruction: Gestures used in sign language
+
+  Facial_Expressions: # instruction: Emotional expressions and facial features
+
+    Microexpressions: # instruction: Subtle facial expressions and twitches
+
+  Group_Interactions: # instruction: Multi-person social dynamics
+
+    Crowd_Dynamics: # instruction: Behavior and arrangement of crowds
+
+  Micro_Gestures: # instruction: Subtle body language and small movements
+
+3_ENVIRONMENT_and_SETTING: # instruction: The background and world where the subject exists.
+
+  Location: # instruction: Specific types of indoor and outdoor settings.
+
+    Interior: # instruction: Indoor environments and spaces
+
+    Exterior_Man_Made: # instruction: Outdoor constructed environments
+
+    Exterior_Natural: # instruction: Natural outdoor environments
+
+    Urban: # instruction: City and urban environments
+
+    Rural: # instruction: Countryside and rural settings
+
+    Underwater: # instruction: Submerged aquatic environments
+
+  Time_Weather: # instruction: Atmospheric conditions and time of day.
+
+    Time_of_Day: # instruction: Temporal lighting conditions
+
+    Weather_Conditions: # instruction: Atmospheric and weather phenomena
+
+    Celestial_Events: # instruction: Astronomical and sky phenomena
+
+    Seasonal_Changes: # instruction: Season-specific environmental elements
+
+    Fog_Mist: # instruction: Foggy and misty atmospheric conditions
+
+    Storms: # instruction: Stormy weather and conditions
+
+  Architecture: # instruction: Building styles, materials, and types.
+
+    Architectural_Styles: # instruction: Building design and architectural movements
+
+    Building_Materials: # instruction: Construction materials and textures
+
+    Vernacular_Styles: # instruction: Regional and traditional architectural forms
+
+    Futuristic: # instruction: Futuristic and sci-fi architectural styles
+
+    Ruins: # instruction: Decayed and ruined structures
+
+  Flora_Fauna_Details: # instruction: Environmental life and natural elements
+
+    Flowers: # instruction: Various types of flowers and blossoms
+
+    Trees: # instruction: Different species and types of trees
+
+  Natural_Phenomena: # instruction: Natural events and environmental effects
+
+    Volcanoes: # instruction: Volcanic activity and landscapes
+
+    Auroras: # instruction: Northern and southern lights phenomena
+
+4_COMPOSITION_and_CINEMATOGRAPHY: # instruction: How the scene is framed, shot, and composed, as if by a camera.
+
+  Shot_Framing: # instruction: Camera position and subject framing
+
+    Close_Up: # instruction: Tight framing on a subject or detail
+
+    Wide_Shot: # instruction: Broad view of the scene
+
+  Angle_Perspective: # instruction: Camera angle and viewpoint
+
+    Birds_Eye_View: # instruction: Overhead perspective
+
+    Worms_Eye_View: # instruction: Low angle perspective
+
+  Focus_Depth: # instruction: Focus techniques and depth effects
+
+    Shallow_Focus: # instruction: Focus on a narrow depth range
+
+    Deep_Focus: # instruction: Wide depth of field
+
+  Aspect_Canvas: # instruction: Image format and canvas arrangements
+
+    Panoramic: # instruction: Wide panoramic formats
+
+    Square: # instruction: Square image formats
+
+  Movement_Techniques: # instruction: Motion capture and dynamic effects
+
+    Panning: # instruction: Horizontal camera movement
+
+    Tracking: # instruction: Following a subject movement
+
+  Scale_Proportion: # instruction: Size relationships and visual hierarchy (new addition for completeness)
+
+  Symmetry_Balance: # instruction: Design principles of symmetry, asymmetry, and balance (new addition for visual fundamentals)
+
+5_STYLE_and_AESTHETICS: # instruction: The overall visual style, art movement, and mood of the image.
+
+  Art_Movements: # instruction: Historical and contemporary art styles
+
+    Impressionism: # instruction: Impressionist art style
+
+    Surrealism: # instruction: Surrealist art style
+
+  Medium_Technique: # instruction: The artistic medium used, both digital and traditional.
+
+    Digital: # instruction: Digital art creation methods
+
+    Traditional: # instruction: Classic art mediums and techniques
+
+    Mixed_Media: # instruction: Combination of different artistic mediums
+
+  Aesthetic_Genres: # instruction: Visual style genres and movements
+
+    Cyberpunk: # instruction: Cyberpunk visual style
+
+    Steampunk: # instruction: Steampunk visual style
+
+  Color_Value: # instruction: Hue, saturation, value, and tonal elements (expanded for better color coverage)
+
+    Monochrome: # instruction: Single color or grayscale schemes
+
+  Color_Schemes: # instruction: Color theory and palette arrangements
+
+  Textures_Patterns: # instruction: Surface qualities and decorative elements
+
+  Mood_Atmosphere: # instruction: Emotional and atmospheric qualities
+
+    Gritty: # instruction: Rough and gritty mood
+
+    Dreamlike: # instruction: Dreamlike and surreal atmosphere
+
+  Film_Techniques: # instruction: Photography and film processing effects
+
+    Bokeh: # instruction: Out-of-focus light effects
+
+  Post_Processing: # instruction: Digital enhancement and effects
+
+    Glitch: # instruction: Digital glitch effects
+
+  Cultural_Motifs: # instruction: Traditional and cultural design elements
+
+6_TECHNICAL_ATTRIBUTES_and_RENDERING: # instruction: Technical details about the virtual camera, lens, and rendering process.
+
+  Lighting: # instruction: All aspects of how the scene is illuminated (consolidated for reduced overlap).
+
+    Lighting_Types: # instruction: Different lighting techniques and sources
+
+    Lighting_Quality: # instruction: Characteristics of light appearance
+
+    Named_Lighting: # instruction: Specific lighting styles and techniques
+
+    Natural_Light: # instruction: Sunlight and natural illumination
+
+    Artificial_Light: # instruction: Man-made light sources
+
+  Detail_Quality: # instruction: Level of detail and rendering quality
+
+  Camera_Film: # instruction: Specifics about the virtual camera, lens, and film type.
+
+    Camera_Types: # instruction: Different camera systems and formats
+
+    Lens_Effects: # instruction: Optical effects and lens characteristics
+
+    Film_Stocks: # instruction: Film types and photographic mediums
+
+    DSLR: # instruction: Digital single-lens reflex cameras
+
+    Mirrorless: # instruction: Mirrorless camera systems
+
+  Technical_Specs: # instruction: Camera settings and technical parameters
+
+  Rendering_Engines: # instruction: 3D rendering software and techniques
+
+    Ray_Tracing: # instruction: Ray tracing rendering techniques
+
+  File_Aesthetics: # instruction: Digital file formats and presentation styles
+
+7_SPECIAL_FX_and_PARTICLES: # instruction: Visual effects like smoke, fire, magic, and debris.
+
+  Elements: # instruction: Basic particle and environmental effects
+
+    Smoke: # instruction: Smoke and fog effects
+
+    Fire: # instruction: Fire and flame effects
+
+  Fluid_Energy: # instruction: Liquid and energy-based effects
+
+  Destruction: # instruction: Breaking and destruction effects
+
+  Atmospheric: # instruction: Environmental and atmospheric effects
+
+  Magical_Supernatural: # instruction: Fantasy and supernatural effects
+
+    Glowing_Runes: # instruction: Magical glowing symbols
+
+8_NARRATIVE_and_THEME: # instruction: The underlying story, message, or theme of the image.
+
+  Story_Genres: # instruction: Narrative categories and story types
+
+    Mystery: # instruction: Mystery and suspense stories
+
+  Narrative_Arcs: # instruction: Story structure and character development
+
+  Emotional_Themes: # instruction: Core emotional and thematic elements
+
+    Hope: # instruction: Themes of hope and optimism
+
+  Moral_Philosophical: # instruction: Ethical and philosophical perspectives
+
+  Cultural_Social: # instruction: Social and cultural commentary themes
+
+    Activism: # instruction: Social and political activism themes
+
+  Symbolic_Metaphorical: # instruction: Symbolic meanings and metaphorical elements

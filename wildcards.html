@@ -433,6 +433,20 @@
                     // Merge configs: defaults < saved
                     Object.assign(Config, defaultConfig, savedConfig ? JSON.parse(savedConfig) : {});
 
+                    // Load API keys from the separate, git-ignored file
+                    try {
+                        const keysResponse = await fetch('api-keys.json');
+                        if (keysResponse.ok) {
+                            const apiKeys = await keysResponse.json();
+                            // These keys are used for the session and are not saved in localStorage
+                            Config.API_KEY_GEMINI = apiKeys.API_KEY_GEMINI || '';
+                            Config.API_KEY_OPENROUTER = apiKeys.API_KEY_OPENROUTER || '';
+                            Config.API_KEY_CUSTOM = apiKeys.API_KEY_CUSTOM || '';
+                        }
+                    } catch (keyError) {
+                        console.info("api-keys.json not found or invalid, API keys can be entered manually.", keyError);
+                    }
+
                 } catch (error) {
                     console.error("Failed to load configuration:", error);
                     UI.showNotification(`Error: Could not load configuration. Please ensure config.json is present and valid. Error: ${error.message}`, false);
@@ -450,8 +464,10 @@
                     // Create a new object with only the changed values
                     const changedConfig = {};
                     for (const key in Config) {
+                        if (key.startsWith('API_KEY')) continue; // Do not save API keys to localStorage
+
                         // A deep-enough comparison for this app's config structure
-                        if (Config.hasOwnProperty(key) && JSON.stringify(Config[key]) !== JSON.stringify(defaultConfig[key])) {
+                        if (Config.hasOwnProperty(key) && defaultConfig.hasOwnProperty(key) && JSON.stringify(Config[key]) !== JSON.stringify(defaultConfig[key])) {
                             changedConfig[key] = Config[key];
                         }
                     }
@@ -1132,32 +1148,14 @@
                 this.bindEventListeners();
                 this.debouncedSearch = debounce(this.handleSearch, Config.SEARCH_DEBOUNCE_DELAY);
             },
-            async loadApiKeysFromEnv() {
-                try {
-                    const geminiResponse = await fetch('API_GEMINI.ENV');
-                    if (geminiResponse.ok) {
-                        const geminiKey = (await geminiResponse.text()).trim();
-                        UI.elements.geminiApiKey.value = geminiKey;
-                        localStorage.setItem(Config.API_KEY_GEMINI, geminiKey);
-                    }
-                } catch (error) { console.info('Could not fetch Gemini API key:', error); }
-
-                try {
-                    const openRouterResponse = await fetch('API_OPENROUTER.ENV');
-                    if (openRouterResponse.ok) {
-                        const openRouterKey = (await openRouterResponse.text()).trim();
-                        UI.elements.openrouterApiKey.value = openRouterKey;
-                        localStorage.setItem(Config.API_KEY_OPENROUTER, openRouterKey);
-                    }
-                } catch (error) { console.info('Could not fetch OpenRouter API key:', error); }
-            },
+            
             bindEventListeners() {
                 const elements = UI.elements;
                 elements.globalPrompt.addEventListener('change', e => { State.appState.systemPrompt = e.target.value; State.saveState(); });
                 elements.suggestItemPrompt.addEventListener('change', e => { State.appState.suggestItemPrompt = e.target.value; State.saveState(); });
-                elements.geminiApiKey.addEventListener('change', e => { State.updateConfigValue('API_KEY_GEMINI', e.target.value.trim()); State.fetchGeminiModels(); });
-                elements.openrouterApiKey.addEventListener('change', e => { State.updateConfigValue('API_KEY_OPENROUTER', e.target.value.trim()); State.fetchOpenRouterModels(); });
-                elements.customApiKey.addEventListener('change', e => State.updateConfigValue('API_KEY_CUSTOM', e.target.value.trim()));
+                elements.geminiApiKey.addEventListener('change', e => { Config.API_KEY_GEMINI = e.target.value.trim(); State.fetchGeminiModels(); });
+                elements.openrouterApiKey.addEventListener('change', e => { Config.API_KEY_OPENROUTER = e.target.value.trim(); State.fetchOpenRouterModels(); });
+                elements.customApiKey.addEventListener('change', e => Config.API_KEY_CUSTOM = e.target.value.trim());
                 elements.customApiUrl.addEventListener('change', e => State.updateConfigValue('API_URL_CUSTOM', e.target.value.trim()));
                 elements.geminiModelName.addEventListener('change', e => State.updateConfigValue('MODEL_NAME_GEMINI', e.target.value.trim()));
                 elements.openrouterModelName.addEventListener('change', e => State.updateConfigValue('MODEL_NAME_OPENROUTER', e.target.value.trim()));
