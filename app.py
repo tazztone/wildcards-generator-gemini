@@ -100,6 +100,11 @@ def get_data_by_path(path, state):
         data = data.get(part, {})
     return data
 
+def get_wildcards_by_path(path, state):
+    if not path: return []
+    data_node = get_data_by_path(path, state)
+    return data_node.get('wildcards', [])
+
 with gr.Blocks(css="wildcards.css") as demo:
     config = load_config()
     initial_data = load_initial_data()
@@ -153,7 +158,7 @@ with gr.Blocks(css="wildcards.css") as demo:
     def on_path_change(path, state):
         data_node = get_data_by_path(path, state)
         wildcards = data_node.get('wildcards', [])
-        return gr.CheckboxGroup.update(choices=wildcards, value=wildcards)
+        return gr.update(choices=wildcards, value=wildcards)
     category_path_dropdown.change(fn=on_path_change, inputs=[category_path_dropdown, app_state], outputs=[wildcard_display_group])
     demo.load(on_path_change, inputs=[category_path_dropdown, app_state], outputs=[wildcard_display_group])
 
@@ -164,7 +169,7 @@ with gr.Blocks(css="wildcards.css") as demo:
         wildcards = data_node.get('wildcards', [])
         wildcards.append(new_wildcard.strip())
         data_node['wildcards'] = sorted(list(set(wildcards)))
-        return state, gr.CheckboxGroup.update(choices=data_node['wildcards'], value=data_node['wildcards']), gr.Textbox.update(value="")
+        return state, gr.update(choices=data_node['wildcards'], value=data_node['wildcards']), gr.update(value="")
     add_wildcard_btn.click(fn=add_wildcard_handler, inputs=[category_path_dropdown, add_wildcard_input, app_state], outputs=[app_state, wildcard_display_group, add_wildcard_input])
 
     def delete_selected_handler(path, selected, state):
@@ -174,7 +179,7 @@ with gr.Blocks(css="wildcards.css") as demo:
         current = data_node.get('wildcards', [])
         updated = [w for w in current if w not in selected]
         data_node['wildcards'] = updated
-        return state, gr.CheckboxGroup.update(choices=updated, value=updated)
+        return state, gr.update(choices=updated, value=updated)
     delete_selected_btn.click(fn=delete_selected_handler, inputs=[category_path_dropdown, wildcard_display_group, app_state], outputs=[app_state, wildcard_display_group])
 
     def generate_more_handler(path, state, global_prompt):
@@ -205,7 +210,7 @@ with gr.Blocks(css="wildcards.css") as demo:
             data_node['wildcards'] = updated_wildcards
 
             gr.Info("Generation complete!")
-            return state, gr.CheckboxGroup.update(choices=updated_wildcards, value=updated_wildcards)
+            return state, gr.update(choices=updated_wildcards, value=updated_wildcards)
 
         except Exception as e:
             gr.Error(f"Generation failed: {e}")
@@ -214,9 +219,9 @@ with gr.Blocks(css="wildcards.css") as demo:
 
     def search_handler(term, state):
         paths = get_all_paths(state['wildcards'])
-        if not term.strip(): return gr.Dropdown.update(choices=paths)
+        if not term.strip(): return gr.update(choices=paths)
         filtered = [p for p in paths if term.lower() in p.lower()]
-        return gr.Dropdown.update(choices=filtered)
+        return gr.update(choices=filtered)
     search_box.change(fn=search_handler, inputs=[search_box, app_state], outputs=[category_path_dropdown])
 
     def export_handler(state):
@@ -229,7 +234,7 @@ with gr.Blocks(css="wildcards.css") as demo:
 
         with tempfile.NamedTemporaryFile(mode="w", delete=False, suffix=".yaml", encoding="utf-8") as f:
             f.write(yaml_string)
-            return gr.File.update(value=f.name, visible=True)
+            return gr.update(value=f.name, visible=True)
     export_yaml_btn.click(fn=export_handler, inputs=[app_state], outputs=[download_file])
 
     def import_handler(file, state):
@@ -244,7 +249,7 @@ with gr.Blocks(css="wildcards.css") as demo:
         first_path = all_paths[0] if all_paths else None
         wildcards = get_wildcards_by_path(first_path, state)
 
-        return state, gr.Dropdown.update(choices=all_paths, value=first_path), gr.CheckboxGroup.update(choices=wildcards, value=wildcards), gr.File.update(visible=False)
+        return state, gr.update(choices=all_paths, value=first_path), gr.update(choices=wildcards, value=wildcards), gr.update(visible=False)
     import_yaml_btn.upload(fn=import_handler, inputs=[import_yaml_btn, app_state], outputs=[app_state, category_path_dropdown, wildcard_display_group, download_file])
 
 if __name__ == "__main__":
