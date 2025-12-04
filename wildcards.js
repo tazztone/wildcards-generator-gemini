@@ -1,6 +1,8 @@
-// =================================================================================
+        // =================================================================================
         // --- CONFIGURATION & CONSTANTS
         // =================================================================================
+        import YAML from 'https://cdn.jsdelivr.net/npm/yaml@2.8.2/browser/index.js';
+
         let Config = {};
 
         // =================================================================================
@@ -243,10 +245,14 @@
                         return response.text();
                     })
                     .then(yamlText => {
-                        const processedYaml = this.preprocessYamlForImport(yamlText);
-                        const data = jsyaml.load(processedYaml);
-                        const appData = App.convertYamlToState(data);
-                        performReset(appData);
+                        try {
+                            const doc = YAML.parseDocument(yamlText);
+                            const appData = App.processYamlNode(doc.contents);
+                            performReset(appData);
+                        } catch(e) {
+                            console.error("Parsing error", e);
+                            throw e;
+                        }
                     })
                     .catch(error => {
                         console.error("Failed to load initial-data.yaml, resetting to an empty state:", error);
@@ -834,37 +840,61 @@
                 container.addEventListener('drop', this.handleDrop.bind(this));
                 container.addEventListener('dragend', this.handleDragEnd.bind(this));
             },
-            convertYamlToState(yamlObj) {
-                if (!yamlObj || typeof yamlObj !== 'object') {
-                    return {};
-                }
+            processYamlNode(node) {
+                if (YAML.isMap(node)) {
+                    const result = {};
+                    node.items.forEach(pair => {
+                        const key = pair.key.value;
+                        const valueNode = pair.value;
 
-                const stateObj = {};
-                if (yamlObj.instruction) {
-                    stateObj.instruction = yamlObj.instruction;
-                }
+                        let rawComment = "";
+                        // Check multiple locations for the comment
+                        if (valueNode && valueNode.commentBefore) {
+                             rawComment = valueNode.commentBefore;
+                        } else if (valueNode && valueNode.comment) {
+                            rawComment = valueNode.comment;
+                        } else if (pair.key && pair.key.comment) {
+                            rawComment = pair.key.comment;
+                        } else if (pair.key && pair.key.commentBefore) {
+                            rawComment = pair.key.commentBefore;
+                        }
 
-                for (const key in yamlObj) {
-                    if (key === 'instruction') continue;
+                        let instruction = "";
+                        if (rawComment) {
+                             let cleaned = rawComment.trim();
+                             if (cleaned.startsWith('#')) {
+                                 cleaned = cleaned.substring(1).trim();
+                             }
 
-                    const value = yamlObj[key];
-                    if (value && typeof value === 'object' && !Array.isArray(value)) {
-                        if (value.hasOwnProperty('wildcards') && Array.isArray(value.wildcards)) {
-                            stateObj[key] = {
-                                instruction: value.instruction || '',
-                                wildcards: value.wildcards.map(String).sort((a, b) => a.localeCompare(b))
+                             if (cleaned.startsWith('instruction:')) {
+                                 instruction = cleaned.replace(/^instruction:\s*/, '').trim();
+                             }
+                        }
+
+                        const processedValue = this.processYamlNode(valueNode);
+
+                        if (typeof processedValue === 'object' && !Array.isArray(processedValue)) {
+                             processedValue.instruction = instruction;
+                             result[key] = processedValue;
+                        } else if (Array.isArray(processedValue)) {
+                            result[key] = {
+                                instruction: instruction,
+                                wildcards: processedValue
                             };
                         } else {
-                            stateObj[key] = this.convertYamlToState(value);
+                             result[key] = {
+                                 instruction: instruction,
+                                 wildcards: [String(processedValue)]
+                             };
                         }
-                    } else if (Array.isArray(value)) {
-                        stateObj[key] = { instruction: '', wildcards: value.map(String).sort((a, b) => a.localeCompare(b)) };
-                    } else if (value !== null) {
-                        // Handle simple key: value pairs as a single-item wildcard list
-                        stateObj[key] = { instruction: '', wildcards: [String(value)] };
-                    }
+                    });
+                    return result;
+                } else if (YAML.isSeq(node)) {
+                    return node.items.map(item => (item && item.value !== undefined) ? item.value : item);
+                } else if (YAML.isScalar(node)) {
+                    return node.value;
                 }
-                return stateObj;
+                return {};
             },
             getStructureForPrompt(obj) {
                 const result = {};
@@ -1328,97 +1358,40 @@
                 addFilesToZip(State.appState.wildcards, '');
                 zip.generateAsync({ type:"blob" }).then(content => { const a = document.createElement('a'); a.href = URL.createObjectURL(content); a.download = "wildcard_collection.zip"; a.click(); URL.revokeObjectURL(a.href); });
             },
-            buildYamlString(data, level = 0) {
-                let yamlString = '';
-                const indent = '  '.repeat(level);
-                const sortedKeys = Object.keys(data).filter(k => k !== 'instruction').sort();
+            buildYamlDocument(data) {
+                const doc = new YAML.Document();
 
-                for (const key of sortedKeys) {
-                    const value = data[key];
-                    const isLeaf = value && typeof value === 'object' && Array.isArray(value.wildcards);
-
-                    if (isLeaf) {
-                        yamlString += `${indent}${key}:`;
-                        if (value.instruction) {
-                            yamlString += ` # instruction: ${value.instruction.replace(/\n/g, ' ')}`;
-                        }
-                        yamlString += '\n';
-                        if (value.wildcards && value.wildcards.length > 0) {
-                            value.wildcards.forEach(wildcard => {
-                                const dumpedWildcard = jsyaml.dump(wildcard).trim();
-                                yamlString += `${indent}  - ${dumpedWildcard}\n`;
-                            });
-                        }
-                    } else if (typeof value === 'object' && value !== null) {
-                        yamlString += `${indent}${key}:`;
-                        if (value.instruction) {
-                            yamlString += ` # instruction: ${value.instruction.replace(/\n/g, ' ')}`;
-                        }
-                        yamlString += '\n';
-                        yamlString += this.buildYamlString(value, level + 1);
-                    }
-                }
-                return yamlString;
-            },
-
-            preprocessYamlForImport(raw) {
-                const lines = raw.split('\n');
-                const newLines = [];
-                for (let i = 0; i < lines.length; i++) {
-                    const line = lines[i];
-                    // Match "key: # instruction: value"
-                    const instructionMatch = line.match(/^(\s*)([^#\n][^:\n]*?):\s*#\s*instruction:\s*(.*)$/);
-
-                    if (instructionMatch) {
-                        const indent = instructionMatch[1];
-                        const key = instructionMatch[2].trim();
-                        const instruction = instructionMatch[3].trim();
-
-                        newLines.push(`${indent}${key}:`);
-                        if (instruction) {
-                            newLines.push(`${indent}  instruction: ${instruction}`);
-                        }
-
-                        // Look ahead for a list that is a child of the current key
-                        let listLines = [];
-                        let j = i + 1;
-                        while (j < lines.length) {
-                            const nextLine = lines[j];
-                            const nextLineIndentMatch = nextLine.match(/^(\s*)/);
-                            const nextLineIndent = nextLineIndentMatch ? nextLineIndentMatch[1] : '';
-                            
-                            if (nextLine.trim() === '') { // Skip empty lines
-                                j++;
-                                continue;
-                            }
-                            
-                            // If the next line is more indented and is a list item, it belongs to this key
-                            if (nextLineIndent.length > indent.length && nextLine.trim().startsWith('-')) {
-                                listLines.push(nextLine);
-                                j++;
-                            } else {
-                                break;
-                            }
-                        }
-
-                        if (listLines.length > 0) {
-                            newLines.push(`${indent}  wildcards:`);
-                            listLines.forEach(listLine => {
-                                // Add list items with correct indentation relative to 'wildcards:'
-                                newLines.push(`${indent}  ${listLine.trim()}`);
-                            });
-                            i = j - 1; // Move the outer loop index past the lines we've just processed
-                        }
+                function buildNode(dataObj) {
+                    if (dataObj.wildcards) {
+                        const seq = new YAML.YAMLSeq();
+                        dataObj.wildcards.forEach(w => seq.add(new YAML.Scalar(w)));
+                        return seq;
                     } else {
-                        newLines.push(line);
+                        const map = new YAML.YAMLMap();
+                        const keys = Object.keys(dataObj).sort().filter(k => k !== 'instruction');
+
+                        keys.forEach(key => {
+                            const valueData = dataObj[key];
+                            const valueNode = buildNode(valueData);
+                            
+                            if (valueData.instruction) {
+                                valueNode.comment = ` instruction: ${valueData.instruction}`;
+                            }
+                            
+                            map.add({ key: new YAML.Scalar(key), value: valueNode });
+                        });
+                        return map;
                     }
                 }
-                return newLines.join('\n');
+
+                doc.contents = buildNode(data);
+                return doc;
             },
 
             handleExportYaml() {
                 try {
-                    const yamlString = this.buildYamlString(State.appState.wildcards);
+                    const doc = this.buildYamlDocument(State.appState.wildcards);
+                    const yamlString = doc.toString();
                     const blob = new Blob([yamlString], { type: 'text/yaml' });
                     const a = document.createElement('a');
                     a.href = URL.createObjectURL(blob);
@@ -1442,10 +1415,9 @@
                     const reader = new FileReader();
                     reader.onload = re => {
                         const rawText = re.target.result;
-                        const processedYaml = this.preprocessYamlForImport(rawText);
                         try {
-                            const yamlData = jsyaml.load(processedYaml);
-                            const importedData = this.convertYamlToState(yamlData);
+                            const doc = YAML.parseDocument(rawText);
+                            const importedData = App.processYamlNode(doc.contents);
 
                             UI.showNotification('Importing this file will overwrite your current collection. Are you sure?', true, () => {
                                 State.appState.wildcards = importedData;
@@ -1457,9 +1429,9 @@
                             });
 
                         } catch (error) {
-                            if (error.mark) {
-                                const line = error.mark.line;
-                                const snippet = processedYaml.split('\n').slice(Math.max(0, line - 2), line + 3).join('\n');
+                            if (error.linePos) {
+                                const line = error.linePos.start.line;
+                                const snippet = rawText.split('\n').slice(Math.max(0, line - 2), line + 3).join('\n');
                                 UI.showNotification(`Error parsing YAML at line ${line + 1}:<br><b>${error.message}</b><br><br><pre class="text-left text-xs whitespace-pre-wrap custom-scrollbar" style="max-height: 200px; overflow-y: auto; background-color: var(--bg-primary); padding: 1rem;">${sanitize(snippet)}</pre>`);
                             } else {
                                 UI.showNotification(`Error importing: ${error.message}`);

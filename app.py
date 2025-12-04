@@ -1,5 +1,5 @@
 import gradio as gr
-import yaml
+from ruamel.yaml import YAML
 import json
 import urllib.request
 import urllib.error
@@ -174,33 +174,79 @@ class Api:
         except Exception as e:
             raise Exception(f"Suggestion API call failed: {e}")
 
+# Use ruamel.yaml for comment preservation
+yaml = YAML()
+yaml.preserve_quotes = True
+# Configure indentation for consistent output
+yaml.indent(mapping=2, sequence=4, offset=2)
 
-def process_yaml_node(node):
+def process_ruamel_node(node, parent_comments=None):
+    """
+    Recursively process ruamel object to extract structure and comments.
+    """
+    processed = {}
+
+    # Handling list leaf nodes
     if isinstance(node, list):
         return {'instruction': '', 'wildcards': sorted([str(v) for v in node])}
+
     if isinstance(node, dict):
-        return {k: process_yaml_node(v) for k, v in node.items()}
-    if node is None:
-        return {}
+        for k, v in node.items():
+            child_processed = process_ruamel_node(v)
+
+            # Extract comment for this key from the parent node's comment attribute
+            comment = ''
+            if hasattr(node, 'ca') and node.ca.items and k in node.ca.items:
+                # node.ca.items[k] is a list: [None, None, CommentToken, None]
+                # Index 2 is usually the end-of-line comment
+                token = node.ca.items[k][2]
+                if token:
+                    comment_val = token.value.strip() # "# instruction: ..."
+                    # Remove the '# instruction:' prefix if present to store just the value
+                    if comment_val.startswith('# instruction:'):
+                        comment = comment_val.replace('# instruction:', '', 1).strip()
+                    elif comment_val.startswith('#'):
+                        comment = comment_val.replace('#', '', 1).strip()
+
+            if isinstance(child_processed, dict):
+                # If child is a dict (category), attach instruction
+                child_processed['instruction'] = comment
+
+            processed[k] = child_processed
+
+        return processed
+
     return {'instruction': '', 'wildcards': [str(node)]}
 
 def load_initial_data():
     if not os.path.exists('initial-data.yaml'):
         return {}
-    with open('initial-data.yaml', 'r', encoding='utf-8') as f:
-        yaml_data = yaml.safe_load(f)
-    if not yaml_data: return {}
-    return {k: process_yaml_node(v) for k, v in yaml_data.items()}
+    try:
+        with open('initial-data.yaml', 'r', encoding='utf-8') as f:
+            yaml_data = yaml.load(f)
+        if not yaml_data: return {}
+
+        # Process the ruamel structure into our internal app state structure
+        # The top-level object is a CommentedMap, so we process it like a dict
+        return process_ruamel_node(yaml_data)
+
+    except Exception as e:
+        print(f"Error loading initial-data.yaml: {e}")
+        return {}
 
 def load_config():
     if not os.path.exists('config.json'):
         return {}
-    with open('config.json', 'r') as f:
-        return json.load(f)
+    try:
+        with open('config.json', 'r') as f:
+            return json.load(f)
+    except Exception:
+        return {}
 
 def get_all_paths(wildcard_data, parent_path=""):
     paths = []
     for key, value in wildcard_data.items():
+        if key == 'instruction': continue
         current_path = f"{parent_path}/{key}" if parent_path else key
         if 'wildcards' in value and isinstance(value['wildcards'], list):
             paths.append(current_path)
@@ -499,49 +545,86 @@ with gr.Blocks() as demo:
     search_box.change(fn=search_handler, inputs=[search_box, app_state], outputs=[category_path_dropdown])
 
     def export_handler(state):
-        def unprocess_node(node):
-            if 'wildcards' in node: return node['wildcards']
-            return {k: unprocess_node(v) for k, v in node.items()}
+        try:
+            # Reconstruct CommentedMap
+            def reconstruct_yaml_structure(node):
+                if 'wildcards' in node:
+                    # Leaf node: return list
+                    # Create sequence
+                    l = yaml.seq(node['wildcards'])
+                    return l
+                else:
+                    # Dict node
+                    m = yaml.map()
+                    for k, v in node.items():
+                        if k == 'instruction': continue
+                        m[k] = reconstruct_yaml_structure(v)
+                        # Attach instruction if present
+                        if isinstance(v, dict) and 'instruction' in v and v['instruction']:
+                            m.yaml_add_eol_comment(f"instruction: {v['instruction']}", k)
+                    return m
 
-        yaml_data = {k: unprocess_node(v) for k, v in state['wildcards'].items()}
-        yaml_string = yaml.dump(yaml_data, indent=2, allow_unicode=True)
+            yaml_data = reconstruct_yaml_structure(state['wildcards'])
 
-        with tempfile.NamedTemporaryFile(mode="w", delete=False, suffix=".yaml", encoding="utf-8") as f:
-            f.write(yaml_string)
-            return gr.update(value=f.name, visible=True)
+            with tempfile.NamedTemporaryFile(mode="w", delete=False, suffix=".yaml", encoding="utf-8") as f:
+                yaml.dump(yaml_data, f)
+                return gr.update(value=f.name, visible=True)
+        except Exception as e:
+            gr.Error(f"Export failed: {e}")
+            return gr.update()
+
     export_yaml_btn.click(fn=export_handler, inputs=[app_state], outputs=[download_file])
 
     def save_handler(state):
-        def unprocess_node(node):
-            if 'wildcards' in node:
-                # Preserve instruction if present
-                res = {'wildcards': node['wildcards']}
-                if node.get('instruction'):
-                    res['instruction'] = node['instruction']
-                return res
-            # Recursive step for nested dictionaries
-            return {k: unprocess_node(v) for k, v in node.items() if k != 'instruction'}
+        try:
+            # Reconstruct CommentedMap
+            def reconstruct_yaml_structure(node):
+                if 'wildcards' in node:
+                    # Leaf node: return list
+                    # Create sequence
+                    l = yaml.seq(node['wildcards'])
+                    return l
+                else:
+                    # Dict node
+                    m = yaml.map()
+                    for k, v in node.items():
+                        if k == 'instruction': continue
+                        m[k] = reconstruct_yaml_structure(v)
+                        # Attach instruction if present
+                        if isinstance(v, dict) and 'instruction' in v and v['instruction']:
+                            m.yaml_add_eol_comment(f"instruction: {v['instruction']}", k)
+                    return m
 
-        yaml_data = {k: unprocess_node(v) for k, v in state['wildcards'].items()}
-        with open('initial-data.yaml', 'w', encoding='utf-8') as f:
-            yaml.dump(yaml_data, f, indent=2, allow_unicode=True)
-        gr.Info("Saved to initial-data.yaml")
+            yaml_data = reconstruct_yaml_structure(state['wildcards'])
+
+            with open('initial-data.yaml', 'w', encoding='utf-8') as f:
+                yaml.dump(yaml_data, f)
+            gr.Info("Saved to initial-data.yaml")
+        except Exception as e:
+            gr.Error(f"Save failed: {e}")
 
     save_btn.click(fn=save_handler, inputs=[app_state], outputs=None)
 
     def import_handler(file, state):
         if file is None: return state, gr.update(), gr.update(), gr.update()
-        with open(file.name, 'r', encoding='utf-8') as f:
-            new_yaml_data = yaml.safe_load(f)
+        try:
+            with open(file.name, 'r', encoding='utf-8') as f:
+                yaml_data = yaml.load(f)
 
-        new_wildcards_state = {k: process_yaml_node(v) for k, v in new_yaml_data.items()}
-        state['wildcards'] = new_wildcards_state
+            if not yaml_data: return state, gr.update(), gr.update(), gr.update()
 
-        all_paths = get_all_paths(new_wildcards_state)
-        first_path = all_paths[0] if all_paths else None
-        wildcards = get_wildcards_by_path(first_path, state)
+            new_wildcards_state = process_ruamel_node(yaml_data)
+            state['wildcards'] = new_wildcards_state
 
-        return state, gr.update(choices=all_paths, value=first_path), gr.update(choices=wildcards, value=wildcards), gr.update(visible=False)
+            all_paths = get_all_paths(new_wildcards_state)
+            first_path = all_paths[0] if all_paths else None
+            wildcards = get_wildcards_by_path(first_path, state)
+
+            return state, gr.update(choices=all_paths, value=first_path), gr.update(choices=wildcards, value=wildcards), gr.update(visible=False)
+        except Exception as e:
+            gr.Error(f"Import failed: {e}")
+            return state, gr.update(), gr.update(), gr.update()
+
     import_yaml_btn.upload(fn=import_handler, inputs=[import_yaml_btn, app_state], outputs=[app_state, category_path_dropdown, wildcard_display_group, download_file])
 
 if __name__ == "__main__":
