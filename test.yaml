@@ -1,7 +1,0 @@
-A: # instruction: a1
-  B: # instruction: b1
-    - b2
-    - b3
-  C: # instruction: c1
-    D: # instruction: d1
-      - d2

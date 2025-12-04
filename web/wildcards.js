@@ -239,7 +239,7 @@
                     if (notify) UI.showNotification('All categories have been reset.');
                 };
 
-                fetch('initial-data.yaml')
+                fetch('data/initial-data.yaml')
                     .then(response => {
                         if (!response.ok) throw new Error('Network response was not ok');
                         return response.text();
@@ -249,7 +249,7 @@
                             const doc = YAML.parseDocument(yamlText);
                             const appData = App.processYamlNode(doc.contents);
                             performReset(appData);
-                        } catch(e) {
+                        } catch (e) {
                             console.error("Parsing error", e);
                             throw e;
                         }

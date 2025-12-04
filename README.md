@@ -15,6 +15,14 @@ The project includes two versions of the tool:
 *   **Search:** Instant search across all your wildcard categories.
 *   **Customizable:** Configure API keys, prompts, and UI settings.
 
+## Project Structure
+
+*   `app.py`: Python application entry point.
+*   `web/`: Contains the Web Version files (`wildcards.html`, `wildcards.js`, `wildcards.css`) and configuration.
+    *   `web/data/`: Contains data files (`initial-data.yaml`).
+*   `scripts/`: Installation scripts.
+*   `docs/`: Documentation.
+
 ---
 
 ## 1. Web Version (Recommended)
@@ -22,7 +30,7 @@ The project includes two versions of the tool:
 The Web Version is a standalone Single Page Application (SPA). It offers the most complete feature set, including drag-and-drop organization, advanced AI suggestions, and support for multiple API providers.
 
 ### How to Run
-Simply open the `wildcards.html` file in any modern web browser. No installation is required.
+Simply open the `web/wildcards.html` file in any modern web browser. No installation is required.
 
 ### Key Features
 *   **Multiple API Support:** connect to Google Gemini, OpenRouter, or any custom OpenAI-compatible endpoint.
@@ -35,6 +43,8 @@ Click "Global Settings" in the interface to:
 *   Enter your API keys (Gemini, OpenRouter, etc.).
 *   Customize system prompts.
 *   Adjust UI settings like search delay and history limits.
+
+You can also use `web/api-keys.json` (rename `web/api-keys.json.example`) to preload keys.
 
 ---
 
@@ -49,7 +59,8 @@ The Python version runs a local web server using Gradio. It interacts directly w
 
 1.  Clone this repository or download the files.
 2.  Run the installation script:
-    *   **Windows:** Double-click `windows_install.bat`. This will set up a virtual environment and install dependencies.
+    *   **Windows:** Double-click `scripts/windows_install.bat`.
+    *   **Linux/macOS:** Run `scripts/install.sh`.
     *   **Manual:**
         ```bash
         python -m venv venv
@@ -67,7 +78,7 @@ The Python version runs a local web server using Gradio. It interacts directly w
 3.  Open the URL displayed in the terminal (usually `http://127.0.0.1:7860`) in your browser.
 
 ### Features
-*   **Direct File Access:** Reads and writes directly to `initial-data.yaml` (or imported YAMLs).
+*   **Direct File Access:** Reads and writes directly to `web/data/initial-data.yaml` (or imported YAMLs).
 *   **Multiple API Support:** Supports Google Gemini, OpenRouter, and Custom OpenAI-compatible APIs.
 *   **Category Management:** Create and delete categories directly from the interface.
 *   **Persistence:** Save changes directly to disk.
@@ -76,10 +87,9 @@ The Python version runs a local web server using Gradio. It interacts directly w
 
 ## Configuration Files
 
-*   **`config.json`**: Contains default settings for the application. You can modify this file to change default prompts or storage keys.
-*   **`api-keys.json`**: (Optional) You can create this file to preload API keys for the Web Version. See `api-keys.json.example` for the format.
-    *   *Note: The Web Version primarily manages keys via the UI and LocalStorage, but this file can be used for pre-configuration if served correctly.*
-*   **`initial-data.yaml`**: The default dataset loaded when resetting the application or starting fresh.
+*   **`web/config.json`**: Contains default settings for the application. You can modify this file to change default prompts or storage keys.
+*   **`web/api-keys.json`**: (Optional) You can create this file to preload API keys for the Web Version. See `web/api-keys.json.example` for the format.
+*   **`web/data/initial-data.yaml`**: The default dataset loaded when resetting the application or starting fresh.
 
 ## Usage Guide
 

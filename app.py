@@ -219,12 +219,14 @@ def process_ruamel_node(node, parent_comments=None):
     return {'instruction': '', 'wildcards': [str(node)]}
 
 def load_initial_data():
-    if not os.path.exists('initial-data.yaml'):
+    path = os.path.join('web', 'data', 'initial-data.yaml')
+    if not os.path.exists(path):
         return {}
     try:
-        with open('initial-data.yaml', 'r', encoding='utf-8') as f:
+        with open(path, 'r', encoding='utf-8') as f:
             yaml_data = yaml.load(f)
-        if not yaml_data: return {}
+        if not yaml_data:
+            return {}
 
         # Process the ruamel structure into our internal app state structure
         # The top-level object is a CommentedMap, so we process it like a dict
@@ -235,10 +237,11 @@ def load_initial_data():
         return {}
 
 def load_config():
-    if not os.path.exists('config.json'):
+    path = os.path.join('web', 'config.json')
+    if not os.path.exists(path):
         return {}
     try:
-        with open('config.json', 'r') as f:
+        with open(path, 'r') as f:
             return json.load(f)
     except Exception:
         return {}
@@ -597,9 +600,10 @@ with gr.Blocks() as demo:
 
             yaml_data = reconstruct_yaml_structure(state['wildcards'])
 
-            with open('initial-data.yaml', 'w', encoding='utf-8') as f:
+            path = os.path.join('web', 'data', 'initial-data.yaml')
+            with open(path, 'w', encoding='utf-8') as f:
                 yaml.dump(yaml_data, f)
-            gr.Info("Saved to initial-data.yaml")
+            gr.Info(f"Saved to {path}")
         except Exception as e:
             gr.Error(f"Save failed: {e}")
 
