@@ -1,5 +1,5 @@
 import pytest
-from app import process_ruamel_node, get_all_paths, get_data_by_path, get_parent_structure_by_path
+from python_app.utils import process_ruamel_node, get_all_paths, get_data_by_path, get_parent_structure_by_path
 from ruamel.yaml import YAML
 
 yaml = YAML()

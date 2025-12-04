@@ -2,7 +2,7 @@ import pytest
 from unittest.mock import MagicMock, patch
 import json
 import urllib.error
-from app import Api
+from python_app.api import Api
 
 @pytest.fixture
 def api_instance():

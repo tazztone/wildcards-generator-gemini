@@ -1,294 +1,18 @@
 import gradio as gr
-from ruamel.yaml import YAML
-import json
-import urllib.request
-import urllib.error
 import tempfile
 import os
 
-class Api:
-    def _prepare_request(self, provider, api_keys, models, global_prompt, user_prompt):
-        headers = {'Content-Type': 'application/json'}
-        payload = {}
-        url = ""
-
-        if provider == 'gemini':
-            api_key = api_keys.get('gemini')
-            model = models.get('gemini', 'gemini-1.5-flash')
-            if not api_key:
-                raise ValueError("Gemini API key not provided in settings.")
-
-            url = f"https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent?key={api_key}"
-            payload = {
-                "contents": [
-                    {"role": "user", "parts": [{"text": global_prompt}]},
-                    {"role": "model", "parts": [{"text": "Understood."}]},
-                    {"role": "user", "parts": [{"text": user_prompt}]}
-                ],
-                "generationConfig": {
-                    "responseMimeType": "application/json",
-                    "responseSchema": {"type": "ARRAY", "items": {"type": "STRING"}}
-                }
-            }
-        elif provider == 'openrouter':
-            api_key = api_keys.get('openrouter')
-            model = models.get('openrouter', 'openai/gpt-3.5-turbo') # Default or user selected
-            if not api_key:
-                raise ValueError("OpenRouter API key not provided in settings.")
-
-            url = "https://openrouter.ai/api/v1/chat/completions"
-            headers['Authorization'] = f"Bearer {api_key}"
-            payload = {
-                "model": model,
-                "messages": [
-                     {"role": "user", "content": f"{global_prompt}\n\n{user_prompt}"}
-                ],
-                "response_format": { "type": "json_object" }
-            }
-        elif provider == 'custom':
-            api_key = api_keys.get('custom')
-            model = models.get('custom', '')
-            base_url = models.get('custom_url', '')
-            if not base_url:
-                raise ValueError("Custom API URL not provided in settings.")
-
-            url = f"{base_url.rstrip('/')}/chat/completions"
-            if api_key:
-                headers['Authorization'] = f"Bearer {api_key}"
-
-            payload = {
-                "model": model,
-                "messages": [
-                     {"role": "user", "content": f"{global_prompt}\n\n{user_prompt}"}
-                ],
-                "response_format": { "type": "json_object" }
-            }
-        else:
-            raise ValueError(f"Provider '{provider}' is not implemented yet.")
-
-        return url, headers, payload
-
-    def generate_wildcards(self, provider, api_keys, models, global_prompt, category_path, existing_words, custom_instructions):
-        readable_path = category_path.replace('/', ' > ').replace('_', ' ')
-        user_prompt = f"Category Path: '{readable_path}'\nExisting Wildcards: {', '.join(existing_words[:50])}\nCustom Instructions: \"{custom_instructions.strip()}\""
-
-        url, headers, payload = self._prepare_request(provider, api_keys, models, global_prompt, user_prompt)
-
-        data = json.dumps(payload).encode('utf-8')
-        req = urllib.request.Request(url, data=data, headers=headers, method='POST')
-
-        try:
-            with urllib.request.urlopen(req, timeout=30) as response:
-                if response.status != 200:
-                    raise urllib.error.HTTPError(url, response.status, "API request failed", response.headers, response.fp)
-
-                response_body = response.read().decode('utf-8')
-                response_json = json.loads(response_body)
-
-                if provider == 'gemini':
-                    if response_json.get('candidates'):
-                        part_text = response_json['candidates'][0]['content']['parts'][0]['text']
-                        return json.loads(part_text)
-                    else:
-                        raise Exception("Invalid response from Gemini API: 'candidates' key not found.")
-                elif provider in ['openrouter', 'custom']:
-                     if response_json.get('choices'):
-                        content_str = response_json['choices'][0]['message']['content']
-                        # Try to handle potential markdown code blocks
-                        if "```" in content_str:
-                             import re
-                             match = re.search(r'```(?:json)?\s*([\s\S]*?)\s*```', content_str)
-                             if match:
-                                 content_str = match.group(1)
-
-                        content = json.loads(content_str)
-                        if isinstance(content, list):
-                            return content
-                        elif isinstance(content, dict):
-                            # Handle { "wildcards": [...] } or similar wrappers
-                             for key in ['wildcards', 'items', 'categories']:
-                                 if key in content and isinstance(content[key], list):
-                                     return content[key]
-                             # If just values are list
-                             for val in content.values():
-                                 if isinstance(val, list):
-                                     return val
-                        return [] # Fallback
-                     else:
-                         raise Exception(f"Invalid response from {provider} API.")
-
-        except urllib.error.HTTPError as e:
-            error_body = e.read().decode('utf-8')
-            raise Exception(f"API request failed with status {e.code}: {error_body}")
-        except Exception as e:
-            raise Exception(f"An error occurred during API call: {e}")
-
-    def suggest_items(self, provider, api_keys, models, suggest_prompt, parent_path, structure):
-        readable_path = parent_path.replace('/', ' > ').replace('_', ' ') if parent_path else 'Top-Level'
-        global_prompt = suggest_prompt.replace('{parentPath}', readable_path)
-        user_prompt = f"For context, here are the existing sibling items at the same level:\n{json.dumps(structure, indent=2)}\n\nPlease provide new suggestions for the '{readable_path}' category. Return a JSON array of objects with 'name' and 'instruction' keys."
-
-        # We need to tweak _prepare_request or manually construct payload because response schema is different
-        # For simplicity, we'll assume the model follows instructions or we force JSON mode if supported
-
-        url, headers, payload = self._prepare_request(provider, api_keys, models, global_prompt, user_prompt)
-
-        # Override Gemini schema for suggestions
-        if provider == 'gemini':
-             payload['generationConfig']['responseSchema'] = {
-                "type": "ARRAY",
-                "items": {
-                    "type": "OBJECT",
-                    "properties": {
-                        "name": { "type": "STRING" },
-                        "instruction": { "type": "STRING" }
-                    },
-                    "required": ["name", "instruction"]
-                }
-            }
-
-        data = json.dumps(payload).encode('utf-8')
-        req = urllib.request.Request(url, data=data, headers=headers, method='POST')
-
-        try:
-            with urllib.request.urlopen(req, timeout=30) as response:
-                response_body = response.read().decode('utf-8')
-                response_json = json.loads(response_body)
-
-                if provider == 'gemini':
-                     part_text = response_json['candidates'][0]['content']['parts'][0]['text']
-                     return json.loads(part_text)
-                elif provider in ['openrouter', 'custom']:
-                     content_str = response_json['choices'][0]['message']['content']
-                     if "```" in content_str:
-                         import re
-                         match = re.search(r'```(?:json)?\s*([\s\S]*?)\s*```', content_str)
-                         if match: content_str = match.group(1)
-                     content = json.loads(content_str)
-                     if isinstance(content, list): return content
-                     if isinstance(content, dict):
-                         for key in ['items', 'suggestions', 'categories']:
-                             if key in content and isinstance(content[key], list): return content[key]
-                     return []
-
-        except Exception as e:
-            raise Exception(f"Suggestion API call failed: {e}")
+from .utils import (
+    load_config, load_initial_data, get_all_paths, get_data_by_path,
+    get_wildcards_by_path, get_parent_structure_by_path, process_ruamel_node,
+    reconstruct_yaml_structure, yaml, get_base_dir
+)
+from .api import Api
 
 # Global API instance
 api = Api()
 
-# Use ruamel.yaml for comment preservation
-yaml = YAML()
-yaml.preserve_quotes = True
-# Configure indentation for consistent output
-yaml.indent(mapping=2, sequence=4, offset=2)
-
-def process_ruamel_node(node, parent_comments=None):
-    """
-    Recursively process ruamel object to extract structure and comments.
-    """
-    processed = {}
-
-    # Handling list leaf nodes
-    if isinstance(node, list):
-        return {'instruction': '', 'wildcards': sorted([str(v) for v in node])}
-
-    if isinstance(node, dict):
-        for k, v in node.items():
-            child_processed = process_ruamel_node(v)
-
-            # Extract comment for this key from the parent node's comment attribute
-            comment = ''
-            if hasattr(node, 'ca') and node.ca.items and k in node.ca.items:
-                # node.ca.items[k] is a list: [None, None, CommentToken, None]
-                # Index 2 is usually the end-of-line comment
-                token = node.ca.items[k][2]
-                if token:
-                    comment_val = token.value.strip() # "# instruction: ..."
-                    # Remove the '# instruction:' prefix if present to store just the value
-                    if comment_val.startswith('# instruction:'):
-                        comment = comment_val.replace('# instruction:', '', 1).strip()
-                    elif comment_val.startswith('#'):
-                        comment = comment_val.replace('#', '', 1).strip()
-
-            if isinstance(child_processed, dict):
-                # If child is a dict (category), attach instruction
-                child_processed['instruction'] = comment
-
-            processed[k] = child_processed
-
-        return processed
-
-    return {'instruction': '', 'wildcards': [str(node)]}
-
-def load_initial_data():
-    path = os.path.join('web', 'data', 'initial-data.yaml')
-    if not os.path.exists(path):
-        return {}
-    try:
-        with open(path, 'r', encoding='utf-8') as f:
-            yaml_data = yaml.load(f)
-        if not yaml_data:
-            return {}
-
-        # Process the ruamel structure into our internal app state structure
-        # The top-level object is a CommentedMap, so we process it like a dict
-        return process_ruamel_node(yaml_data)
-
-    except Exception as e:
-        print(f"Error loading initial-data.yaml: {e}")
-        return {}
-
-def load_config():
-    path = os.path.join('web', 'config.json')
-    if not os.path.exists(path):
-        return {}
-    try:
-        with open(path, 'r') as f:
-            return json.load(f)
-    except Exception:
-        return {}
-
-def get_all_paths(wildcard_data, parent_path=""):
-    paths = []
-    for key, value in wildcard_data.items():
-        if key == 'instruction': continue
-        current_path = f"{parent_path}/{key}" if parent_path else key
-        if 'wildcards' in value and isinstance(value['wildcards'], list):
-            paths.append(current_path)
-        elif isinstance(value, dict) and value:
-            paths.extend(get_all_paths(value, current_path))
-    return sorted(paths)
-
-def get_data_by_path(path, state):
-    if not path: return None
-    parts = path.split('/')
-    data = state['wildcards']
-    for part in parts:
-        data = data.get(part, {})
-    return data
-
-def get_wildcards_by_path(path, state):
-    if not path: return []
-    data_node = get_data_by_path(path, state)
-    return data_node.get('wildcards', [])
-
-# Helper to get parent object structure for suggestions context
-def get_parent_structure_by_path(path, state):
-    # If path is top level or empty, return top level keys
-    if not path: return list(state['wildcards'].keys())
-
-    parts = path.split('/')
-    if len(parts) == 1:
-        # Parent is root
-        return list(state['wildcards'].keys())
-
-    parent_path = '/'.join(parts[:-1])
-    parent_data = get_data_by_path(parent_path, state)
-    # Return keys of siblings
-    return list(parent_data.keys()) if parent_data else []
-
-# --- Event Handlers (Moved to module level) ---
+# --- Event Handlers ---
 
 def update_settings(provider, key, model, url, state):
     state['api_keys'][provider] = key
@@ -387,11 +111,6 @@ def suggest_handler(path, state, suggest_prompt):
     models = state['models']
     provider = state['active_provider']
 
-    # Determine context: suggest items for current category, or subcategories?
-    # If current path has wildcards, maybe we can't add subcategories easily in this UI model without breaking leaf node assumption.
-    # So let's assume suggestions are for NEW SIBLINGS of the current path?
-    # Or if we are at root (path=None), suggest top level categories.
-
     structure = get_parent_structure_by_path(path, state)
 
     try:
@@ -408,10 +127,6 @@ def suggest_handler(path, state, suggest_prompt):
 
 def accept_suggestions_handler(selected_suggestions, path, state):
     if not selected_suggestions: return state, gr.update()
-
-    # Logic: Where do we add them?
-    # If we asked for suggestions based on 'path', and prompts were "siblings", then we add them as siblings of path.
-    # If path is "Characters/Job", parent is "Characters". We add "Characters/NewJob".
 
     parts = path.split('/') if path else []
     parent_path_parts = parts[:-1]
@@ -446,24 +161,6 @@ def search_handler(term, state):
 
 def export_handler(state):
     try:
-        # Reconstruct CommentedMap
-        def reconstruct_yaml_structure(node):
-            if 'wildcards' in node:
-                # Leaf node: return list
-                # Create sequence
-                l = yaml.seq(node['wildcards'])
-                return l
-            else:
-                # Dict node
-                m = yaml.map()
-                for k, v in node.items():
-                    if k == 'instruction': continue
-                    m[k] = reconstruct_yaml_structure(v)
-                    # Attach instruction if present
-                    if isinstance(v, dict) and 'instruction' in v and v['instruction']:
-                        m.yaml_add_eol_comment(f"instruction: {v['instruction']}", k)
-                return m
-
         yaml_data = reconstruct_yaml_structure(state['wildcards'])
 
         with tempfile.NamedTemporaryFile(mode="w", delete=False, suffix=".yaml", encoding="utf-8") as f:
@@ -475,27 +172,10 @@ def export_handler(state):
 
 def save_handler(state):
     try:
-        # Reconstruct CommentedMap
-        def reconstruct_yaml_structure(node):
-            if 'wildcards' in node:
-                # Leaf node: return list
-                # Create sequence
-                l = yaml.seq(node['wildcards'])
-                return l
-            else:
-                # Dict node
-                m = yaml.map()
-                for k, v in node.items():
-                    if k == 'instruction': continue
-                    m[k] = reconstruct_yaml_structure(v)
-                    # Attach instruction if present
-                    if isinstance(v, dict) and 'instruction' in v and v['instruction']:
-                        m.yaml_add_eol_comment(f"instruction: {v['instruction']}", k)
-                return m
-
         yaml_data = reconstruct_yaml_structure(state['wildcards'])
 
-        path = os.path.join('web', 'data', 'initial-data.yaml')
+        base_dir = get_base_dir()
+        path = os.path.join(base_dir, 'web', 'data', 'initial-data.yaml')
         with open(path, 'w', encoding='utf-8') as f:
             yaml.dump(yaml_data, f)
         gr.Info(f"Saved to {path}")
@@ -522,6 +202,8 @@ def import_handler(file, state):
         gr.Error(f"Import failed: {e}")
         return state, gr.update(), gr.update(), gr.update()
 
+
+# --- UI Construction ---
 
 with gr.Blocks() as demo:
     config = load_config()
@@ -640,4 +322,4 @@ with gr.Blocks() as demo:
     import_yaml_btn.upload(fn=import_handler, inputs=[import_yaml_btn, app_state], outputs=[app_state, category_path_dropdown, wildcard_display_group, download_file])
 
 if __name__ == "__main__":
-    demo.launch()
+    demo.launch(css_paths=["web/wildcards.css"])

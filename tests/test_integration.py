@@ -1,6 +1,6 @@
 import pytest
 from unittest.mock import MagicMock, patch
-import app
+import python_app.app as app
 import gradio as gr
 
 @pytest.fixture
@@ -78,7 +78,7 @@ def test_search_handler(mock_state):
     # For now, let's assume it returns something truthy.
     assert update is not None
 
-@patch('app.api')
+@patch('python_app.app.api')
 def test_generate_more_handler(mock_api, mock_state):
     mock_api.generate_wildcards.return_value = ["gen1", "gen2"]
 
@@ -92,7 +92,7 @@ def test_generate_more_handler(mock_api, mock_state):
         assert "gen2" in new_state['wildcards']['Category']['wildcards']
         mock_api.generate_wildcards.assert_called_once()
 
-@patch('app.api')
+@patch('python_app.app.api')
 def test_suggest_handler(mock_api, mock_state):
     mock_api.suggest_items.return_value = [{'name': 'NewCat', 'instruction': 'Do this'}]
     mock_state['active_provider'] = 'gemini'
