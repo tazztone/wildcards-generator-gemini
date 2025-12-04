@@ -68,7 +68,9 @@ The Python version runs a local web server using Gradio. It interacts directly w
 
 ### Features
 *   **Direct File Access:** Reads and writes directly to `initial-data.yaml` (or imported YAMLs).
-*   **Gemini Support:** Currently supports Google Gemini for wildcard generation.
+*   **Multiple API Support:** Supports Google Gemini, OpenRouter, and Custom OpenAI-compatible APIs.
+*   **Category Management:** Create and delete categories directly from the interface.
+*   **Persistence:** Save changes directly to disk.
 
 ---
 
