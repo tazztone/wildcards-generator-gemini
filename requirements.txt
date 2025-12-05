@@ -1,4 +1,0 @@
-gradio
-ruamel.yaml
-pytest
-pytest-mock
