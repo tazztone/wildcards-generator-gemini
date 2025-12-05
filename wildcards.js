@@ -599,7 +599,7 @@
             },
             createCategoryElement(name, data, level, path, index) {
                 const element = document.createElement('details');
-                element.className = `bg-gray-800 rounded-lg shadow-md group ${level > 0 ? 'ml-4 mt-2' : ''}`;
+                element.className = `bg-gray-800 rounded-lg shadow-md group level-${level}`;
                 if (level === 0) {
                      element.classList.add(`category-tint-${(index % 10) + 1}`);
                 }
@@ -630,6 +630,8 @@
                 gridWrapper.className = 'grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 w-full';
                 
                 nonLeafNodes.forEach(node => contentWrapper.appendChild(node));
+                contentWrapper.appendChild(this.createSubcategoryPlaceholder(path));
+
                 leafNodes.forEach(node => gridWrapper.appendChild(node));
                 
                 gridWrapper.appendChild(this.createWildcardPlaceholder(path));
@@ -639,11 +641,24 @@
             },
             createWildcardCardElement(name, data, level, path) {
                 const element = document.createElement('div');
-                element.className = `bg-gray-700/50 p-4 rounded-lg flex flex-col`;
+                element.className = `bg-gray-700/50 p-4 rounded-lg flex flex-col level-${level}`;
                 element.dataset.path = path;
                 element.draggable = true;
                 element.innerHTML = this.getWildcardCardHtml(name, data, path);
                 return element;
+            },
+            createSubcategoryPlaceholder(parentPath) {
+                const placeholder = document.createElement('div');
+                placeholder.className = 'bg-gray-800/50 p-4 rounded-lg flex items-center justify-between border-2 border-dashed border-gray-600 hover:border-indigo-500 transition-colors mt-2 mb-4';
+                placeholder.dataset.parentPath = parentPath;
+                placeholder.innerHTML = `
+                    <span class="text-gray-400 font-medium">Add new subcategory</span>
+                    <div class="flex gap-2">
+                        <button class="add-subcategory-btn bg-green-600 hover:bg-green-700 text-white font-bold py-1 px-3 rounded-md" title="Add new folder">+</button>
+                        <button class="suggest-subcategory-btn bg-purple-600 hover:bg-purple-700 text-white font-bold py-1 px-3 rounded-md" title="Suggest new items for this category">Suggest</button>
+                    </div>
+                `;
+                return placeholder;
             },
             createWildcardPlaceholder(parentPath) {
                 const placeholder = document.createElement('div');
@@ -684,8 +699,6 @@
                             <input type="text" class="custom-instructions-input bg-gray-700 text-sm border border-gray-600 rounded-md px-2 py-1 focus:ring-indigo-500 focus:border-indigo-500 flex-grow" placeholder="Folder instructions..." style="min-width: 200px;" value="${sanitize(data.instruction || '')}" onclick="event.stopPropagation();">
                         </div>
                         <div class="flex items-center gap-2 ml-auto flex-shrink-0">
-                            <button class="add-subcategory-btn bg-green-600 hover:bg-green-700 text-white font-bold py-1 px-2 text-sm rounded-md" title="Add new folder">+</button>
-                            <button class="suggest-subcategory-btn bg-purple-600 hover:bg-purple-700 text-white font-bold py-1 px-2 text-sm rounded-md" title="Suggest new items for this category">Suggest</button>
                             <span class="arrow-down transition-transform duration-300 text-indigo-400"><svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg></span>
                         </div>
                     </summary>
@@ -693,7 +706,9 @@
                 `;
             },
             getWildcardCardHtml(name, data, path) {
+                const parentPath = path.includes('/') ? path.substring(0, path.lastIndexOf('/')).replace(/\//g, ' > ').replace(/_/g, ' ') : 'Top Level';
                 return `
+                    <div class="text-xs text-gray-400 mb-1 uppercase tracking-wider">${sanitize(parentPath)}</div>
                     <div class="flex justify-between items-center mb-2">
                         <h3 class="font-bold text-lg text-gray-100"><span contenteditable="true" class="wildcard-name outline-none focus:bg-indigo-400/50 rounded px-1">${name.replace(/_/g, ' ')}</span> <span class="wildcard-count text-gray-400 text-sm ml-2">(${(data.wildcards || []).length})</span></h3>
                         <button class="delete-btn text-red-400 hover:text-red-300 font-bold text-xl leading-none" title="Delete this card">&times;</button>
@@ -942,6 +957,10 @@
                         this.handleCreateItem(parentPath, 'list');
                     } else if (target.matches('.suggest-wildcard-list-btn')) {
                         this.handleSuggestItems(parentPath, 'list');
+                    } else if (target.matches('.add-subcategory-btn')) {
+                        this.handleCreateItem(parentPath, 'folder');
+                    } else if (target.matches('.suggest-subcategory-btn')) {
+                        this.handleSuggestItems(parentPath, 'folder');
                     }
                     return;
                 }
@@ -949,8 +968,6 @@
                 if (!pathElement) return;
                 const path = pathElement.dataset.path;
 
-                if (target.closest('.add-subcategory-btn')) { e.preventDefault(); this.handleCreateItem(path, 'folder'); return; }
-                if (target.closest('.suggest-subcategory-btn')) { e.preventDefault(); this.handleSuggestItems(path, 'folder'); return; }
                 if (target.closest('.delete-btn')) { e.preventDefault(); this.handleDelete(path); return; }
                 
                 if (target.closest('.generate-btn')) {
