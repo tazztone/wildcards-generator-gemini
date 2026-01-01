@@ -521,6 +521,8 @@ const Api = {
 const UI = {
     elements: {},
     init() {
+        this.renderApiSettings(); // Render settings first so elements exist
+
         this.elements = {
             container: document.getElementById('wildcard-container'),
             globalPrompt: document.getElementById('global-prompt'),
@@ -542,6 +544,9 @@ const UI = {
             dialogClose: document.getElementById('notification-close'),
             dialogConfirmButtons: document.getElementById('confirmation-buttons'),
             ariaLive: document.getElementById('aria-live-region'),
+            // Toolbar & Dropdown
+            overflowMenuBtn: document.getElementById('overflow-menu-btn'),
+            overflowMenuDropdown: document.getElementById('overflow-menu-dropdown'),
             // Advanced Config
             configHistoryLimit: document.getElementById('config-history-limit'),
             configSearchDebounce: document.getElementById('config-search-debounce'),
@@ -575,6 +580,28 @@ const UI = {
             // Any cleanup needed when settings close
         });
 
+        // Toolbar Dropdown Logic
+        if (this.elements.overflowMenuBtn && this.elements.overflowMenuDropdown) {
+            this.elements.overflowMenuBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                const isHidden = this.elements.overflowMenuDropdown.classList.contains('hidden');
+                // Close any other open menus if we had them, then toggle this one
+                this.elements.overflowMenuDropdown.classList.toggle('hidden', !isHidden);
+            });
+
+            // Close dropdown when clicking outside
+            document.addEventListener('click', (e) => {
+                if (!this.elements.overflowMenuBtn.contains(e.target) && !this.elements.overflowMenuDropdown.contains(e.target)) {
+                    this.elements.overflowMenuDropdown.classList.add('hidden');
+                }
+            });
+
+            // Close dropdown when clicking an item inside it
+            this.elements.overflowMenuDropdown.addEventListener('click', () => {
+                this.elements.overflowMenuDropdown.classList.add('hidden');
+            });
+        }
+
         // UI Event Listeners for Progressive Reveal
         this.elements.apiEndpoint.addEventListener('change', (e) => {
             this.updateSettingsVisibility(e.target.value);
@@ -586,6 +613,133 @@ const UI = {
             if (customButtons) customButtons.remove();
         });
     },
+
+    renderApiSettings() {
+        const container = document.getElementById('api-settings-container');
+        const template = document.getElementById('api-settings-template');
+        if (!container || !template) return;
+
+        const providers = [
+            {
+                id: 'openrouter',
+                title: 'OpenRouter API',
+                iconUrl: 'https://openrouter.ai/favicon.ico',
+                linkUrl: 'https://openrouter.ai/keys',
+                apiKeyId: 'openrouter-api-key',
+                apiKeyPlaceholder: 'sk-or-...',
+                modelNameId: 'openrouter-model-name',
+                modelListId: 'openrouter-model-list',
+                modelPlaceholder: 'e.g., openai/gpt-4o',
+                loadingId: 'openrouter-model-loading-indicator',
+                errorId: 'openrouter-model-error-indicator',
+                showKeyHelp: true,
+                showTip: true,
+                tipText: 'OpenRouter provides access to hundreds of models (Chat-GPT, Claude, Gemini, Deepseek, GLM, etc) many of them for free.'
+            },
+            {
+                id: 'gemini',
+                title: 'Gemini API',
+                linkUrl: 'https://aistudio.google.com/app/apikey',
+                apiKeyId: 'gemini-api-key',
+                apiKeyPlaceholder: 'AIzaSy...',
+                modelNameId: 'gemini-model-name',
+                modelListId: 'gemini-model-list',
+                modelPlaceholder: 'e.g., gemini-1.5-flash',
+                loadingId: 'gemini-model-loading-indicator',
+                errorId: 'gemini-model-error-indicator',
+                showKeyHelp: false // Gemini key handling is similar but didn't have the text in original
+            },
+            {
+                id: 'custom',
+                title: 'Custom API',
+                isCustom: true,
+                apiKeyId: 'custom-api-key',
+                apiKeyPlaceholder: 'Enter API key if required',
+                apiKeyOptional: true,
+                modelNameId: 'custom-model-name',
+                modelListId: 'custom-model-list',
+                modelPlaceholder: 'Enter model identifier',
+                apiUrlId: 'custom-api-url',
+                loadingId: 'custom-model-loading-indicator', // Note: original didn't have indicators for custom? Adding for consistency
+                errorId: 'custom-model-error-indicator'
+            }
+        ];
+
+        container.innerHTML = '';
+
+        providers.forEach(p => {
+            const clone = template.content.cloneNode(true);
+            const panel = clone.querySelector('.api-settings-panel');
+            panel.id = `settings-${p.id}`;
+
+            // Header
+            const titleEl = clone.querySelector('.provider-title');
+            if (p.iconUrl) {
+                const img = document.createElement('img');
+                img.src = p.iconUrl;
+                img.className = 'w-5 h-5 opacity-80';
+                titleEl.appendChild(img);
+                titleEl.appendChild(document.createTextNode(' ' + p.title)); // Add space
+            } else {
+                titleEl.textContent = p.title;
+            }
+
+            const headerLink = clone.querySelector('.header-section a');
+            if (p.linkUrl) {
+                headerLink.href = p.linkUrl;
+            } else {
+                headerLink.remove(); // Remove link if not applicable (Custom)
+            }
+
+            if (p.isCustom) {
+                clone.querySelector('.custom-badge').classList.remove('hidden');
+                const urlSection = clone.querySelector('.custom-url-section');
+                urlSection.classList.remove('hidden');
+                urlSection.querySelector('input').id = p.apiUrlId;
+            }
+
+            // API Key
+            const apiKeyInput = clone.querySelector('.api-key-input');
+            apiKeyInput.id = p.apiKeyId;
+            apiKeyInput.placeholder = p.apiKeyPlaceholder;
+
+            if (p.apiKeyOptional) {
+                clone.querySelector('.optional-text').classList.remove('hidden');
+            }
+
+            if (p.showKeyHelp) {
+                clone.querySelector('.key-help-text').classList.remove('hidden');
+            }
+
+            // Model Name
+            const modelInput = clone.querySelector('.model-name-input');
+            modelInput.id = p.modelNameId;
+            modelInput.setAttribute('list', p.modelListId);
+            modelInput.placeholder = p.modelPlaceholder;
+
+            const datalist = clone.querySelector('.model-list');
+            datalist.id = p.modelListId;
+
+            const testBtn = clone.querySelector('.test-conn-btn');
+            testBtn.dataset.provider = p.id;
+
+            const loadingInd = clone.querySelector('.loading-indicator');
+            loadingInd.id = p.loadingId || `loading-${p.id}`; // Fallback if not defined
+
+            const errorInd = clone.querySelector('.error-indicator');
+            errorInd.id = p.errorId || `error-${p.id}`;
+
+            // Tip
+            if (p.showTip) {
+                const tipBox = clone.querySelector('.tip-box');
+                tipBox.classList.remove('hidden');
+                tipBox.querySelector('.tip-text').textContent = p.tipText;
+            }
+
+            container.appendChild(clone);
+        });
+    },
+
     updateSettingsVisibility(provider) {
         // Hide all panels
         document.querySelectorAll('.api-settings-panel').forEach(el => el.classList.add('hidden'));
@@ -952,7 +1106,25 @@ const App = {
     },
     updateThemeIcon(theme) {
         const btn = document.getElementById('theme-toggle');
-        btn.textContent = theme === 'dark' ? '🌙' : '☀️';
+        const svg = btn.querySelector('svg');
+        const path = svg.querySelector('path');
+
+        if (theme === 'dark') {
+            // Sun icon for dark mode (to switch to light) or Moon? 
+            // Typically show the moon if current is dark? Or show the sun to switch to light?
+            // Existing icon was Moon-ish path: M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z
+            // Let's use Moon for Dark Mode active (showing current state) or Sun for Light Mode target.
+            // Usually, the icon represents the action (switch to light) OR current state.
+            // Let's stick to: formatted for "Switch to Light" (Sun) when in Dark, and "Switch to Dark" (Moon) when in Light.
+
+            // Sun Path
+            path.setAttribute('d', 'M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z');
+            btn.title = "Switch to Light Mode";
+        } else {
+            // Moon Path
+            path.setAttribute('d', 'M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z');
+            btn.title = "Switch to Dark Mode";
+        }
     },
 
     bindEventListeners() {
@@ -1421,6 +1593,9 @@ const App = {
         document.getElementById('batch-expand').disabled = !hasSelection;
         document.getElementById('batch-collapse').disabled = !hasSelection;
         document.getElementById('batch-delete').disabled = !hasSelection;
+
+        // Auto-hide the bar when no selection
+        document.getElementById('batch-ops-bar').classList.toggle('hidden', !hasSelection);
     },
     handleBatchAction(action) {
         const selectedCheckboxes = document.querySelectorAll('.category-batch-checkbox:checked');

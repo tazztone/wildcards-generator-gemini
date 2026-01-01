@@ -134,17 +134,13 @@
                     <div>
                         <label for="global-prompt" class="block text-lg font-semibold text-indigo-300 mb-2">Global
                             System Prompt (for Wildcard Generation)</label>
-                        <textarea id="global-prompt"
-                            class="w-full bg-gray-900 border border-gray-600 rounded-md p-2 text-sm focus:ring-indigo-500 focus:border-indigo-500 custom-scrollbar"
-                            rows="4"></textarea>
+                        <textarea id="global-prompt" class="input-primary custom-scrollbar" rows="4"></textarea>
 
                     </div>
                     <div>
                         <label for="suggestion-prompt" class="block text-lg font-semibold text-indigo-300 mb-2">Item
                             Suggestion Prompt</label>
-                        <textarea id="suggestion-prompt"
-                            class="w-full bg-gray-900 border border-gray-600 rounded-md p-2 text-sm focus:ring-indigo-500 focus:border-indigo-500 custom-scrollbar"
-                            rows="4"></textarea>
+                        <textarea id="suggestion-prompt" class="input-primary custom-scrollbar" rows="4"></textarea>
                     </div>
                     <!-- API Provider Selection -->
                     <div class="bg-gray-800 p-4 rounded-lg border border-gray-700">
@@ -160,191 +156,79 @@
                             wildcards.</p>
                     </div>
 
-                    <!-- OpenRouter Settings -->
-                    <div id="settings-openrouter"
-                        class="api-settings-panel space-y-4 p-5 bg-gray-800 rounded-lg border border-gray-700 transition-all duration-300">
-                        <div class="flex justify-between items-center mb-2">
-                            <h3 class="text-xl font-semibold text-white flex items-center gap-2">
-                                <img src="https://openrouter.ai/favicon.ico" alt="" class="w-5 h-5 opacity-80">
-                                OpenRouter API
-                            </h3>
-                            <a href="https://openrouter.ai/keys" target="_blank" rel="noopener noreferrer"
-                                class="text-indigo-400 hover:text-indigo-300 text-sm font-medium flex items-center gap-1">
-                                Get API Key <span class="text-xs">↗</span>
-                            </a>
-                        </div>
+                    <!-- API Settings Container (Populated via JS) -->
+                    <div id="api-settings-container"></div>
 
-                        <div>
-                            <label for="openrouter-api-key" class="block text-sm font-medium text-gray-300 mb-1">API
-                                Key</label>
-                            <div class="relative">
-                                <input type="password" id="openrouter-api-key"
-                                    class="w-full bg-gray-900 border border-gray-600 rounded-md p-3 pr-10 text-sm focus:ring-indigo-500 focus:border-indigo-500 transition-shadow"
-                                    placeholder="sk-or-..." autocomplete="off">
-                                <button
-                                    class="toggle-api-key-visibility absolute inset-y-0 right-0 flex items-center pr-3 text-gray-400 hover:text-gray-100 transition-colors"
-                                    title="Show/Hide API Key">
-                                    <svg class="eye-icon h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                            d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                            d="M2.458 12C3.732 5.943 7.523 2 12 2c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7S3.732 13.057 2.458 9c1.274-4.057 5.065-7 9.542-7z" />
-                                        <path class="eye-slash hidden" stroke-linecap="round" stroke-linejoin="round"
-                                            stroke-width="2" d="M17 17L7 7" />
-                                    </svg>
-                                </button>
+                    <!-- Templates -->
+                    <template id="api-settings-template">
+                        <div
+                            class="api-settings-panel hidden space-y-4 p-5 bg-gray-800 rounded-lg border border-gray-700 transition-all duration-300">
+                            <div class="flex justify-between items-center mb-2 header-section">
+                                <h3 class="text-xl font-semibold text-white flex items-center gap-2 provider-title">
+                                    <!-- Icon and Title injected here -->
+                                </h3>
+                                <a href="#" target="_blank" rel="noopener noreferrer"
+                                    class="text-indigo-400 hover:text-indigo-300 text-sm font-medium flex items-center gap-1 api-link">
+                                    Get API Key <span class="text-xs">↗</span>
+                                </a>
+                                <span
+                                    class="custom-badge hidden text-xs text-gray-400 uppercase tracking-wider font-semibold border border-gray-600 rounded px-2 py-0.5">OpenAI
+                                    Compatible</span>
                             </div>
-                            <p class="text-xs text-gray-500 mt-1">Key is stored in session memory only.</p>
-                        </div>
 
-                        <div>
-                            <label for="openrouter-model-name"
-                                class="block text-sm font-medium text-gray-300 mb-1">Model
-                                Name</label>
-                            <div class="flex gap-2">
-                                <div class="relative flex-grow">
-                                    <input type="text" id="openrouter-model-name" list="openrouter-model-list"
-                                        class="w-full bg-gray-900 border border-gray-600 rounded-md p-3 text-sm focus:ring-indigo-500 focus:border-indigo-500"
-                                        placeholder="e.g., openai/gpt-4o">
-                                    <datalist id="openrouter-model-list"></datalist>
+                            <div class="custom-url-section hidden">
+                                <label class="block text-sm font-medium text-gray-300 mb-1">API Base URL</label>
+                                <input type="text" class="api-url-input input-primary font-mono"
+                                    placeholder="http://localhost:11434/v1">
+                                <p class="text-xs text-gray-500 mt-1">The base URL for the API (e.g. for Ollama, LM
+                                    Studio, etc.)</p>
+                            </div>
+
+                            <div>
+                                <label class="block text-sm font-medium text-gray-300 mb-1">API Key <span
+                                        class="optional-text text-gray-500 text-xs hidden">(Optional)</span></label>
+                                <div class="relative">
+                                    <input type="password" class="api-key-input input-primary pr-10" autocomplete="off">
+                                    <button class="toggle-visibility-btn input-icon-btn" title="Show/Hide API Key">
+                                        <svg class="eye-icon h-5 w-5" fill="none" viewBox="0 0 24 24"
+                                            stroke="currentColor">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                d="M2.458 12C3.732 5.943 7.523 2 12 2c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7S3.732 13.057 2.458 9c1.274-4.057 5.065-7 9.542-7z" />
+                                            <path class="eye-slash hidden" stroke-linecap="round"
+                                                stroke-linejoin="round" stroke-width="2" d="M17 17L7 7" />
+                                        </svg>
+                                    </button>
                                 </div>
-                                <button
-                                    class="test-connection-btn bg-indigo-600 hover:bg-indigo-700 text-white font-medium py-2 px-4 rounded-md transition-colors shadow-sm whitespace-nowrap"
-                                    data-provider="openrouter">
-                                    Test Connection
-                                </button>
+                                <p class="key-help-text text-xs text-gray-500 mt-1 hidden">Key is stored in session
+                                    memory only.</p>
                             </div>
-                            <div class="flex justify-between items-start mt-1">
-                                <p id="openrouter-model-loading-indicator"
-                                    class="text-xs text-indigo-400 hidden animate-pulse">Loading models...</p>
-                                <p id="openrouter-model-error-indicator" class="text-xs text-red-400 hidden"></p>
-                            </div>
-                        </div>
 
-                        <div class="bg-blue-900/20 border border-blue-800/50 rounded p-3 text-sm text-blue-200">
-                            <strong>Tip:</strong> OpenRouter provides access to hundreds of models (Chat-GPT, Claude,
-                            Gemini, Deepseek, GLM, etc) many of them for free.
-                        </div>
-                    </div>
-
-                    <!-- Gemini Settings -->
-                    <div id="settings-gemini"
-                        class="api-settings-panel hidden space-y-4 p-5 bg-gray-800 rounded-lg border border-gray-700 transition-all duration-300">
-                        <div class="flex justify-between items-center mb-2">
-                            <h3 class="text-xl font-semibold text-white flex items-center gap-2">Gemini API</h3>
-                            <a href="https://aistudio.google.com/app/apikey" target="_blank" rel="noopener noreferrer"
-                                class="text-indigo-400 hover:text-indigo-300 text-sm font-medium flex items-center gap-1">
-                                Get API Key <span class="text-xs">↗</span>
-                            </a>
-                        </div>
-
-                        <div>
-                            <label for="gemini-api-key" class="block text-sm font-medium text-gray-300 mb-1">API
-                                Key</label>
-                            <div class="relative">
-                                <input type="password" id="gemini-api-key"
-                                    class="w-full bg-gray-900 border border-gray-600 rounded-md p-3 pr-10 text-sm focus:ring-indigo-500 focus:border-indigo-500 transition-shadow"
-                                    placeholder="AIzaSy..." autocomplete="off">
-                                <button
-                                    class="toggle-api-key-visibility absolute inset-y-0 right-0 flex items-center pr-3 text-gray-400 hover:text-gray-100 transition-colors"
-                                    title="Show/Hide API Key">
-                                    <svg class="eye-icon h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                            d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                            d="M2.458 12C3.732 5.943 7.523 2 12 2c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7S3.732 13.057 2.458 9c1.274-4.057 5.065-7 9.542-7z" />
-                                        <path class="eye-slash hidden" stroke-linecap="round" stroke-linejoin="round"
-                                            stroke-width="2" d="M17 17L7 7" />
-                                    </svg>
-                                </button>
-                            </div>
-                        </div>
-
-                        <div>
-                            <label for="gemini-model-name" class="block text-sm font-medium text-gray-300 mb-1">Model
-                                Name</label>
-                            <div class="flex gap-2">
-                                <div class="relative flex-grow">
-                                    <input type="text" id="gemini-model-name" list="gemini-model-list"
-                                        class="w-full bg-gray-900 border border-gray-600 rounded-md p-3 text-sm focus:ring-indigo-500 focus:border-indigo-500"
-                                        placeholder="e.g., gemini-1.5-flash">
-                                    <datalist id="gemini-model-list"></datalist>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-300 mb-1">Model Name</label>
+                                <div class="flex gap-2">
+                                    <div class="relative flex-grow">
+                                        <input type="text" class="model-name-input input-primary" placeholder="">
+                                        <datalist class="model-list"></datalist>
+                                    </div>
+                                    <button
+                                        class="test-conn-btn bg-indigo-600 hover:bg-indigo-700 text-white font-medium py-2 px-4 rounded-md transition-colors shadow-sm whitespace-nowrap">Test
+                                        Connection</button>
                                 </div>
-                                <button
-                                    class="test-connection-btn bg-indigo-600 hover:bg-indigo-700 text-white font-medium py-2 px-4 rounded-md transition-colors shadow-sm whitespace-nowrap"
-                                    data-provider="gemini">
-                                    Test Connection
-                                </button>
-                            </div>
-                            <div class="flex justify-between items-start mt-1">
-                                <p id="gemini-model-loading-indicator"
-                                    class="text-xs text-indigo-400 hidden animate-pulse">
-                                    Loading models...</p>
-                                <p id="gemini-model-error-indicator" class="text-xs text-red-400 hidden"></p>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Custom API Settings -->
-                    <div id="settings-custom"
-                        class="api-settings-panel hidden space-y-4 p-5 bg-gray-800 rounded-lg border border-gray-700 transition-all duration-300">
-                        <div class="flex justify-between items-center mb-2">
-                            <h3 class="text-xl font-semibold text-white">Custom API</h3>
-                            <span
-                                class="text-xs text-gray-400 uppercase tracking-wider font-semibold border border-gray-600 rounded px-2 py-0.5">OpenAI
-                                Compatible</span>
-                        </div>
-
-                        <div>
-                            <label for="custom-api-url" class="block text-sm font-medium text-gray-300 mb-1">API Base
-                                URL</label>
-                            <input type="text" id="custom-api-url"
-                                class="w-full bg-gray-900 border border-gray-600 rounded-md p-3 text-sm focus:ring-indigo-500 focus:border-indigo-500 font-mono"
-                                placeholder="e.g., http://localhost:11434/v1">
-                            <p class="text-xs text-gray-500 mt-1">The base URL for the API (e.g. for Ollama, LM Studio,
-                                etc.)</p>
-                        </div>
-
-                        <div>
-                            <label for="custom-api-key" class="block text-sm font-medium text-gray-300 mb-1">API Key
-                                (Optional)</label>
-                            <div class="relative">
-                                <input type="password" id="custom-api-key"
-                                    class="w-full bg-gray-900 border border-gray-600 rounded-md p-3 pr-10 text-sm focus:ring-indigo-500 focus:border-indigo-500 transition-shadow"
-                                    placeholder="Enter API key if required" autocomplete="off">
-                                <button
-                                    class="toggle-api-key-visibility absolute inset-y-0 right-0 flex items-center pr-3 text-gray-400 hover:text-gray-100 transition-colors"
-                                    title="Show/Hide API Key">
-                                    <svg class="eye-icon h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                            d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                            d="M2.458 12C3.732 5.943 7.523 2 12 2c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7S3.732 13.057 2.458 9c1.274-4.057 5.065-7 9.542-7z" />
-                                        <path class="eye-slash hidden" stroke-linecap="round" stroke-linejoin="round"
-                                            stroke-width="2" d="M17 17L7 7" />
-                                    </svg>
-                                </button>
-                            </div>
-                        </div>
-
-                        <div>
-                            <label for="custom-model-name" class="block text-sm font-medium text-gray-300 mb-1">Model
-                                Name</label>
-                            <div class="flex gap-2">
-                                <div class="relative flex-grow">
-                                    <input type="text" id="custom-model-name" list="custom-model-list"
-                                        class="w-full bg-gray-900 border border-gray-600 rounded-md p-3 text-sm focus:ring-indigo-500 focus:border-indigo-500"
-                                        placeholder="Enter model identifier">
-                                    <datalist id="custom-model-list"></datalist>
+                                <div class="flex justify-between items-start mt-1">
+                                    <p class="loading-indicator text-xs text-indigo-400 hidden animate-pulse">Loading
+                                        models...</p>
+                                    <p class="error-indicator text-xs text-red-400 hidden"></p>
                                 </div>
-                                <button
-                                    class="test-connection-btn bg-indigo-600 hover:bg-indigo-700 text-white font-medium py-2 px-4 rounded-md transition-colors shadow-sm whitespace-nowrap"
-                                    data-provider="custom">
-                                    Test Connection
-                                </button>
+                            </div>
+
+                            <div
+                                class="tip-box hidden bg-blue-900/20 border border-blue-800/50 rounded p-3 text-sm text-blue-200">
+                                <strong>Tip:</strong> <span class="tip-text"></span>
                             </div>
                         </div>
-                    </div>
+                    </template>
                     <details class="bg-gray-900/50 rounded-lg border border-gray-700 mt-6">
                         <summary
                             class="p-4 cursor-pointer font-semibold text-indigo-300 flex justify-between items-center">
@@ -404,8 +288,7 @@
                     Wildcards</label>
                 <span id="search-results-count" class="text-sm text-gray-400 mb-2"></span>
             </div>
-            <input type="text" id="search-wildcards"
-                class="w-full bg-gray-800 border border-gray-600 rounded-md p-2 text-sm focus:ring-indigo-500 focus:border-indigo-500"
+            <input type="text" id="search-wildcards" class="input-primary bg-gray-800"
                 placeholder="Search for wildcards...">
         </div>
         <!-- Statistics Dashboard -->
@@ -423,39 +306,64 @@
                 <span id="stat-pinned" class="text-yellow-400 font-bold ml-1">0</span>
             </div>
         </div>
-        <div class="mt-6 flex flex-wrap justify-center items-center gap-4">
-            <button id="export-yaml"
-                class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-6 rounded-lg shadow-lg transition-transform transform hover:scale-105">Export
-                YAML</button>
-            <button id="import-yaml"
-                class="bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-6 rounded-lg shadow-lg transition-transform transform hover:scale-105">Import
-                YAML</button>
-            <button id="download-all-zip"
-                class="bg-orange-600 hover:bg-orange-700 text-white font-bold py-3 px-6 rounded-lg shadow-lg transition-transform transform hover:scale-105">📦
-                Download
-                ZIP</button>
-            <button id="check-duplicates"
-                class="bg-yellow-600 hover:bg-yellow-700 text-white font-bold py-3 px-6 rounded-lg shadow-lg transition-transform transform hover:scale-105">🔍
-                Check Duplicates</button>
-            <button id="export-config"
-                class="bg-blue-800 hover:bg-blue-900 text-white font-bold py-3 px-6 rounded-lg shadow-lg transition-transform transform hover:scale-105">Export
-                Config</button>
-            <button id="import-config"
-                class="bg-green-800 hover:bg-green-900 text-white font-bold py-3 px-6 rounded-lg shadow-lg transition-transform transform hover:scale-105">Import
-                Config</button>
-            <button id="undo-btn"
-                class="bg-gray-600 hover:bg-gray-700 text-white font-bold py-3 px-6 rounded-lg shadow-lg transition-transform transform hover:scale-105">Undo
-                (Ctrl+Z)</button>
-            <button id="redo-btn"
-                class="bg-gray-600 hover:bg-gray-700 text-white font-bold py-3 px-6 rounded-lg shadow-lg transition-transform transform hover:scale-105">Redo
-                (Ctrl+Y)</button>
-            <button id="help-btn"
-                class="bg-purple-600 hover:bg-purple-700 text-white font-bold py-3 px-6 rounded-lg shadow-lg transition-transform transform hover:scale-105">Help</button>
+        <!-- Primary Toolbar -->
+        <div class="mt-6 flex flex-wrap justify-center items-center gap-3">
+            <!-- Primary Actions -->
+            <button id="export-yaml" class="btn-toolbar btn-primary" title="Export all wildcards to a YAML file">
+                <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                </svg>
+                Export YAML
+            </button>
+            <button id="import-yaml" class="btn-toolbar btn-success" title="Import wildcards from a YAML file">
+                <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
+                </svg>
+                Import YAML
+            </button>
+            <button id="download-all-zip" class="btn-toolbar btn-primary"
+                title="Download all wildcards as a ZIP archive">
+                📦 Download ZIP
+            </button>
+            <button id="check-duplicates" class="btn-toolbar btn-warning"
+                title="Find and highlight duplicate wildcard entries">
+                🔍 Check Duplicates
+            </button>
+            <button id="help-btn" class="btn-toolbar btn-accent" title="View keyboard shortcuts and usage help">
+                ❓ Help
+            </button>
+
+            <!-- Overflow Dropdown -->
+            <div class="relative" id="overflow-menu-container">
+                <button id="overflow-menu-btn" class="btn-toolbar btn-secondary" title="More actions">
+                    <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z" />
+                    </svg>
+                </button>
+                <div id="overflow-menu-dropdown"
+                    class="hidden absolute right-0 mt-2 w-48 bg-gray-800 border border-gray-700 rounded-lg shadow-xl z-50">
+                    <button id="export-config" class="dropdown-item" title="Export application configuration">
+                        📤 Export Config
+                    </button>
+                    <button id="import-config" class="dropdown-item" title="Import application configuration">
+                        📥 Import Config
+                    </button>
+                    <div class="border-t border-gray-700 my-1"></div>
+                    <button id="undo-btn" class="dropdown-item" title="Undo last action (Ctrl+Z)">
+                        ↩️ Undo <span class="text-gray-500 text-xs ml-auto">Ctrl+Z</span>
+                    </button>
+                    <button id="redo-btn" class="dropdown-item" title="Redo last undone action (Ctrl+Y)">
+                        ↪️ Redo <span class="text-gray-500 text-xs ml-auto">Ctrl+Y</span>
+                    </button>
+                </div>
+            </div>
         </div>
-        </header>
 
         <!-- Batch Operations Bar -->
-        <div id="batch-ops-bar" class="mb-4 flex flex-wrap items-center gap-4 bg-gray-800 p-3 rounded-lg">
+        <div id="batch-ops-bar" class="mb-4 flex flex-wrap items-center gap-4 bg-gray-800 p-3 rounded-lg hidden">
             <label class="flex items-center gap-2 cursor-pointer text-sm">
                 <input type="checkbox" id="batch-select-all"
                     class="w-4 h-4 text-indigo-600 bg-gray-700 border-gray-500 rounded focus:ring-indigo-500">
@@ -465,13 +373,13 @@
             <div class="flex gap-2 ml-auto">
                 <button id="batch-expand"
                     class="bg-indigo-600 hover:bg-indigo-700 text-white text-sm py-1 px-3 rounded disabled:opacity-50"
-                    disabled>Expand Selected</button>
+                    title="Expand all selected categories" disabled>Expand Selected</button>
                 <button id="batch-collapse"
                     class="bg-gray-600 hover:bg-gray-700 text-white text-sm py-1 px-3 rounded disabled:opacity-50"
-                    disabled>Collapse Selected</button>
+                    title="Collapse all selected categories" disabled>Collapse Selected</button>
                 <button id="batch-delete"
                     class="bg-red-600 hover:bg-red-700 text-white text-sm py-1 px-3 rounded disabled:opacity-50"
-                    disabled>Delete Selected</button>
+                    title="Delete all selected categories" disabled>Delete Selected</button>
             </div>
         </div>
 
