@@ -403,7 +403,7 @@
             position: fixed;
             top: 20px;
             right: 20px;
-            z-index: 9999;
+            z-index: 99999;
             display: flex;
             flex-direction: column;
             gap: 10px;
@@ -531,6 +531,25 @@
 
         .settings-modal[open] {
             animation: modal-appear 0.25s ease-out;
+        }
+
+        /* Fix text color in settings modal inputs/textareas */
+        .settings-modal textarea,
+        .settings-modal input,
+        .settings-modal select {
+            color: var(--text-primary);
+        }
+
+        .settings-modal textarea::placeholder,
+        .settings-modal input::placeholder {
+            color: var(--text-secondary);
+        }
+
+        /* Toast container when inside a dialog (for top-layer visibility) */
+        .dialog-toast-container {
+            position: fixed;
+            top: 20px;
+            right: 20px;
         }
 
         @keyframes modal-appear {

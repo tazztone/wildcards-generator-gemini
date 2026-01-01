@@ -898,7 +898,22 @@ const UI = {
             toast.classList.add('fade-out');
             setTimeout(() => toast.remove(), 300);
         });
-        this.elements.toastContainer.appendChild(toast);
+
+        // Check if settings dialog is open - if so, append toast inside it
+        // (dialogs use browser's top-layer which sits above all z-indexes)
+        let container = this.elements.toastContainer;
+        if (this.elements.settingsDialog?.open) {
+            // Get or create a toast container inside the dialog
+            let dialogToastContainer = this.elements.settingsDialog.querySelector('.dialog-toast-container');
+            if (!dialogToastContainer) {
+                dialogToastContainer = document.createElement('div');
+                dialogToastContainer.className = 'dialog-toast-container toast-container';
+                this.elements.settingsDialog.appendChild(dialogToastContainer);
+            }
+            container = dialogToastContainer;
+        }
+
+        container.appendChild(toast);
         this.announce(message);
         setTimeout(() => {
             if (toast.parentNode) {
