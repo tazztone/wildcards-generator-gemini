@@ -446,13 +446,31 @@ export const UI = {
 
         // Hide all top level items not in path
         const rootKey = path.split('/')[0];
-        this.elements.container.querySelectorAll('.category-item').forEach(el => {
+        this.elements.container.querySelectorAll('.category-item.level-0').forEach(el => {
             if (el.dataset.path !== rootKey) el.classList.add('hidden');
             else el.classList.remove('hidden');
         });
 
         this.renderBreadcrumbs(path);
         this.elements.breadcrumbs.classList.remove('hidden');
+
+        // Expand all details along the path
+        const parts = path.split('/');
+        let currentPath = '';
+        parts.forEach((part, index) => {
+            currentPath += (index > 0 ? '/' : '') + part;
+            // Search within container to avoid finding breadcrumb spans
+            const el = this.elements.container.querySelector(`[data-path="${currentPath}"]`);
+            if (el && el.tagName === 'DETAILS') {
+                el.open = true;
+            }
+        });
+
+        // Scroll to the target element
+        const targetEl = this.elements.container.querySelector(`[data-path="${path}"]`);
+        if (targetEl) {
+            targetEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
     },
 
     renderBreadcrumbs(path) {
@@ -480,9 +498,6 @@ export const UI = {
         this.elements.breadcrumbs.querySelectorAll('.breadcrumb-item').forEach(el => {
             el.onclick = () => {
                 const targetPath = el.dataset.path;
-                // Navigate/Focus logic here
-                // For now, maybe just scroll or expand details?
-                // Or implementing "Focus Mode" fully implies we only show this path.
                 const event = new CustomEvent('request-focus-path', { detail: { path: targetPath } });
                 document.dispatchEvent(event);
             };
