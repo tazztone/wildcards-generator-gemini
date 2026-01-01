@@ -24,6 +24,8 @@
 
 <body class="antialiased">
 
+    <a href="#wildcard-container" class="sr-only focus:not-sr-only focus:absolute focus:top-4 focus:left-4 focus:z-50 bg-indigo-600 text-white px-4 py-2 rounded-md font-bold shadow-lg">Skip to content</a>
+
     <div id="aria-live-region" class="sr-only" role="status" aria-live="polite" aria-atomic="true"></div>
     <div id="toast-container" class="toast-container" aria-live="polite"></div>
 
@@ -39,7 +41,7 @@
             </div>
             <button id="notification-close"
                 class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 px-4 rounded-lg transition-colors"
-                value="default">Close</button>
+                value="default" aria-label="Close notification">Close</button>
         </div>
     </dialog>
 
@@ -388,7 +390,7 @@
         </div>
 
         <div id="breadcrumbs-container" class="hidden"></div>
-        <main id="wildcard-container" class="space-y-4"></main>
+        <main id="wildcard-container" class="space-y-4" tabindex="-1"></main>
     </div>
 
     <script src="js/main.js" type="module"></script>
@@ -400,7 +402,7 @@
                     <h2 class="text-xl font-semibold text-indigo-400"><span contenteditable="true"
                             class="category-name outline-none focus:bg-indigo-400/50 rounded px-1"></span></h2>
                     <button class="delete-btn text-red-400 hover:text-red-300 font-bold text-xl leading-none"
-                        title="Delete this category">&times;</button>
+                        title="Delete this category" aria-label="Delete this category">&times;</button>
                     <input type="text"
                         class="custom-instructions-input bg-gray-700 text-sm border border-gray-600 rounded-md px-2 py-1 focus:ring-indigo-500 focus:border-indigo-500 flex-grow"
                         placeholder="Folder instructions..." style="min-width: 200px;"
@@ -431,7 +433,7 @@
                         class="wildcard-name outline-none focus:bg-indigo-400/50 rounded px-1"></span> <span
                         class="wildcard-count text-gray-400 text-sm ml-2"></span></h3>
                 <button class="delete-btn text-red-400 hover:text-red-300 font-bold text-xl leading-none"
-                    title="Delete this card">&times;</button>
+                    title="Delete this card" aria-label="Delete this card">&times;</button>
             </div>
             <input type="text"
                 class="custom-instructions-input bg-gray-800 text-sm border border-gray-600 rounded-md px-2 py-1 w-full my-2 focus:ring-indigo-500 focus:border-indigo-500"
@@ -450,7 +452,7 @@
                         class="btn-text">Generate More</span>
                     <div class="loader hidden"></div>
                 </button>
-                <button class="copy-btn text-gray-400 hover:text-white" title="Copy all wildcards"><svg width="20"
+                <button class="copy-btn text-gray-400 hover:text-white" title="Copy all wildcards" aria-label="Copy all wildcards"><svg width="20"
                         height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
                         stroke-linecap="round" stroke-linejoin="round">
                         <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>

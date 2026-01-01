@@ -651,7 +651,7 @@ export const UI = {
                 </div>
                 <div class="flex items-center gap-2 ml-auto flex-shrink-0">
                     <button class="pin-btn btn-action-icon text-yellow-400 hover:text-yellow-300 text-lg transition-all duration-200" title="${isPinned ? 'Unpin' : 'Pin to top'}">${isPinned ? '📌' : '📍'}</button>
-                    <button class="delete-btn btn-action-icon text-red-400 hover:text-red-300 font-bold text-xl leading-none transition-all duration-200" title="Delete this category">&times;</button>
+                    <button class="delete-btn btn-action-icon text-red-400 hover:text-red-300 font-bold text-xl leading-none transition-all duration-200" title="Delete this category" aria-label="Delete this category">&times;</button>
                     <span class="arrow-down transition-transform duration-300 text-indigo-400"><svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg></span>
                 </div>
             </summary>
@@ -665,7 +665,7 @@ export const UI = {
             <div class="text-xs text-gray-400 mb-1 uppercase tracking-wider">${sanitize(parentPath)}</div>
             <div class="flex justify-between items-center mb-2 group">
                 <h3 class="font-bold text-lg text-gray-100 flex-grow"><span contenteditable="true" class="wildcard-name outline-none focus:bg-indigo-400/50 rounded px-1" aria-label="Edit list name">${name.replace(/_/g, ' ')}</span> <span class="wildcard-count text-gray-400 text-sm ml-2">(${(data.wildcards || []).length})</span></h3>
-                <button class="delete-btn btn-action-icon text-red-400 hover:text-red-300 font-bold text-xl leading-none transition-all duration-200" title="Delete this card">&times;</button>
+                <button class="delete-btn btn-action-icon text-red-400 hover:text-red-300 font-bold text-xl leading-none transition-all duration-200" title="Delete this card" aria-label="Delete this card">&times;</button>
             </div>
             <input type="text" class="custom-instructions-input input-ghost bg-transparent text-sm border border-transparent rounded-md px-2 py-1 w-full my-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all duration-200" placeholder="Custom generation instructions..." value="${sanitize(data.instruction || '')}">
             <div class="chip-container custom-scrollbar flex flex-wrap gap-2 bg-gray-800 rounded-md p-2 w-full border border-gray-600 overflow-y-auto" style="max-height: 150px; min-height: 2.5rem;">
@@ -679,7 +679,7 @@ export const UI = {
             <div class="flex justify-between items-center mt-3 flex-wrap gap-2">
                 <button class="generate-btn bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold py-2 px-3 rounded-md flex items-center gap-2 shadow-sm hover:shadow-md transition-all"><span class="btn-text">Generate More</span><div class="loader hidden"></div></button>
                 <div class="flex gap-1 ml-auto">
-                    <button class="copy-btn btn-secondary text-gray-400 hover:text-white p-2 rounded-md transition-colors" title="Copy all wildcards"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg></button>
+                    <button class="copy-btn btn-secondary text-gray-400 hover:text-white p-2 rounded-md transition-colors" title="Copy all wildcards" aria-label="Copy all wildcards"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg></button>
                     <button class="select-all-btn btn-secondary text-xs py-1.5 px-2 rounded-md" title="Select All">Select All</button>
                     <button class="batch-delete-btn bg-red-900/50 hover:bg-red-700 text-red-200 hover:text-white text-xs py-1.5 px-2 rounded-md transition-colors" title="Delete Selected">Delete</button>
                 </div>
