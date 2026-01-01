@@ -257,7 +257,7 @@ const State = {
                 }
 
                 const processedValue = this.processYamlNode(valueNode);
-                if (typeof processedValue === 'object' && !Array.isArray(processedValue)) {
+                if (typeof processedValue === 'object' && processedValue !== null && !Array.isArray(processedValue)) {
                     processedValue.instruction = instruction;
                     result[key] = processedValue;
                 } else if (Array.isArray(processedValue)) {

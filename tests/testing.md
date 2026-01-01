@@ -41,6 +41,9 @@ npx playwright show-report
 - `tests/state_logic.spec.js`: **NEW** - Unit/Integration tests for `js/state.js` logic (Deep Proxy, Undo/Redo, YAML processing).
 - `tests/ui_logic.spec.js`: **NEW** - Logic tests for UI rendering rules (Sorting, Hiding instructions).
 - `tests/utils.spec.js`: **NEW** - Unit tests for utility functions (`sanitize`, `debounce`).
+- `tests/api_logic.spec.js`: **NEW** - Unit/Integration tests for `js/api.js` (Request prep, response parsing, error handling).
+- `tests/dnd_logic.spec.js`: **NEW** - Logic tests for Drag & Drop state mutations.
+- `tests/state_proxy.spec.js`: **NEW** - Logic tests for deep proxy updates and YAML scalar edge cases.
 
 ## Test Categories
 
@@ -126,6 +129,20 @@ npx playwright show-report
 - `sanitize` escapes HTML.
 - `debounce` delays function execution.
 
+### 15. API Logic (New)
+- Request preparation for Gemini, OpenRouter, and Custom APIs.
+- Response parsing handling different JSON/Markdown formats.
+- Error handling for failed connections.
+
+### 16. Drag & Drop Logic (New)
+- Verifies `moveItem` correctly updates state structure.
+- Prevents invalid moves (e.g., parent into child).
+- Respects data types (cannot drop item inside a wildcard list).
+
+### 17. State Proxy Logic (New)
+- Verifies deep proxy traps for nested updates.
+- Verifies YAML processing robustness (handling null scalars).
+
 ## Configuration
 
 Test config in `playwright.config.js`:
@@ -191,3 +208,9 @@ jobs:
 *   **Global State:** Using global classes on `body` is robust for app-wide modes like dragging.
 *   **Re-rendering:** Be aware that the current full-element replacement strategy affects UX and testing state persistence.
 *   **Exposing Modules for Testing:** To test internal logic of modules (State, UI), we expose them to `window` in `main.js` when running locally, allowing `page.evaluate` to access them.
+
+## Key Takeaways from Recent Improvements
+
+*   **Wait for Globals:** When testing exposed modules via `page.evaluate`, always use `await page.waitForFunction(() => typeof window.Module !== 'undefined')` to ensure initialization is complete before access.
+*   **Test Data Validity:** When testing logic that depends on data structure (like Drag & Drop rejection rules), ensure your test setup perfectly matches the expected structure (e.g., Categories must not have a `wildcards` array if they are folders).
+*   **Robust YAML Processing:** When processing YAML, always check for `null` values explicitly, as `typeof null` is `'object'`, which can cause runtime errors if property access is attempted.
