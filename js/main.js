@@ -1,6 +1,7 @@
 import { App } from './app.js';
 import { State } from './state.js';
 import { UI } from './ui.js';
+import { Api } from './api.js';
 import { loadConfig } from './config.js';
 
 document.addEventListener('DOMContentLoaded', async () => {
@@ -12,5 +13,6 @@ document.addEventListener('DOMContentLoaded', async () => {
         window.App = App;
         window.State = State;
         window.UI = UI;
+        window.Api = Api;
     }
 });
