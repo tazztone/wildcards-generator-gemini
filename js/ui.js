@@ -532,7 +532,11 @@ export const UI = {
 
         nonLeafNodes.forEach(node => contentWrapper.appendChild(node));
 
-        // Visual Separator for DnD could go here
+        // Visual Separator for DnD
+        const separator = document.createElement('div');
+        separator.className = 'dnd-separator';
+        separator.dataset.path = path; // The category path
+        contentWrapper.appendChild(separator);
 
         const gridWrapper = document.createElement('div');
         gridWrapper.className = 'grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 w-full';

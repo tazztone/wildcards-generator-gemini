@@ -435,6 +435,7 @@ export const App = {
             e.dataTransfer.setData('text/plain', this.draggedPath);
             e.dataTransfer.effectAllowed = 'move';
             requestAnimationFrame(() => target.classList.add('dragging'));
+            document.body.classList.add('dragging-active');
         }
     },
 
@@ -458,6 +459,12 @@ export const App = {
 
         // Remove all classes first
         target.classList.remove('drop-line-before', 'drop-line-after', 'drop-inside');
+
+        // Check for separator
+        if (target.classList.contains('dnd-separator')) {
+            target.classList.add('drop-inside');
+            return;
+        }
 
         // If it's a category (details), allow dropping inside
         const isCategory = target.tagName === 'DETAILS';
@@ -499,8 +506,10 @@ export const App = {
         const height = rect.height;
         let position = 'after';
         const isCategory = target.tagName === 'DETAILS';
+        const isSeparator = target.classList.contains('dnd-separator');
 
-        if (isCategory && relY > height * 0.25 && relY < height * 0.75) position = 'inside';
+        if (isSeparator) position = 'inside';
+        else if (isCategory && relY > height * 0.25 && relY < height * 0.75) position = 'inside';
         else if (relY < height / 2) position = 'before';
 
         // Execute Move
@@ -574,6 +583,7 @@ export const App = {
 
     handleDragEnd(e) {
         this.draggedPath = null;
+        document.body.classList.remove('dragging-active');
         document.querySelectorAll('.dragging, .drop-target-active, .drop-line-before, .drop-line-after, .drop-inside')
             .forEach(el => el.classList.remove('dragging', 'drop-target-active', 'drop-line-before', 'drop-line-after', 'drop-inside'));
     },
