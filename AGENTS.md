@@ -37,8 +37,10 @@ This file contains context and rules for AI agents working on this repository.
 ├── docs/
 │   └── openrouter_API_docs.md
 └── tests/
-    └── e2e.spec.js      # Playwright tests
-```
+    ├── e2e.spec.js              # Core E2E tests
+    ├── e2e-new-features.spec.js # Feature-specific E2E tests
+    ├── bug_repro.spec.js        # Regression tests for fixed bugs
+    └── extended_coverage.spec.js# Coverage for API errors, Import/Export, etc.
 
 ## API Keys
 
@@ -53,8 +55,6 @@ npm install -D @playwright/test http-server
 npx playwright install chromium
 npx playwright test
 ```
-
-Current: **42 passed**
 
 See [tests/testing.md](tests/testing.md) for detailed testing documentation.
 

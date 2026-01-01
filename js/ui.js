@@ -206,6 +206,22 @@ export const UI = {
             return;
         }
 
+        // Check if a subcategory was added/removed/renamed
+        // If parentPath points to a valid category in DOM, re-render its content
+        // But wait, if we renamed 'Mid' in 'Top/Mid', parentPath is 'Top'.
+        // 'Top' should be re-rendered.
+        const parentEl = this.findElement(parentPath);
+        if (parentEl && parentEl.tagName === 'DETAILS') {
+            const data = State.getObjectByPath(parentPath);
+            if (data) {
+                // Determine level
+                const level = parseInt(parentEl.classList.value.match(/level-(\d+)/)?.[1] || '0');
+                this.renderCategoryContent(parentEl, data, parentPath, level);
+                this.updateStats();
+                return;
+            }
+        }
+
         // CASE 3: Instruction update
         if (changedProp === 'instruction') {
             const targetPath = parentPath;

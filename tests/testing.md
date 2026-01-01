@@ -9,8 +9,8 @@ This document describes the testing strategy and framework for the Wildcard Gene
 | Framework | Playwright |
 | Test Type | End-to-End (E2E) |
 | Browsers | Chromium |
-| Test Location | `tests/e2e.spec.js` |
-| **Status** | **42 passed** ✅ |
+| Test Location | `tests/` |
+| **Status** | **Passed** ✅ |
 
 ## Quick Start
 
@@ -32,69 +32,82 @@ npx playwright test -g "page loads"
 npx playwright show-report
 ```
 
-## Test Categories (42 total)
+## Test Files
 
-### 1. Core UI (5 tests)
+- `tests/e2e.spec.js`: Core functionality tests (UI, Categories, Wildcards, Batch Ops).
+- `tests/e2e-new-features.spec.js`: Newer features like API Settings, Theme Toggle, Toolbar.
+- `tests/bug_repro.spec.js`: Regression tests ensuring reported bugs (e.g., nested renaming) are fixed.
+- `tests/extended_coverage.spec.js`: Advanced scenarios like API Error Handling, Drag & Drop (wip), Import/Export content verification.
+
+## Test Categories
+
+### 1. Core UI
 - Page loading and title
 - Search input functionality
 - Undo/redo buttons visible
 - Export buttons present
 - Help dialog opens
 
-### 2. Category Operations (5 tests)
+### 2. Category Operations
 - Category expands on click
 - Category collapses when clicked again
 - Pin button toggles pinning
 - Add category shows dialog
 - Delete button shows confirmation
+- **Nested Category Renaming** (Bug Fix Verified)
 
-### 3. Wildcard Management (4 tests)
+### 3. Wildcard Management
 - Copy button shows toast
 - Add wildcard input works
 - Generate more button exists
 - Select all/deselect all toggles
 
-### 4. Batch Operations (4 tests)
+### 4. Batch Operations
 - Batch operations bar visible
 - Select all checkbox enables buttons
 - Batch expand works
 - Batch collapse works
 
-### 5. Theme & Settings (5 tests)
+### 5. Theme & Settings
 - Theme toggle visible
 - Theme toggle switches modes
 - Global settings panel toggles
 - API dropdown has options
 - Switching API shows different panel
 
-### 6. Search & Statistics (4 tests)
+### 6. Search & Statistics
 - Statistics dashboard shows counts
 - Search shows result count
 - Check duplicates works
 - Clear search resets view
 
-### 7. Import/Export (5 tests)
+### 7. Import/Export
 - YAML export triggers download
 - ZIP export triggers download
 - Config export triggers download
 - Import YAML button functional
 - Import config button functional
+- **Export Content Verification**: Checks if exported YAML actually contains data.
 
-### 8. Keyboard Shortcuts (4 tests)
+### 8. Keyboard Shortcuts
 - Ctrl+S shows auto-save message
 - Ctrl+Z triggers undo
 - Escape collapses all categories
 - Arrow keys navigate categories
 
-### 9. Dialogs & Popups (3 tests)
+### 9. Dialogs & Popups
 - Notification dialog closes
 - Suggest popup elements exist
 - Generate popup elements exist
 
-### 10. Accessibility (3 tests)
+### 10. Accessibility
 - ARIA live region exists
 - Toast container has aria-live
 - Dialogs have proper roles
+
+### 11. Error Handling (New)
+- API 500 Error triggers notification
+- Network Error triggers notification
 
 ## Configuration
 
@@ -137,29 +150,3 @@ jobs:
 | Tests timeout | Increase timeout, check network |
 | Elements not found | Add explicit waits, check selectors |
 | Server not starting | Verify port 8080 is available |
-
-## Common Failure Patterns & Fixes
-
-### 1. Element Click Fails (Event Propagation)
-**Symptom**: Test clicks a button (e.g., Delete/Pin), but the expected action (toast/modal) doesn't appear.
-**Cause**: The button might have `onclick="event.stopPropagation()"` preventing the event from bubbling to the delegate listener in `js/app.js`.
-**Fix**: Remove `stopPropagation()` from the button and handle the event bubbling correctly in `app.js`.
-
-### 2. Icon State Not Updating
-**Symptom**: Theme toggle test passes class check but visually the icon is wrong (Moon vs Sun).
-**Cause**: Changing the CSS class on `<html>` does NOT automatically update the SVG `d` path inside the button.
-**Fix**: Ensure `js/app.js` has specific logic to update the SVG path attributes when state changes.
-
-### 3. Flaky Tests
-**Symptom**: Tests fail intermittently.
-**Fix**:
-- Use `.first()` if multiple elements match (e.g., `.delete-btn`).
-- Add specific `await expect(...).toBeVisible()` before interacting.
-- Use `page.waitForTimeout()` sparingly; rely on assertions where possible.
-
-## Test Artifacts
-
-After running:
-- **Reports**: `playwright-report/index.html`
-- **Screenshots**: `test-results/` (on failure)
-- **Traces**: `test-results/` (on first retry)

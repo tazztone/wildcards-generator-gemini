@@ -470,11 +470,13 @@ export const App = {
     handleDrop(e) {
         e.preventDefault();
         const target = e.target.closest('[data-path]');
+
+        // Capture draggedPath before cleanup
+        const srcPath = this.draggedPath;
         this.handleDragEnd(e); // Clean visuals immediately
 
-        if (!target || !this.draggedPath) return;
+        if (!target || !srcPath) return;
 
-        const srcPath = this.draggedPath;
         const destPath = target.dataset.path; // This is the item we dropped ON
 
         if (srcPath === destPath) return;
