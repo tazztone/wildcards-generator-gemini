@@ -61,6 +61,11 @@ export const App = {
 
                 saveApiKey(provider, keyInput.value.trim(), persist);
             }
+
+            // OpenRouter Filter Checkboxes
+            if (e.target.id === 'openrouter-free-only' || e.target.id === 'openrouter-json-only') {
+                 UI.filterAndRenderModels('openrouter');
+            }
         });
 
         document.addEventListener('click', (e) => {
@@ -68,6 +73,23 @@ export const App = {
                 const btn = e.target.closest('.test-conn-btn') || e.target;
                 const provider = btn.dataset.provider;
                 Api.testConnection(provider, (msg, type) => UI.showToast(msg, type));
+            }
+            // Refresh Models Button
+            if (e.target.matches('.refresh-models-btn')) {
+                const btn = e.target;
+                const provider = btn.dataset.provider;
+                const icon = btn.textContent;
+                btn.textContent = '⏳';
+                btn.disabled = true;
+
+                Api.testConnection(provider, (msg, type) => UI.showToast(msg, type))
+                    .then(models => {
+                        UI.populateModelList(provider, models);
+                    })
+                    .finally(() => {
+                        btn.textContent = icon;
+                        btn.disabled = false;
+                    });
             }
             // Help Button
             if (e.target.matches('#help-btn')) {

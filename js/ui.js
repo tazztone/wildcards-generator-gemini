@@ -305,7 +305,8 @@ export const UI = {
                 errorId: 'openrouter-model-error-indicator',
                 showKeyHelp: true,
                 showTip: true,
-                tipText: 'OpenRouter provides access to hundreds of models (Chat-GPT, Claude, Gemini, Deepseek, GLM, etc) many of them for free.'
+                tipText: 'OpenRouter provides access to hundreds of models (Chat-GPT, Claude, Gemini, Deepseek, GLM, etc) many of them for free.',
+                extraOptions: true
             },
             {
                 id: 'gemini',
@@ -392,6 +393,35 @@ export const UI = {
             modelInput.id = p.modelNameId;
             modelInput.setAttribute('list', p.modelListId);
             modelInput.placeholder = p.modelPlaceholder;
+
+            // Extra Options (Filters & Refresh)
+            if (p.extraOptions) {
+                // Refresh Button
+                const refreshBtn = document.createElement('button');
+                refreshBtn.className = 'refresh-models-btn p-2 rounded-md bg-gray-700 hover:bg-gray-600 text-gray-300 transition-colors ml-1';
+                refreshBtn.innerHTML = '🔄';
+                refreshBtn.title = 'Refresh Model List';
+                refreshBtn.dataset.provider = p.id;
+                modelInput.parentNode.appendChild(refreshBtn);
+
+                // Checkboxes Container
+                const filtersDiv = document.createElement('div');
+                filtersDiv.className = 'flex flex-wrap gap-4 mt-2 text-sm text-gray-300';
+
+                // Free Only
+                const freeLabel = document.createElement('label');
+                freeLabel.className = 'flex items-center gap-2 cursor-pointer';
+                freeLabel.innerHTML = `<input type="checkbox" id="${p.id}-free-only" class="w-4 h-4 text-indigo-600 bg-gray-700 border-gray-500 rounded focus:ring-indigo-500"> <span>Free Models Only</span>`;
+
+                // JSON Support
+                const jsonLabel = document.createElement('label');
+                jsonLabel.className = 'flex items-center gap-2 cursor-pointer';
+                jsonLabel.innerHTML = `<input type="checkbox" id="${p.id}-json-only" class="w-4 h-4 text-indigo-600 bg-gray-700 border-gray-500 rounded focus:ring-indigo-500" checked> <span>Require JSON Support</span>`;
+
+                filtersDiv.appendChild(freeLabel);
+                filtersDiv.appendChild(jsonLabel);
+                modelInput.closest('div').parentNode.insertBefore(filtersDiv, modelInput.closest('div').nextSibling);
+            }
 
             const datalist = clone.querySelector('.model-list');
             datalist.id = p.modelListId;
@@ -763,5 +793,74 @@ export const UI = {
         toast.textContent = message;
         this.elements.toastContainer.appendChild(toast);
         setTimeout(() => toast.remove(), 3000);
+    },
+
+    populateModelList(provider, models) {
+        if (provider !== 'openrouter') return; // Currently only robustly supporting OpenRouter
+
+        State.state.availableModels = models; // Cache raw models
+        this.filterAndRenderModels(provider);
+    },
+
+    filterAndRenderModels(provider) {
+        const models = State.state.availableModels || [];
+        const datalist = document.getElementById(`${provider}-model-list`);
+        if (!datalist) return;
+
+        const freeOnly = document.getElementById(`${provider}-free-only`)?.checked;
+        const jsonOnly = document.getElementById(`${provider}-json-only`)?.checked;
+
+        datalist.innerHTML = '';
+
+        const filtered = models.filter(m => {
+            // Check Free
+            if (freeOnly) {
+                const pricing = m.pricing;
+                // OpenRouter pricing is string. "0" or "0.0" usually.
+                const isFree = pricing &&
+                               (parseFloat(pricing.prompt) === 0) &&
+                               (parseFloat(pricing.completion) === 0);
+                if (!isFree) return false;
+            }
+
+            // Check JSON
+            if (jsonOnly) {
+                // Check supported_parameters
+                /*
+                  Example m structure:
+                  {
+                    id: "openai/gpt-3.5-turbo",
+                    supported_parameters: ["response_format", ...],
+                    ...
+                  }
+                */
+               // Some models might not have the field populated, assume false then.
+               const supportsJson = m.supported_parameters && m.supported_parameters.includes('response_format');
+               if (!supportsJson) return false;
+            }
+            return true;
+        });
+
+        // Sort: Free ones first? Or just alphabetical?
+        // Let's sort alphabetically by name
+        filtered.sort((a, b) => (a.name || a.id).localeCompare(b.name || b.id));
+
+        filtered.forEach(m => {
+            const option = document.createElement('option');
+            option.value = m.id;
+            // Label format: "Name (Free?)" or just Name
+            const isFree = m.pricing && parseFloat(m.pricing.prompt) === 0;
+            const label = `${m.name || m.id}${isFree ? ' [FREE]' : ''}`;
+            option.textContent = label; // In some browsers this shows in the list
+            datalist.appendChild(option);
+        });
+
+        // Update count helper?
+        const loadingInd = document.getElementById(`${provider}-model-loading-indicator`);
+        if (loadingInd) {
+            loadingInd.textContent = `${filtered.length} models available`;
+            loadingInd.classList.remove('hidden', 'animate-pulse');
+            loadingInd.classList.add('text-green-400');
+        }
     }
 };

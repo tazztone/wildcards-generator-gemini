@@ -44,7 +44,7 @@ function createDeepProxy(target, path = [], onChange) {
 }
 
 const State = {
-    _rawData: { wildcards: {}, systemPrompt: '', suggestItemPrompt: '', pinnedCategories: [] }, // internal raw storage
+    _rawData: { wildcards: {}, systemPrompt: '', suggestItemPrompt: '', pinnedCategories: [], availableModels: [] }, // internal raw storage
     state: null, // The public reactive proxy
 
     history: [],

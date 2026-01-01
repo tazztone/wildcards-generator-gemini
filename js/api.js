@@ -125,13 +125,19 @@ export const Api = {
                 successMessage = `Gemini connection successful! Found ${data.models.length} models.`;
                 models = data.models;
             } else if (provider === 'openrouter') {
-                if (!data.data) throw new Error('Invalid response from OpenRouter API.');
-                successMessage = `OpenRouter connection successful! Found ${data.data.length} models.`;
-                models = data.data;
+                // OpenRouter sometimes returns { data: [...] } and sometimes might return [...] depending on the endpoint/proxy.
+                // Standard is { data: [...] }
+                const list = Array.isArray(data) ? data : (data.data || []);
+                if (!list.length && !Array.isArray(list)) throw new Error('Invalid response from OpenRouter API.');
+
+                successMessage = `OpenRouter connection successful! Found ${list.length} models.`;
+                models = list;
             } else if (provider === 'custom') {
-                if (!data.data) throw new Error('Invalid response from custom API. Expected a "data" array.');
-                successMessage = `Custom API connection successful! Found ${data.data.length} models.`;
-                models = data.data;
+                // OpenAI compatible usually { data: [...] }
+                const list = Array.isArray(data) ? data : (data.data || []);
+                 // Allow empty list if compatible but no models found?
+                successMessage = `Custom API connection successful! Found ${list.length} models.`;
+                models = list;
             }
 
             if (uiCallback) uiCallback(successMessage, 'success');
