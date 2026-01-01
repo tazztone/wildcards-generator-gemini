@@ -375,6 +375,19 @@ export const UI = {
             apiKeyInput.id = p.apiKeyId;
             apiKeyInput.placeholder = p.apiKeyPlaceholder;
 
+            // Associate label with API key input
+            const apiKeyLabel = apiKeyInput.closest('div').previousElementSibling;
+            if (apiKeyLabel && apiKeyLabel.tagName === 'LABEL') {
+                apiKeyLabel.htmlFor = p.apiKeyId;
+            }
+
+            // Toggle visibility button ARIA
+            const toggleBtn = clone.querySelector('.toggle-visibility-btn');
+            if (toggleBtn) {
+                toggleBtn.setAttribute('aria-label', 'Show API Key');
+                toggleBtn.setAttribute('aria-pressed', 'false');
+            }
+
             if (p.apiKeyOptional) {
                 clone.querySelector('.optional-text').classList.remove('hidden');
             }
@@ -393,6 +406,12 @@ export const UI = {
             modelInput.id = p.modelNameId;
             modelInput.setAttribute('list', p.modelListId);
             modelInput.placeholder = p.modelPlaceholder;
+
+            // Associate label with Model Name input
+            const modelLabel = modelInput.closest('div').parentNode.previousElementSibling;
+            if (modelLabel && modelLabel.tagName === 'LABEL') {
+                modelLabel.htmlFor = p.modelNameId;
+            }
 
             // Extra Options (Filters & Refresh)
             if (p.extraOptions) {
