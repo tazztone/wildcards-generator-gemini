@@ -162,6 +162,10 @@ export const UI = {
                 if (existing) {
                     // Replace content? Or just update? For now, re-render category is safest for full object replacement
                     const newEl = this.createCategoryElement(key, value, 0, fullPath, index);
+                    // Preserve state (open/closed)
+                    if (existing.hasAttribute('open')) {
+                        newEl.setAttribute('open', '');
+                    }
                     existing.replaceWith(newEl);
                 } else {
                     // Add new
