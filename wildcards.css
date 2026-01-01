@@ -912,4 +912,42 @@
             background-color: var(--bg-tertiary);
             border: 1px solid var(--border-primary);
             accent-color: var(--accent-primary);
-        }
+        }/* Drag and Drop Separator */
+.dnd-separator {
+    display: none;
+    height: 4px; /* Thin line or small area */
+    margin: 8px 0;
+    border-radius: 2px;
+    background-color: transparent;
+    transition: all 0.2s;
+    /* Optional: make it look like a drop zone */
+    border: 2px dashed var(--border-primary);
+    align-items: center;
+    justify-content: center;
+    color: var(--text-secondary);
+    font-size: 0.8rem;
+    height: 32px; /* Taller for easier target */
+}
+
+/* Only show when dragging anything */
+body.dragging-active .dnd-separator {
+    display: flex;
+}
+
+.dnd-separator.drop-inside {
+    background-color: rgba(99, 102, 241, 0.2);
+    border-color: var(--accent-primary);
+    color: var(--accent-primary);
+    box-shadow: 0 0 10px rgba(99, 102, 241, 0.2);
+}
+
+.dnd-separator::before {
+    content: "Drop here to move to this category";
+    opacity: 0;
+    transition: opacity 0.2s;
+}
+
+.dnd-separator:hover::before,
+.dnd-separator.drop-inside::before {
+    opacity: 1;
+}
