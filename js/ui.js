@@ -89,6 +89,20 @@ export const UI = {
         });
     },
 
+    sortKeys(keys, parentPath) {
+        const pinned = State.state.pinnedCategories || [];
+        return keys.sort((a, b) => {
+            const pathA = parentPath ? `${parentPath}/${a}` : a;
+            const pathB = parentPath ? `${parentPath}/${b}` : b;
+            const isPinnedA = pinned.includes(pathA);
+            const isPinnedB = pinned.includes(pathB);
+
+            if (isPinnedA && !isPinnedB) return -1;
+            if (!isPinnedA && isPinnedB) return 1;
+            return a.localeCompare(b);
+        });
+    },
+
     renderAll() {
         const wildcards = State.state.wildcards;
 
@@ -114,7 +128,8 @@ export const UI = {
         const fragment = document.createDocumentFragment();
 
         // Sort keys
-        const keys = Object.keys(wildcards).sort((a, b) => a.localeCompare(b)); // Helper needed for pinned sort later
+        let keys = Object.keys(wildcards);
+        keys = this.sortKeys(keys, '');
 
         keys.forEach((key, index) => {
             const data = wildcards[key];
@@ -132,6 +147,11 @@ export const UI = {
         const { path, value, type } = e.detail;
 
         // path is Array e.g. ['wildcards', 'Characters'] or ['wildcards', 'Characters', 'wildcards', '0']
+
+        if (path[0] === 'pinnedCategories') {
+            this.renderAll();
+            return;
+        }
 
         if (path[0] !== 'wildcards') {
             // Handle global settings changes if needed
@@ -513,7 +533,8 @@ export const UI = {
         const contentWrapper = element.querySelector('.content-wrapper');
         contentWrapper.innerHTML = '';
 
-        const sortedKeys = Object.keys(data).filter(k => k !== 'instruction').sort();
+        let keys = Object.keys(data).filter(k => k !== 'instruction');
+        const sortedKeys = this.sortKeys(keys, path);
 
         const leafNodes = [];
         const nonLeafNodes = [];
