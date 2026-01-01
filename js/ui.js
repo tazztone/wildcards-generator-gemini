@@ -116,9 +116,9 @@ export const UI = {
         // Sort keys
         const keys = Object.keys(wildcards).sort((a, b) => a.localeCompare(b)); // Helper needed for pinned sort later
 
-        keys.forEach(key => {
+        keys.forEach((key, index) => {
             const data = wildcards[key];
-            const el = this.createCategoryElement(key, data, 0, key);
+            const el = this.createCategoryElement(key, data, 0, key, index);
             fragment.appendChild(el);
         });
 
@@ -154,13 +154,18 @@ export const UI = {
                 // Addition or full replace
                 // Check if exists
                 const existing = this.elements.container.querySelector(`details[data-path="${fullPath}"]`);
+
+                // Calculate index for tinting
+                const allKeys = Object.keys(State.state.wildcards || {}).sort((a, b) => a.localeCompare(b));
+                const index = allKeys.indexOf(key);
+
                 if (existing) {
                     // Replace content? Or just update? For now, re-render category is safest for full object replacement
-                    const newEl = this.createCategoryElement(key, value, 0, fullPath);
+                    const newEl = this.createCategoryElement(key, value, 0, fullPath, index);
                     existing.replaceWith(newEl);
                 } else {
                     // Add new
-                    const newEl = this.createCategoryElement(key, value, 0, fullPath);
+                    const newEl = this.createCategoryElement(key, value, 0, fullPath, index);
                     // Need to insert in correct sort order... for now append
                     // To do it right: find first sibling that should come AFTER this one and insertBefore
                     this.elements.container.insertBefore(newEl, this.elements.container.querySelector('.placeholder-category'));
@@ -429,11 +434,11 @@ export const UI = {
 
     // Creation Methods (Copied & Adapted from wildcards.js)
 
-    createCategoryElement(name, data, level, path) {
+    createCategoryElement(name, data, level, path, index = 0) {
         const element = document.createElement('details');
         element.className = `bg-gray-800 rounded-lg shadow-md group level-${level} category-item`; // added category-item
         if (level === 0) {
-            // element.classList.add(`category-tint-${(index % 10) + 1}`); // Needs index, skipping for now
+            element.classList.add(`category-tint-${(index % 10) + 1}`);
         }
         element.dataset.path = path;
         element.draggable = true;
