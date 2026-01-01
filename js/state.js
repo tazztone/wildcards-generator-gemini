@@ -75,6 +75,13 @@ const State = {
 
     _initProxy() {
         this.state = createDeepProxy(this._rawData, [], (path, value, target, type) => {
+            // 0. Auto-sort wildcard arrays (if enabled/applicable)
+            // If the target is an array and it belongs to a 'wildcards' list, sort it.
+            // Check if path ends with 'wildcards' -> index (so path to array ends in 'wildcards')
+            if (Array.isArray(target) && path.length >= 2 && path[path.length - 2] === 'wildcards') {
+                target.sort((a, b) => a.localeCompare(b));
+            }
+
             // 1. Save to LocalStorage (debouncing could be added here if needed, but synchronous is safer for now)
             this._saveToLocalStorage();
 
