@@ -1161,9 +1161,11 @@ const App = {
         document.addEventListener('keydown', this.handleKeyboardShortcuts.bind(this));
 
         document.addEventListener('click', e => {
-            if (e.target.matches('.test-connection-btn')) {
+            // Fix: Class was test-conn-btn in template, checking both just in case
+            if (e.target.matches('.test-conn-btn') || e.target.closest('.test-conn-btn')) {
                 e.preventDefault();
-                const provider = e.target.dataset.provider;
+                const btn = e.target.closest('.test-conn-btn');
+                const provider = btn.dataset.provider;
                 Api.testConnection(provider);
             }
             if (e.target.matches('#add-category-placeholder-btn')) this.handleAddNewCategory();
