@@ -53,19 +53,11 @@ const State = {
             // Merge configs: defaults < saved
             Object.assign(Config, defaultConfig, savedConfig ? JSON.parse(savedConfig) : {});
 
-            // Load API keys from the separate, git-ignored file
-            try {
-                const keysResponse = await fetch('api-keys.json');
-                if (keysResponse.ok) {
-                    const apiKeys = await keysResponse.json();
-                    // These keys are used for the session and are not saved in localStorage
-                    Config.API_KEY_GEMINI = apiKeys.API_KEY_GEMINI || '';
-                    Config.API_KEY_OPENROUTER = apiKeys.API_KEY_OPENROUTER || '';
-                    Config.API_KEY_CUSTOM = apiKeys.API_KEY_CUSTOM || '';
-                }
-            } catch (keyError) {
-                console.info("api-keys.json not found or invalid, API keys can be entered manually.", keyError);
-            }
+            // Initialize empty API keys - users enter keys via Settings panel
+            // Keys are stored in session only and never persisted to localStorage
+            Config.API_KEY_GEMINI = '';
+            Config.API_KEY_OPENROUTER = '';
+            Config.API_KEY_CUSTOM = '';
 
         } catch (error) {
             console.error("Failed to load configuration:", error);

@@ -28,8 +28,6 @@ This file contains context and rules for AI agents working on this repository.
 ├── manifest.json        # PWA manifest
 ├── sw.js                # Service worker for offline
 ├── config.json          # Default settings
-├── api-keys.json        # (Git-ignored) API keys
-├── api-keys.json.example
 ├── data/
 │   └── initial-data.yaml  # Default wildcard data
 ├── docs/
@@ -37,6 +35,10 @@ This file contains context and rules for AI agents working on this repository.
 └── tests/
     └── e2e.spec.js      # Playwright tests
 ```
+
+## API Keys
+
+API keys (`GEMINI_API_KEY`, `OPENROUTER_API_KEY`) are entered via the **Settings panel** in the browser. Keys are stored in session memory only and never persisted to disk or localStorage for security.
 
 ## Testing
 
