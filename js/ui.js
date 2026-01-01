@@ -410,6 +410,30 @@ export const UI = {
         return document.querySelector(`div[data-path="${path}"]`);
     },
 
+    toggleLoader(path, isLoading) {
+        const card = this.findCardElement(path);
+        if (!card) return;
+
+        // Find the generate button specifically
+        const btn = card.querySelector('.generate-btn');
+        if (!btn) return;
+
+        const loader = btn.querySelector('.loader');
+        const text = btn.querySelector('.btn-text');
+
+        if (isLoading) {
+            btn.disabled = true;
+            btn.classList.add('opacity-75', 'cursor-not-allowed');
+            if (loader) loader.classList.remove('hidden');
+            if (text) text.classList.add('hidden');
+        } else {
+            btn.disabled = false;
+            btn.classList.remove('opacity-75', 'cursor-not-allowed');
+            if (loader) loader.classList.add('hidden');
+            if (text) text.classList.remove('hidden');
+        }
+    },
+
     // Focus Mode / Breadcrumbs
     focusPath(path) {
         if (!path) {

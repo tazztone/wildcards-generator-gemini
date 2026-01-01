@@ -384,7 +384,9 @@ export const App = {
 
     async handleGenerate(path) {
         const obj = State.getObjectByPath(path);
-        // UI Loader toggle logic needed here (omitted for brevity, assume UI handles visual state via specialized method or we add it back)
+
+        UI.toggleLoader(path, true);
+
         try {
             const newItems = await Api.generateWildcards(
                 State.state.systemPrompt,
@@ -402,6 +404,8 @@ export const App = {
             }
         } catch (e) {
             UI.showNotification(e.message);
+        } finally {
+            UI.toggleLoader(path, false);
         }
     },
 
