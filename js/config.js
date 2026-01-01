@@ -4,7 +4,7 @@ export const Config = {};
 
 export async function loadConfig() {
     try {
-        const response = await fetch('config.json');
+        const response = await fetch('config/config.json');
         if (!response.ok) throw new Error('Could not fetch default configuration.');
         const defaultConfig = await response.json();
 
@@ -39,7 +39,7 @@ export async function loadConfig() {
 
 export async function saveConfig() {
     try {
-        const response = await fetch('config.json');
+        const response = await fetch('config/config.json');
         if (!response.ok) throw new Error('Could not fetch default configuration for saving.');
         const defaultConfig = await response.json();
 
