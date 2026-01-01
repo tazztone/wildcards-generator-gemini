@@ -7,7 +7,7 @@ This document describes the testing strategy and framework for the Wildcard Gene
 | Aspect | Details |
 |--------|---------|
 | Framework | Playwright |
-| Test Type | End-to-End (E2E) |
+| Test Type | End-to-End (E2E) & Unit/Integration Logic |
 | Browsers | Chromium |
 | Test Location | `tests/` |
 | **Status** | **Passed** ✅ |
@@ -38,6 +38,9 @@ npx playwright show-report
 - `tests/e2e-new-features.spec.js`: Newer features like API Settings, Theme Toggle, Toolbar.
 - `tests/bug_repro.spec.js`: Regression tests ensuring reported bugs (e.g., nested renaming) are fixed.
 - `tests/extended_coverage.spec.js`: Advanced scenarios like API Error Handling, Drag & Drop (wip), Import/Export content verification.
+- `tests/state_logic.spec.js`: **NEW** - Unit/Integration tests for `js/state.js` logic (Deep Proxy, Undo/Redo, YAML processing).
+- `tests/ui_logic.spec.js`: **NEW** - Logic tests for UI rendering rules (Sorting, Hiding instructions).
+- `tests/utils.spec.js`: **NEW** - Unit tests for utility functions (`sanitize`, `debounce`).
 
 ## Test Categories
 
@@ -109,6 +112,20 @@ npx playwright show-report
 - API 500 Error triggers notification
 - Network Error triggers notification
 
+### 12. State Logic (New)
+- Deep Proxy updates state on nested changes.
+- Undo/Redo correctly restores previous states.
+- Deletion is undoable.
+- YAML processing correctly extracts instructions from comments.
+
+### 13. UI Logic (New)
+- Pinned categories sort before unpinned.
+- 'instruction' keys are hidden from the UI but persist in data.
+
+### 14. Utilities (New)
+- `sanitize` escapes HTML.
+- `debounce` delays function execution.
+
 ## Configuration
 
 Test config in `playwright.config.js`:
@@ -151,6 +168,7 @@ jobs:
 | Tests timeout | Increase timeout, check network |
 | Elements not found | Add explicit waits, check selectors |
 | Server not starting | Verify port 8080 is available |
+| Execution context destroyed | Avoid page navigation during `page.evaluate`, use `_rawData` manipulation instead of `resetState` if it triggers reloads/async chaos. |
 
 ## Known Limitations & Challenges
 
@@ -172,4 +190,4 @@ jobs:
 ### Architecture Insights
 *   **Global State:** Using global classes on `body` is robust for app-wide modes like dragging.
 *   **Re-rendering:** Be aware that the current full-element replacement strategy affects UX and testing state persistence.
-
+*   **Exposing Modules for Testing:** To test internal logic of modules (State, UI), we expose them to `window` in `main.js` when running locally, allowing `page.evaluate` to access them.
