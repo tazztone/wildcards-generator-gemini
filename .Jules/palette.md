@@ -1,3 +1,4 @@
-## 2024-05-23 - Accessibility in Dynamic Content
-**Learning:** Dynamic content injection (like `innerHTML`) bypasses template accessibility checks if the strings are not carefully managed.
-**Action:** When using string interpolation for UI components, ensure ARIA attributes are included directly in the template strings.
+## 2024-05-23 - Initial Palette Session
+
+**Learning:** This project generates UI via string interpolation in `js/ui.js` extensively.
+**Action:** When fixing accessibility or UI polish, I must look at `js/ui.js` primarily, not just `index.html`.

@@ -397,8 +397,11 @@ export const App = {
 
     handleContainerKeydown(e) {
         if (e.key === 'Enter') {
-            e.preventDefault();
-            e.target.blur();
+            // If it's a contenteditable element, blur it to save
+            if (e.target.isContentEditable) {
+                e.preventDefault();
+                e.target.blur();
+            }
         }
     },
 

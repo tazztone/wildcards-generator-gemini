@@ -32,8 +32,29 @@ export const UI = {
             overflowMenuDropdown: document.getElementById('overflow-menu-dropdown'),
             // Search
             search: document.getElementById('search-wildcards'),
+            searchClearBtn: document.getElementById('search-clear-btn'),
             searchResultsCount: document.getElementById('search-results-count'),
         };
+
+        // Search Handlers
+        if (this.elements.search) {
+            this.elements.search.addEventListener('input', (e) => {
+                const val = e.target.value;
+                if (this.elements.searchClearBtn) {
+                    if (val && val.length > 0) this.elements.searchClearBtn.classList.remove('hidden');
+                    else this.elements.searchClearBtn.classList.add('hidden');
+                }
+            });
+        }
+        if (this.elements.searchClearBtn) {
+            this.elements.searchClearBtn.addEventListener('click', () => {
+                this.elements.search.value = '';
+                this.elements.searchClearBtn.classList.add('hidden');
+                this.elements.search.focus();
+                // Trigger input event to update search results (handled in main.js/app.js)
+                this.elements.search.dispatchEvent(new Event('input', { bubbles: true }));
+            });
+        }
 
         // Settings Modal Handlers
         this.elements.settingsBtn?.addEventListener('click', () => {
