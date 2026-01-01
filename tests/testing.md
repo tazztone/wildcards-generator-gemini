@@ -137,7 +137,25 @@ jobs:
 | Tests timeout | Increase timeout, check network |
 | Elements not found | Add explicit waits, check selectors |
 | Server not starting | Verify port 8080 is available |
-| Flaky tests | Use `.first()`, add waits, use JS evaluate |
+
+## Common Failure Patterns & Fixes
+
+### 1. Element Click Fails (Event Propagation)
+**Symptom**: Test clicks a button (e.g., Delete/Pin), but the expected action (toast/modal) doesn't appear.
+**Cause**: The button might have `onclick="event.stopPropagation()"` preventing the event from bubbling to the delegate listener in `js/app.js`.
+**Fix**: Remove `stopPropagation()` from the button and handle the event bubbling correctly in `app.js`.
+
+### 2. Icon State Not Updating
+**Symptom**: Theme toggle test passes class check but visually the icon is wrong (Moon vs Sun).
+**Cause**: Changing the CSS class on `<html>` does NOT automatically update the SVG `d` path inside the button.
+**Fix**: Ensure `js/app.js` has specific logic to update the SVG path attributes when state changes.
+
+### 3. Flaky Tests
+**Symptom**: Tests fail intermittently.
+**Fix**:
+- Use `.first()` if multiple elements match (e.g., `.delete-btn`).
+- Add specific `await expect(...).toBeVisible()` before interacting.
+- Use `page.waitForTimeout()` sparingly; rely on assertions where possible.
 
 ## Test Artifacts
 

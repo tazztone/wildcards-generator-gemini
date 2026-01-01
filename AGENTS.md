@@ -16,7 +16,7 @@ This file contains context and rules for AI agents working on this repository.
 
 1. **No Build Step** — No webpack, vite, npm build. Code runs directly in browser.
 2. **No Backend** — All logic is client-side JavaScript.
-3. **Monolithic Structure** — Main files are `index.html`, `wildcards.js`, `wildcards.css`. Don't split into many small files.
+3. **Modular Structure** — Main entry is `index.html`. Logic is split into modules in `js/`. `wildcards.js` has been removed.
 4. **No Python** — Project was converted from Python to pure web app.
 
 ## Project Structure
@@ -69,3 +69,10 @@ See [tests/testing.md](tests/testing.md) for detailed testing documentation.
 - Toast notifications, PWA/offline, lazy loading
 - Theme toggle, keyboard nav, duplicate detection, pinning
 - Statistics dashboard, batch operations, search highlighting
+
+## Coding Standards
+
+### Event Delegation
+- The application uses event delegation on the main container (`js/app.js`).
+- **DO NOT** use `event.stopPropagation()` on action buttons (like Pin/Delete), as it breaks the delegation.
+- Allow events to bubble and handle them in `js/app.js`.
