@@ -163,7 +163,24 @@ export const UI = {
                     const newEl = this.createCategoryElement(key, value, 0, fullPath);
                     // Need to insert in correct sort order... for now append
                     // To do it right: find first sibling that should come AFTER this one and insertBefore
-                    this.elements.container.insertBefore(newEl, this.elements.container.querySelector('.placeholder-category'));
+                    let inserted = false;
+                    const children = this.elements.container.children;
+                    for (let i = 0; i < children.length; i++) {
+                        const child = children[i];
+                        if (child.classList.contains('category-item')) {
+                            const childPath = child.dataset.path;
+                            // Check if childPath > fullPath
+                            if (childPath.localeCompare(fullPath) > 0) {
+                                this.elements.container.insertBefore(newEl, child);
+                                inserted = true;
+                                break;
+                            }
+                        }
+                    }
+
+                    if (!inserted) {
+                        this.elements.container.insertBefore(newEl, this.elements.container.querySelector('.placeholder-category'));
+                    }
                 }
             }
             this.updateStats();
