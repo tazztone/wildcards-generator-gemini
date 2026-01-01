@@ -310,9 +310,7 @@ export const App = {
                 State.saveStateToHistory();
                 const obj = State.getObjectByPath(path);
                 obj.wildcards.push(input.value.trim()); // Proxy trap triggers
-                // Sort logic should ideally be here or in state trap. 
-                // Simple approach: Sort here.
-                obj.wildcards.sort((a, b) => a.localeCompare(b));
+                // Sort logic is now handled in the state proxy trap.
                 input.value = '';
             }
         }
@@ -346,7 +344,7 @@ export const App = {
                 if (obj.wildcards[index] !== val) {
                     State.saveStateToHistory();
                     obj.wildcards[index] = val; // Nested proxy update
-                    obj.wildcards.sort((a, b) => a.localeCompare(b));
+                    // Sort logic is now handled in the state proxy trap.
                 }
             } else if (e.target.classList.contains('category-name') || e.target.classList.contains('wildcard-name')) {
                 // Rename Key
@@ -399,7 +397,7 @@ export const App = {
                 // For now, let's just add them to demonstrate architecture
                 State.saveStateToHistory();
                 obj.wildcards.push(...newItems);
-                obj.wildcards.sort((a, b) => a.localeCompare(b));
+                // Sort logic is now handled in the state proxy trap.
                 UI.showToast(`Generated ${newItems.length} items`, 'success');
             }
         } catch (e) {
