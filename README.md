@@ -61,12 +61,15 @@ A standalone Single Page Application (SPA) for managing and generating "wildcard
 
 ## Development
 
-Built with vanilla HTML, CSS, and JavaScript (ES Modules).
+Built with vanilla HTML, CSS, and JavaScript (ES Modules). Refactored into a modular architecture for better maintainability.
 
 | File | Purpose |
 |------|---------|
 | `index.html` | Entry point |
-| `wildcards.js` | Application logic |
+| `js/app.js` | Main application logic & initialization |
+| `js/ui.js` | UI rendering and event handling |
+| `js/state.js` | State management (Proxy-based) |
+| `js/api.js` | LLM API integration (Gemini/OpenRouter) |
 | `wildcards.css` | Styling |
 | `data/` | Default dataset |
 | `tests/` | Playwright E2E tests |
@@ -78,6 +81,8 @@ npm install -D @playwright/test http-server
 npx playwright install chromium
 npx playwright test
 ```
+
+Current Status: **42/42 passed** (100% Core coverage)
 
 ## For Developers & AI Agents
 

@@ -9,7 +9,7 @@ This file contains context and rules for AI agents working on this repository.
 | Type | Static Single Page Application (SPA) |
 | Languages | HTML, CSS, JavaScript (ES Modules) |
 | Entry Point | `index.html` |
-| Logic | `wildcards.js` |
+| Logic | `js/app.js` (Modular) |
 | Styling | `wildcards.css` + Tailwind CSS (CDN) |
 
 ## Core Rules
@@ -21,9 +21,13 @@ This file contains context and rules for AI agents working on this repository.
 
 ## Project Structure
 
-```
 ├── index.html           # Entry point
-├── wildcards.js         # App logic
+├── js/                  # App modules
+│   ├── app.js           # Main logic
+│   ├── ui.js            # UI rendering
+│   ├── state.js         # State management
+│   ├── api.js           # LLM integration
+│   └── ...
 ├── wildcards.css        # Styling
 ├── manifest.json        # PWA manifest
 ├── sw.js                # Service worker for offline

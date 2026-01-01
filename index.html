@@ -201,6 +201,10 @@
                                         </svg>
                                     </button>
                                 </div>
+                                <label class="checkbox-label">
+                                    <input type="checkbox" class="api-key-remember checkbox-input">
+                                    <span>Remember API Key (Encrypted in LocalStorage)</span>
+                                </label>
                                 <p class="key-help-text text-xs text-gray-500 mt-1 hidden">Key is stored in session
                                     memory only.</p>
                             </div>
@@ -383,10 +387,11 @@
             </div>
         </div>
 
+        <div id="breadcrumbs-container" class="hidden"></div>
         <main id="wildcard-container" class="space-y-4"></main>
     </div>
 
-    <script src="wildcards.js" type="module"></script>
+    <script src="js/main.js" type="module"></script>
 
     <template id="category-template">
         <details class="bg-gray-800 rounded-lg shadow-md group">

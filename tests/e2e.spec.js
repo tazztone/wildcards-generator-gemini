@@ -97,7 +97,7 @@ test.describe('Wildcard Generator E2E Tests', () => {
 
         test('pin button toggles category pinning', async ({ page }) => {
             const firstCategory = page.locator('#wildcard-container > details').first();
-            const pinBtn = firstCategory.locator('.pin-btn');
+            const pinBtn = firstCategory.locator(':scope > summary .pin-btn');
 
             // Get initial text
             const initialText = await pinBtn.textContent();
@@ -148,13 +148,13 @@ test.describe('Wildcard Generator E2E Tests', () => {
         test('copy button shows toast notification', async ({ page }) => {
             // Expand first category
             const firstCategory = page.locator('#wildcard-container > details').first();
-            await firstCategory.locator('summary').click();
+            await firstCategory.locator(':scope > summary').click();
             await page.waitForTimeout(500);
 
             // Expand a subcategory to find wildcard cards
             const subCategory = firstCategory.locator('details').first();
             if (await subCategory.isVisible()) {
-                await subCategory.locator('summary').click();
+                await subCategory.locator(':scope > summary').click();
                 await page.waitForTimeout(500);
             }
 
@@ -169,12 +169,12 @@ test.describe('Wildcard Generator E2E Tests', () => {
         test('add wildcard input is functional', async ({ page }) => {
             // Expand categories to find a wildcard card
             const firstCategory = page.locator('#wildcard-container > details').first();
-            await firstCategory.locator('summary').click();
+            await firstCategory.locator(':scope > summary').click();
             await page.waitForTimeout(500);
 
             const subCategory = firstCategory.locator('details').first();
             if (await subCategory.isVisible()) {
-                await subCategory.locator('summary').click();
+                await subCategory.locator(':scope > summary').click();
                 await page.waitForTimeout(500);
             }
 
@@ -189,12 +189,12 @@ test.describe('Wildcard Generator E2E Tests', () => {
 
         test('generate more button exists in wildcard cards', async ({ page }) => {
             const firstCategory = page.locator('#wildcard-container > details').first();
-            await firstCategory.locator('summary').click();
+            await firstCategory.locator(':scope > summary').click();
             await page.waitForTimeout(500);
 
             const subCategory = firstCategory.locator('details').first();
             if (await subCategory.isVisible()) {
-                await subCategory.locator('summary').click();
+                await subCategory.locator(':scope > summary').click();
                 await page.waitForTimeout(500);
             }
 
@@ -206,12 +206,12 @@ test.describe('Wildcard Generator E2E Tests', () => {
 
         test('select all button toggles text', async ({ page }) => {
             const firstCategory = page.locator('#wildcard-container > details').first();
-            await firstCategory.locator('summary').click();
+            await firstCategory.locator(':scope > summary').click();
             await page.waitForTimeout(500);
 
             const subCategory = firstCategory.locator('details').first();
             if (await subCategory.isVisible()) {
-                await subCategory.locator('summary').click();
+                await subCategory.locator(':scope > summary').click();
                 await page.waitForTimeout(500);
             }
 
@@ -488,7 +488,7 @@ test.describe('Wildcard Generator E2E Tests', () => {
         test('Ctrl+Z triggers undo', async ({ page }) => {
             // Make a change first (expand a category)
             const firstCategory = page.locator('#wildcard-container > details').first();
-            await firstCategory.locator('summary').click();
+            await firstCategory.locator(':scope > summary').click();
             await page.waitForTimeout(300);
 
             // Press Ctrl+Z
@@ -531,7 +531,7 @@ test.describe('Wildcard Generator E2E Tests', () => {
             const categories = container.locator(':scope > details');
 
             // Focus first category
-            await categories.first().locator('summary').focus();
+            await categories.first().locator(':scope > summary').focus();
 
             // Press down arrow
             await page.keyboard.press('ArrowDown');
