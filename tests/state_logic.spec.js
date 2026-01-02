@@ -85,6 +85,80 @@ test.describe('State Management Logic', () => {
         expect(exists).toBe(true);
     });
 
+    test('Mixed operations (Add, Rename, Delete) with Undo/Redo', async ({ page }) => {
+        test.setTimeout(60000);
+
+        await page.evaluate(async () => {
+            window.State._rawData.wildcards = {};
+            window.State._initProxy();
+            // Start
+            window.State.saveStateToHistory();
+        });
+
+        // 1. Add Category
+        await page.evaluate(() => {
+            window.State.state.wildcards.Cat1 = { instruction: '', wildcards: [] };
+            window.State.saveStateToHistory();
+        });
+
+        // 2. Add Item
+        await page.evaluate(() => {
+            window.State.state.wildcards.Cat1.wildcards.push('Item1');
+            window.State.saveStateToHistory();
+        });
+
+        // 3. Rename Item (Update)
+        await page.evaluate(() => {
+            window.State.state.wildcards.Cat1.wildcards[0] = 'Item1_Renamed';
+            window.State.saveStateToHistory();
+        });
+
+        // 4. Delete Category
+        await page.evaluate(() => {
+            delete window.State.state.wildcards.Cat1;
+            window.State.saveStateToHistory();
+        });
+
+        // Check Delete
+        let hasCat = await page.evaluate(() => !!window.State.state.wildcards.Cat1);
+        expect(hasCat).toBe(false);
+
+        // Undo Delete (Back to 3)
+        await page.evaluate(() => window.State.undo());
+        hasCat = await page.evaluate(() => !!window.State.state.wildcards.Cat1);
+        expect(hasCat).toBe(true);
+        let item = await page.evaluate(() => window.State.state.wildcards.Cat1.wildcards[0]);
+        expect(item).toBe('Item1_Renamed');
+
+        // Undo Rename (Back to 2)
+        await page.evaluate(() => window.State.undo());
+        item = await page.evaluate(() => window.State.state.wildcards.Cat1.wildcards[0]);
+        expect(item).toBe('Item1');
+
+        // Undo Add Item (Back to 1)
+        await page.evaluate(() => window.State.undo());
+        let wcLength = await page.evaluate(() => window.State.state.wildcards.Cat1.wildcards.length);
+        expect(wcLength).toBe(0);
+
+        // Undo Add Category (Back to Start)
+        await page.evaluate(() => window.State.undo());
+        hasCat = await page.evaluate(() => !!window.State.state.wildcards.Cat1);
+        expect(hasCat).toBe(false);
+
+        // Redo All
+        await page.evaluate(() => window.State.redo()); // Add Cat
+        expect(await page.evaluate(() => !!window.State.state.wildcards.Cat1)).toBe(true);
+
+        await page.evaluate(() => window.State.redo()); // Add Item
+        expect(await page.evaluate(() => window.State.state.wildcards.Cat1.wildcards.length)).toBe(1);
+
+        await page.evaluate(() => window.State.redo()); // Rename
+        expect(await page.evaluate(() => window.State.state.wildcards.Cat1.wildcards[0])).toBe('Item1_Renamed');
+
+        await page.evaluate(() => window.State.redo()); // Delete
+        expect(await page.evaluate(() => !!window.State.state.wildcards.Cat1)).toBe(false);
+    });
+
     test('processYamlNode handles instructions in comments', async ({ page }) => {
         const result = await page.evaluate(async () => {
             const yamlText = `

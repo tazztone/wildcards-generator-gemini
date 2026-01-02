@@ -498,6 +498,78 @@ export const UI = {
         }
     },
 
+    handleSearch(query) {
+        const normalizedQuery = query.toLowerCase().trim();
+        let matchCount = 0;
+
+        console.error(`[Search Debug] Query: "${normalizedQuery}"`);
+
+        const scan = (el) => {
+            let hasMatch = false;
+
+            // Check if this element matches
+            // It could be a category (details) or a wildcard card (div)
+            const path = el.dataset.path;
+            const nameEl = el.querySelector('.category-name, .wildcard-name');
+            const name = nameEl ? nameEl.textContent.toLowerCase() : '';
+
+            // Check wildcards inside if it's a card
+            let wildcardsMatch = false;
+            if (el.classList.contains('wildcard-card')) {
+                const chips = el.querySelectorAll('.chip span[contenteditable]');
+                chips.forEach(chip => {
+                    if (chip.textContent.toLowerCase().includes(normalizedQuery)) wildcardsMatch = true;
+                });
+            }
+
+            // Check if logic matches
+            if (normalizedQuery === '' || name.includes(normalizedQuery) || wildcardsMatch) {
+                hasMatch = true;
+                matchCount++;
+            }
+
+            // Recursive check for children categories
+            // If I am a category, check my children. If any child matches, I must match (be visible)
+            // But if I match myself, my children might not, but I am visible.
+
+            // Actually, usually:
+            // If query is empty -> Show all.
+            // If query:
+            //   Show item if:
+            //     1. Name matches
+            //     2. Contains matching wildcards
+            //     3. Contains matching children
+
+            if (el.tagName === 'DETAILS') {
+                const children = el.querySelectorAll(':scope > .content-wrapper > .category-item, :scope > .content-wrapper > .grid > .wildcard-card');
+                let childMatched = false;
+                children.forEach(child => {
+                    if (scan(child)) childMatched = true;
+                });
+
+                if (childMatched) {
+                    hasMatch = true;
+                    el.open = true; // Auto expand to show result
+                }
+            }
+
+            if (hasMatch || normalizedQuery === '') {
+                el.classList.remove('hidden');
+            } else {
+                el.classList.add('hidden');
+            }
+
+            return hasMatch;
+        };
+
+        const topLevel = this.elements.container.querySelectorAll(':scope > .category-item');
+        topLevel.forEach(el => scan(el));
+
+        if (this.elements.searchResultsCount) {
+             this.elements.searchResultsCount.textContent = normalizedQuery ? `${matchCount} matches` : '';
+        }
+    },
+
     findCardElement(path) {
         // Can be a details (if it's a category) or a div (if it's a wildcard list)
         // Actually wildcard lists are div.bg-gray-700

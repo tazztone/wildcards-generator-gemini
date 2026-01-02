@@ -44,6 +44,7 @@ npx playwright show-report
 - `tests/api_logic.spec.js`: **NEW** - Unit/Integration tests for `js/api.js` (Request prep, response parsing, error handling).
 - `tests/dnd_logic.spec.js`: **NEW** - Logic tests for Drag & Drop state mutations.
 - `tests/state_proxy.spec.js`: **NEW** - Logic tests for deep proxy updates and YAML scalar edge cases.
+- `tests/search_logic.spec.js`: **NEW** - Verifies search filtering and result counting (includes recursive visibility checks).
 
 ## Test Categories
 
@@ -214,3 +215,4 @@ jobs:
 *   **Wait for Globals:** When testing exposed modules via `page.evaluate`, always use `await page.waitForFunction(() => typeof window.Module !== 'undefined')` to ensure initialization is complete before access.
 *   **Test Data Validity:** When testing logic that depends on data structure (like Drag & Drop rejection rules), ensure your test setup perfectly matches the expected structure (e.g., Categories must not have a `wildcards` array if they are folders).
 *   **Robust YAML Processing:** When processing YAML, always check for `null` values explicitly, as `typeof null` is `'object'`, which can cause runtime errors if property access is attempted.
+*   **Event Handling in Tests:** For interactions like Search `input` events, standard `page.fill` might sometimes race with event listener attachment in parallel execution. Using `page.waitForFunction` to ensure UI initialization or forcing event dispatch can improve reliability.
