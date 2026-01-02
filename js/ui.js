@@ -685,7 +685,7 @@ export const UI = {
         return `
             <summary class="flex justify-between items-center p-4 cursor-pointer gap-4 group">
                 <div class="flex items-center gap-3 flex-wrap flex-grow">
-                    <input type="checkbox" aria-label="Select category" class="category-batch-checkbox w-4 h-4 text-indigo-600 bg-gray-700 border-gray-500 rounded focus:ring-indigo-500" onclick="event.stopPropagation();">
+                    <input type="checkbox" aria-label="Select category ${sanitize(name.replace(/_/g, ' '))}" class="category-batch-checkbox w-4 h-4 text-indigo-600 bg-gray-700 border-gray-500 rounded focus:ring-indigo-500" onclick="event.stopPropagation();">
                     <h2 class="text-xl font-semibold text-indigo-400 select-none"><span contenteditable="true" class="category-name outline-none focus:bg-indigo-400/50 rounded px-1" aria-label="Edit category name">${name.replace(/_/g, ' ')}</span></h2>
                     <input type="text" aria-label="Folder instructions" class="custom-instructions-input input-ghost bg-transparent text-sm border border-transparent rounded-md px-2 py-1 focus:ring-indigo-500 focus:border-indigo-500 flex-grow transition-all duration-200" placeholder="Folder instructions..." style="min-width: 200px;" value="${sanitize(data.instruction || '')}" onclick="event.stopPropagation();">
                 </div>
@@ -736,7 +736,7 @@ export const UI = {
     },
 
     createChip(wildcard, index) {
-        return `<div class="chip bg-indigo-500/50 text-white text-sm px-2 py-1 rounded-md flex items-center gap-2 whitespace-nowrap" data-index="${index}"><input type="checkbox" class="batch-select bg-gray-700 border-gray-500 text-indigo-600 focus:ring-indigo-500"><span contenteditable="true" class="outline-none focus:bg-indigo-400/50 rounded px-1" aria-label="Edit item">${sanitize(wildcard)}</span></div>`;
+        return `<div class="chip bg-indigo-500/50 text-white text-sm px-2 py-1 rounded-md flex items-center gap-2 whitespace-nowrap" data-index="${index}"><input type="checkbox" aria-label="Select ${sanitize(wildcard)}" class="batch-select bg-gray-700 border-gray-500 text-indigo-600 focus:ring-indigo-500"><span contenteditable="true" class="outline-none focus:bg-indigo-400/50 rounded px-1" aria-label="Edit item">${sanitize(wildcard)}</span></div>`;
     },
 
     createPlaceholderCategory() {
