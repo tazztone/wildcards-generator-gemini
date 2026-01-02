@@ -469,6 +469,9 @@ export const UI = {
             const testBtn = clone.querySelector('.test-conn-btn');
             testBtn.dataset.provider = p.id;
 
+            const testModelBtn = clone.querySelector('.test-model-btn');
+            if (testModelBtn) testModelBtn.dataset.provider = p.id;
+
             const loadingInd = clone.querySelector('.loading-indicator');
             loadingInd.id = p.loadingId || `loading-${p.id}`;
 
@@ -566,7 +569,7 @@ export const UI = {
         topLevel.forEach(el => scan(el));
 
         if (this.elements.searchResultsCount) {
-             this.elements.searchResultsCount.textContent = normalizedQuery ? `${matchCount} matches` : '';
+            this.elements.searchResultsCount.textContent = normalizedQuery ? `${matchCount} matches` : '';
         }
     },
 
@@ -938,8 +941,8 @@ export const UI = {
                 const pricing = m.pricing;
                 // OpenRouter pricing is string. "0" or "0.0" usually.
                 const isFree = pricing &&
-                               (parseFloat(pricing.prompt) === 0) &&
-                               (parseFloat(pricing.completion) === 0);
+                    (parseFloat(pricing.prompt) === 0) &&
+                    (parseFloat(pricing.completion) === 0);
                 if (!isFree) return false;
             }
 
@@ -954,9 +957,9 @@ export const UI = {
                     ...
                   }
                 */
-               // Some models might not have the field populated, assume false then.
-               const supportsJson = m.supported_parameters && m.supported_parameters.includes('response_format');
-               if (!supportsJson) return false;
+                // Some models might not have the field populated, assume false then.
+                const supportsJson = m.supported_parameters && m.supported_parameters.includes('response_format');
+                if (!supportsJson) return false;
             }
             return true;
         });

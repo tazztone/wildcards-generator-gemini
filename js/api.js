@@ -135,7 +135,7 @@ export const Api = {
             } else if (provider === 'custom') {
                 // OpenAI compatible usually { data: [...] }
                 const list = Array.isArray(data) ? data : (data.data || []);
-                 // Allow empty list if compatible but no models found?
+                // Allow empty list if compatible but no models found?
                 successMessage = `Custom API connection successful! Found ${list.length} models.`;
                 models = list;
             }
@@ -222,6 +222,94 @@ export const Api = {
         } catch (e) {
             console.error("Failed to parse AI response:", result, e);
             throw new Error(`The AI returned a malformed response. Error: ${e.message}`);
+        }
+    },
+
+    /**
+     * Test the currently selected model with a minimal JSON request.
+     * Returns stats including response time and JSON support confirmation.
+     */
+    async testModel(provider, apiKey, modelName, uiCallback) {
+        const startTime = performance.now();
+
+        try {
+            let url, headers, payload;
+
+            if (provider === 'gemini') {
+                url = `https://generativelanguage.googleapis.com/v1beta/models/${modelName}:generateContent?key=${apiKey}`;
+                headers = { 'Content-Type': 'application/json' };
+                payload = {
+                    contents: [{ parts: [{ text: 'Respond with only: {"status":"ok"}' }] }],
+                    generationConfig: {
+                        temperature: 0.1,
+                        maxOutputTokens: 50
+                    }
+                };
+            } else if (provider === 'openrouter') {
+                url = 'https://openrouter.ai/api/v1/chat/completions';
+                headers = {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${apiKey}`,
+                    'HTTP-Referer': window.location.origin
+                };
+                payload = {
+                    model: modelName,
+                    messages: [{ role: 'user', content: 'Respond with only: {"status":"ok"}' }],
+                    response_format: { type: 'json_object' },
+                    max_tokens: 50,
+                    temperature: 0.1
+                };
+            } else { // custom
+                const baseUrl = document.getElementById('custom-api-url')?.value || Config?.API_URL_CUSTOM || '';
+                url = baseUrl.replace(/\/$/, '') + '/chat/completions';
+                headers = {
+                    'Content-Type': 'application/json',
+                    ...(apiKey && { 'Authorization': `Bearer ${apiKey}` })
+                };
+                payload = {
+                    model: modelName,
+                    messages: [{ role: 'user', content: 'Respond with only: {"status":"ok"}' }],
+                    response_format: { type: 'json_object' },
+                    max_tokens: 50,
+                    temperature: 0.1
+                };
+            }
+
+            const response = await fetch(url, {
+                method: 'POST',
+                headers,
+                body: JSON.stringify(payload)
+            });
+
+            const duration = Math.round(performance.now() - startTime);
+
+            if (!response.ok) {
+                const errorText = await response.text();
+                throw new Error(`HTTP ${response.status}: ${errorText.slice(0, 100)}`);
+            }
+
+            const result = await response.json();
+            const supportsJson = result.choices?.[0]?.message?.content?.includes('{') ||
+                result.candidates?.[0]?.content?.parts?.[0]?.text?.includes('{');
+
+            const stats = {
+                responseTime: duration,
+                modelName: modelName,
+                supportsJson: supportsJson,
+                provider: provider
+            };
+
+            if (uiCallback) {
+                uiCallback({ success: true, stats });
+            }
+
+            return stats;
+        } catch (error) {
+            const duration = Math.round(performance.now() - startTime);
+            if (uiCallback) {
+                uiCallback({ success: false, error: error.message, responseTime: duration });
+            }
+            throw error;
         }
     }
 };

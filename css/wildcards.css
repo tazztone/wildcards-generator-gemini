@@ -951,3 +951,40 @@ body.dragging-active .dnd-separator {
 .dnd-separator.drop-inside::before {
     opacity: 1;
 }
+
+/* =================================================================
+   DUPLICATE HIGHLIGHTING
+   ================================================================= */
+
+.chip-duplicate {
+    background: linear-gradient(135deg, rgba(245, 158, 11, 0.4) 0%, rgba(234, 88, 12, 0.4) 100%) !important;
+    border: 2px solid #f59e0b !important;
+    animation: duplicate-pulse 2s ease-in-out infinite;
+    box-shadow: 0 0 8px rgba(245, 158, 11, 0.3);
+}
+
+.chip-duplicate::before {
+    content: "⚠";
+    margin-right: 4px;
+    font-size: 10px;
+}
+
+@keyframes duplicate-pulse {
+    0%, 100% {
+        box-shadow: 0 0 8px rgba(245, 158, 11, 0.3);
+    }
+    50% {
+        box-shadow: 0 0 16px rgba(245, 158, 11, 0.6);
+    }
+}
+
+.duplicate-focus {
+    outline: 2px dashed #f59e0b;
+    outline-offset: 2px;
+}
+
+/* Dropdown section label */
+.dropdown-label {
+    pointer-events: none;
+    font-weight: 600;
+}

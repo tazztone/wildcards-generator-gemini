@@ -1,7 +1,7 @@
 import { State } from './state.js';
 import { UI } from './ui.js';
 import { Api } from './api.js';
-import { Config, saveApiKey } from './config.js';
+import { Config, saveApiKey, saveConfig } from './config.js';
 import { debounce } from './utils.js';
 
 export const App = {
@@ -64,7 +64,7 @@ export const App = {
 
             // OpenRouter Filter Checkboxes
             if (e.target.id === 'openrouter-free-only' || e.target.id === 'openrouter-json-only') {
-                 UI.filterAndRenderModels('openrouter');
+                UI.filterAndRenderModels('openrouter');
             }
         });
 
@@ -72,34 +72,141 @@ export const App = {
             if (e.target.matches('.test-conn-btn') || e.target.closest('.test-conn-btn')) {
                 const btn = e.target.closest('.test-conn-btn') || e.target;
                 const provider = btn.dataset.provider;
-                Api.testConnection(provider, (msg, type) => UI.showToast(msg, type));
-            }
-            // Refresh Models Button
-            if (e.target.matches('.refresh-models-btn')) {
-                const btn = e.target;
-                const provider = btn.dataset.provider;
-                const icon = btn.textContent;
-                btn.textContent = '⏳';
                 btn.disabled = true;
-
+                btn.textContent = '⏳';
                 Api.testConnection(provider, (msg, type) => UI.showToast(msg, type))
                     .then(models => {
                         UI.populateModelList(provider, models);
                     })
                     .finally(() => {
-                        btn.textContent = icon;
+                        btn.textContent = '🔌 Test';
                         btn.disabled = false;
                     });
             }
+            // Test Model Button
+            if (e.target.matches('.test-model-btn') || e.target.closest('.test-model-btn')) {
+                const btn = e.target.closest('.test-model-btn') || e.target;
+                const provider = btn.dataset.provider;
+                const panel = document.querySelector(`#settings-${provider}`);
+                const apiKey = panel?.querySelector('.api-key-input')?.value;
+                const modelName = panel?.querySelector('.model-name-input')?.value;
+                const statsEl = panel?.querySelector('.model-stats');
+
+                if (!modelName?.trim()) {
+                    UI.showToast('Please enter a model name first', 'warning');
+                    return;
+                }
+
+                btn.disabled = true;
+                const origText = btn.textContent;
+                btn.textContent = '⏳ Testing...';
+                if (statsEl) {
+                    statsEl.classList.add('hidden');
+                    statsEl.textContent = '';
+                }
+
+                Api.testModel(provider, apiKey, modelName, (result) => {
+                    if (result.success) {
+                        UI.showToast(`✅ Model responded in ${result.stats.responseTime}ms`, 'success');
+                        if (statsEl) {
+                            statsEl.textContent = `Last test: ${result.stats.responseTime}ms${result.stats.supportsJson ? ' ✓ JSON' : ''}`;
+                            statsEl.classList.remove('hidden');
+                        }
+                    } else {
+                        UI.showToast(`❌ Test failed: ${result.error}`, 'error');
+                    }
+                }).finally(() => {
+                    btn.textContent = origText;
+                    btn.disabled = false;
+                });
+            }
             // Help Button
             if (e.target.matches('#help-btn')) {
-                UI.showNotification(`Welcome!\n\nKey Features:\n- Global Settings: Set API keys and choose your provider.\n- Recursive Categories: Add nested categories for better organization.\n- Drag & Drop: Reorder items by dragging them into category folders.\n- Inline Renaming: Click any title to rename it.\n- Generate More: Use AI to create new wildcards for any list.\n- Export/Import: Save and load your entire setup.\n- Undo/Redo: Revert or re-apply changes.\n- Check Duplicates: Scan for duplicates across all categories.\n- Theme Toggle: Switch between dark and light mode.`);
+                UI.showNotification(`
+<div class="text-left space-y-4 max-w-lg">
+    <h3 class="text-xl font-bold text-indigo-300 flex items-center gap-2">🚀 Getting Started</h3>
+    <ul class="list-none space-y-2 text-sm">
+        <li class="flex items-start gap-2">
+            <span class="text-indigo-400">⚙️</span>
+            <span><strong>Settings:</strong> Configure API keys via the gear icon in the toolbar</span>
+        </li>
+        <li class="flex items-start gap-2">
+            <span class="text-green-400">📁</span>
+            <span><strong>Categories:</strong> Click to expand, drag to reorder or nest</span>
+        </li>
+        <li class="flex items-start gap-2">
+            <span class="text-purple-400">✨</span>
+            <span><strong>Generate:</strong> Use AI to create new wildcards for any list</span>
+        </li>
+        <li class="flex items-start gap-2">
+            <span class="text-blue-400">💾</span>
+            <span><strong>Export/Import:</strong> Save and load your entire setup as YAML or ZIP</span>
+        </li>
+    </ul>
+
+    <h3 class="text-lg font-bold text-indigo-300 mt-4">⌨️ Keyboard Shortcuts</h3>
+    <div class="grid grid-cols-2 gap-2 text-sm bg-gray-800/50 rounded-lg p-3">
+        <div><kbd class="px-2 py-1 bg-gray-700 rounded text-xs">Ctrl+S</kbd></div><div class="text-gray-400">Auto-save reminder</div>
+        <div><kbd class="px-2 py-1 bg-gray-700 rounded text-xs">Ctrl+Z</kbd></div><div class="text-gray-400">Undo</div>
+        <div><kbd class="px-2 py-1 bg-gray-700 rounded text-xs">Ctrl+Y</kbd></div><div class="text-gray-400">Redo</div>
+        <div><kbd class="px-2 py-1 bg-gray-700 rounded text-xs">Escape</kbd></div><div class="text-gray-400">Collapse all</div>
+        <div><kbd class="px-2 py-1 bg-gray-700 rounded text-xs">↑ / ↓</kbd></div><div class="text-gray-400">Navigate categories</div>
+    </div>
+
+    <h3 class="text-lg font-bold text-indigo-300 mt-4">💡 Tips</h3>
+    <ul class="text-sm text-gray-300 list-disc list-inside space-y-1">
+        <li>Click any title to rename it inline</li>
+        <li>Use "Check Duplicates" to find and manage repeated entries</li>
+        <li>Pin frequently used categories to keep them at the top</li>
+        <li>Use the overflow menu (⋮) for reset options and config export</li>
+    </ul>
+</div>
+`);
             }
             // Check Duplicates
             if (e.target.matches('#check-duplicates')) {
                 this.handleCheckDuplicates();
             }
-            // Reset
+            // Reset Options
+            if (e.target.matches('#reset-localstorage')) {
+                UI.showNotification('Clear all saved data from localStorage?\nThis includes remembered API keys and settings.', true, () => {
+                    const keys = Object.keys(localStorage).filter(k => k.startsWith('wildcards'));
+                    keys.forEach(k => localStorage.removeItem(k));
+                    UI.showToast(`Cleared ${keys.length} localStorage items`, 'success');
+                });
+            }
+            if (e.target.matches('#reset-sessionstorage')) {
+                UI.showNotification('Clear session storage?\nThis includes temporary API keys and UI state.', true, () => {
+                    const keys = Object.keys(sessionStorage).filter(k => k.startsWith('wildcards'));
+                    keys.forEach(k => sessionStorage.removeItem(k));
+                    UI.showToast(`Cleared ${keys.length} sessionStorage items`, 'success');
+                });
+            }
+            if (e.target.matches('#reset-defaults')) {
+                UI.showNotification('Reset everything to defaults?\n⚠️ This will clear all wildcards, settings, and history!', true, () => {
+                    State.resetState();
+                    UI.showToast('Reset to defaults complete', 'success');
+                });
+            }
+            if (e.target.matches('#reload-default-data')) {
+                UI.showNotification('Reload default wildcard data?\nYour settings will be preserved.', true, async () => {
+                    try {
+                        const response = await fetch('data/wildcards.yaml');
+                        const text = await response.text();
+                        const YAML = (await import('https://cdn.jsdelivr.net/npm/yaml@2.8.2/browser/index.js')).default;
+                        const data = YAML.parse(text);
+                        State.saveStateToHistory();
+                        State.state.wildcards = data.wildcards || data;
+                        if (data.systemPrompt) State.state.systemPrompt = data.systemPrompt;
+                        if (data.suggestItemPrompt) State.state.suggestItemPrompt = data.suggestItemPrompt;
+                        UI.showToast('Default data reloaded', 'success');
+                    } catch (err) {
+                        console.error('Failed to reload default data:', err);
+                        UI.showToast(`Failed: ${err.message}`, 'error');
+                    }
+                });
+            }
+            // Legacy reset button (if exists)
             if (e.target.matches('#reset-btn')) {
                 UI.showNotification('Are you sure you want to reset everything?', true, () => State.resetState());
             }
@@ -129,6 +236,14 @@ export const App = {
             // Export Config
             if (e.target.matches('#export-config')) {
                 this.handleExportConfig();
+            }
+            // Import YAML
+            if (e.target.matches('#import-yaml')) {
+                this.handleImportYAML();
+            }
+            // Import Config
+            if (e.target.matches('#import-config')) {
+                this.handleImportConfig();
             }
             // Batch Operations
             if (e.target.matches('#batch-expand')) this.handleBatchAction('expand');
@@ -186,6 +301,10 @@ export const App = {
         }
     },
 
+    // Stored duplicates for filtering/highlighting
+    _lastDuplicates: null,
+    _duplicateMap: null,
+
     handleCheckDuplicates() {
         const wildcardMap = new Map();
         const scanData = (data, path) => {
@@ -193,10 +312,10 @@ export const App = {
                 const item = data[key];
                 const currentPath = path ? `${path}/${key}` : key;
                 if (item.wildcards && Array.isArray(item.wildcards)) {
-                    item.wildcards.forEach(wildcard => {
+                    item.wildcards.forEach((wildcard, idx) => {
                         const normalized = wildcard.toLowerCase().trim();
                         if (!wildcardMap.has(normalized)) wildcardMap.set(normalized, []);
-                        wildcardMap.get(normalized).push({ path: currentPath, original: wildcard });
+                        wildcardMap.get(normalized).push({ path: currentPath, original: wildcard, index: idx });
                     });
                 } else if (typeof item === 'object' && item !== null) {
                     scanData(item, currentPath);
@@ -204,14 +323,137 @@ export const App = {
             });
         };
         scanData(State.state.wildcards, '');
+
+        // Build duplicates list
         const duplicates = [];
-        wildcardMap.forEach((locations, wildcard) => {
-            if (locations.length > 1) duplicates.push({ wildcard: locations[0].original, count: locations.length });
+        const duplicateNormalized = new Set();
+        wildcardMap.forEach((locations, normalized) => {
+            if (locations.length > 1) {
+                duplicates.push({ normalized, locations, count: locations.length });
+                duplicateNormalized.add(normalized);
+            }
         });
+
+        this._lastDuplicates = duplicates;
+        this._duplicateMap = duplicateNormalized;
+
         if (duplicates.length === 0) {
             UI.showToast('No duplicates found!', 'success');
-        } else {
-            UI.showNotification(`Found ${duplicates.length} duplicate wildcard(s).`);
+            return;
+        }
+
+        // Show actionable dialog
+        const totalOccurrences = duplicates.reduce((sum, d) => sum + d.count, 0);
+        const message = `
+<div class="text-left space-y-3">
+    <p class="text-lg">Found <strong class="text-indigo-400">${duplicates.length}</strong> duplicate wildcards (${totalOccurrences} total occurrences)</p>
+    <div class="space-y-2">
+        <button id="dupe-highlight" class="w-full text-left px-3 py-2 bg-yellow-900/30 hover:bg-yellow-800/50 rounded-md transition-colors" title="Add visual highlights to all duplicate wildcards in the UI">
+            🔆 <strong>Highlight Duplicates</strong>
+            <span class="text-sm text-gray-400 block ml-6">Add visual indicators to duplicate wildcards</span>
+        </button>
+        <button id="dupe-filter" class="w-full text-left px-3 py-2 bg-blue-900/30 hover:bg-blue-800/50 rounded-md transition-colors" title="Filter view to show only cards containing duplicate wildcards">
+            🔍 <strong>Show Duplicates Only</strong>
+            <span class="text-sm text-gray-400 block ml-6">Filter to show only cards with duplicates</span>
+        </button>
+        <button id="dupe-clear" class="w-full text-left px-3 py-2 bg-gray-700/30 hover:bg-gray-600/50 rounded-md transition-colors" title="Remove all duplicate highlights and filters">
+            ✖️ <strong>Clear Highlights</strong>
+            <span class="text-sm text-gray-400 block ml-6">Remove all duplicate visual indicators</span>
+        </button>
+    </div>
+    <details class="mt-4">
+        <summary class="cursor-pointer text-indigo-400 hover:text-indigo-300">View duplicate list (${duplicates.length})</summary>
+        <ul class="mt-2 text-sm max-h-40 overflow-y-auto custom-scrollbar space-y-1">
+            ${duplicates.slice(0, 20).map(d => `<li class="text-gray-300">"${d.locations[0].original}" - ${d.count} occurrences</li>`).join('')}
+            ${duplicates.length > 20 ? `<li class="text-gray-500">...and ${duplicates.length - 20} more</li>` : ''}
+        </ul>
+    </details>
+</div>`;
+
+        UI.showNotification(message, false, null, false, true); // isHtml = true
+
+        // Bind action buttons after dialog renders
+        setTimeout(() => {
+            document.getElementById('dupe-highlight')?.addEventListener('click', () => {
+                this.highlightDuplicates();
+                UI.elements.notificationDialog?.close();
+            });
+            document.getElementById('dupe-filter')?.addEventListener('click', () => {
+                this.filterToDuplicates();
+                UI.elements.notificationDialog?.close();
+            });
+            document.getElementById('dupe-clear')?.addEventListener('click', () => {
+                this.clearDuplicateHighlights();
+                UI.elements.notificationDialog?.close();
+            });
+        }, 100);
+    },
+
+    highlightDuplicates() {
+        if (!this._duplicateMap || this._duplicateMap.size === 0) {
+            UI.showToast('No duplicates to highlight', 'info');
+            return;
+        }
+        document.querySelectorAll('.chip').forEach(chip => {
+            const text = chip.querySelector('span[contenteditable]')?.textContent?.toLowerCase().trim();
+            if (text && this._duplicateMap.has(text)) {
+                chip.classList.add('chip-duplicate');
+            }
+        });
+        UI.showToast(`Highlighted ${this._duplicateMap.size} duplicate wildcards`, 'success');
+    },
+
+    filterToDuplicates() {
+        if (!this._lastDuplicates || this._lastDuplicates.length === 0) {
+            UI.showToast('No duplicates to filter', 'info');
+            return;
+        }
+        // Get all paths containing duplicates
+        const pathsWithDupes = new Set();
+        this._lastDuplicates.forEach(d => {
+            d.locations.forEach(loc => pathsWithDupes.add(loc.path));
+        });
+
+        // Hide cards not in the set
+        document.querySelectorAll('.wildcard-card').forEach(card => {
+            const path = card.dataset.path;
+            if (pathsWithDupes.has(path)) {
+                card.classList.remove('hidden');
+                card.classList.add('duplicate-focus');
+            } else {
+                card.classList.add('hidden');
+            }
+        });
+
+        // Expand categories containing duplicates
+        pathsWithDupes.forEach(path => {
+            const parts = path.split('/');
+            let currentPath = '';
+            parts.forEach((part, i) => {
+                currentPath += (i > 0 ? '/' : '') + part;
+                const el = document.querySelector(`details[data-path="${currentPath}"]`);
+                if (el) el.open = true;
+            });
+        });
+
+        this.highlightDuplicates();
+        UI.showToast(`Showing ${pathsWithDupes.size} cards with duplicates`, 'success');
+    },
+
+    clearDuplicateHighlights() {
+        document.querySelectorAll('.chip-duplicate').forEach(el => el.classList.remove('chip-duplicate'));
+        document.querySelectorAll('.duplicate-focus').forEach(el => el.classList.remove('duplicate-focus'));
+        // Only remove hidden class from cards that were hidden by duplicate filter (marked with duplicate-focus)
+        // Don't remove hidden from search-filtered items
+        document.querySelectorAll('.wildcard-card.hidden').forEach(el => {
+            // If this was hidden by duplicate filter, it should have been in a duplicate path
+            // For now, just re-render to restore search state
+        });
+        UI.showToast('Duplicate highlights cleared', 'info');
+        // Re-run search to restore proper visibility
+        const searchInput = document.getElementById('search-wildcards');
+        if (searchInput && searchInput.value) {
+            searchInput.dispatchEvent(new Event('input', { bubbles: true }));
         }
     },
 
@@ -680,6 +922,99 @@ export const App = {
             console.error('Export Config failed:', e);
             UI.showToast('Export failed', 'error');
         }
+    },
+
+    handleImportYAML() {
+        const input = document.createElement('input');
+        input.type = 'file';
+        input.accept = '.yaml,.yml';
+        input.title = 'Select a YAML file to import wildcards';
+        input.onchange = async (e) => {
+            const file = e.target.files[0];
+            if (!file) return;
+
+            try {
+                const text = await file.text();
+                const YAML = (await import('https://cdn.jsdelivr.net/npm/yaml@2.8.2/browser/index.js')).default;
+                const data = YAML.parse(text);
+
+                if (!data || typeof data !== 'object') {
+                    throw new Error('Invalid YAML structure');
+                }
+
+                // Merge or replace - ask user
+                const hasExisting = Object.keys(State.state.wildcards).length > 0;
+                if (hasExisting) {
+                    UI.showNotification('Merge with existing data or replace everything?', true, () => {
+                        // Replace mode
+                        State.saveStateToHistory();
+                        if (data.wildcards) {
+                            State.state.wildcards = data.wildcards;
+                        } else {
+                            State.state.wildcards = data;
+                        }
+                        if (data.systemPrompt) State.state.systemPrompt = data.systemPrompt;
+                        if (data.suggestItemPrompt) State.state.suggestItemPrompt = data.suggestItemPrompt;
+                        UI.showToast(`Imported ${file.name} (replaced)`, 'success');
+                    });
+                    // For merge, we'd need a separate button. For now, confirm = replace
+                } else {
+                    State.saveStateToHistory();
+                    if (data.wildcards) {
+                        State.state.wildcards = data.wildcards;
+                    } else {
+                        State.state.wildcards = data;
+                    }
+                    if (data.systemPrompt) State.state.systemPrompt = data.systemPrompt;
+                    if (data.suggestItemPrompt) State.state.suggestItemPrompt = data.suggestItemPrompt;
+                    UI.showToast(`Imported ${file.name}`, 'success');
+                }
+            } catch (err) {
+                console.error('Import YAML failed:', err);
+                UI.showToast(`Import failed: ${err.message}`, 'error');
+            }
+        };
+        input.click();
+    },
+
+    handleImportConfig() {
+        const input = document.createElement('input');
+        input.type = 'file';
+        input.accept = '.json';
+        input.title = 'Select a JSON config file to import settings';
+        input.onchange = async (e) => {
+            const file = e.target.files[0];
+            if (!file) return;
+
+            try {
+                const text = await file.text();
+                const config = JSON.parse(text);
+
+                // Apply config values
+                if (config.apiEndpoint) Config.API_ENDPOINT = config.apiEndpoint;
+                if (config.modelNameGemini) Config.MODEL_NAME_GEMINI = config.modelNameGemini;
+                if (config.modelNameOpenrouter) Config.MODEL_NAME_OPENROUTER = config.modelNameOpenrouter;
+                if (config.modelNameCustom) Config.MODEL_NAME_CUSTOM = config.modelNameCustom;
+                if (config.apiUrlCustom) Config.API_URL_CUSTOM = config.apiUrlCustom;
+                if (config.historyLimit) Config.HISTORY_LIMIT = config.historyLimit;
+                if (config.searchDebounceDelay) Config.SEARCH_DEBOUNCE_DELAY = config.searchDebounceDelay;
+
+                // Persist to storage
+                saveConfig();
+
+                // Update UI
+                const endpointSelect = document.getElementById('api-endpoint');
+                if (endpointSelect) endpointSelect.value = Config.API_ENDPOINT;
+                UI.updateSettingsVisibility(Config.API_ENDPOINT);
+                UI.renderApiSettings();
+
+                UI.showToast(`Config imported from ${file.name}`, 'success');
+            } catch (err) {
+                console.error('Import Config failed:', err);
+                UI.showToast(`Import failed: ${err.message}`, 'error');
+            }
+        };
+        input.click();
     },
 
     _downloadFile(content, filename, mimeType) {

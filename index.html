@@ -24,7 +24,9 @@
 
 <body class="antialiased">
 
-    <a href="#wildcard-container" class="sr-only focus:not-sr-only focus:absolute focus:top-4 focus:left-4 focus:z-50 bg-indigo-600 text-white px-4 py-2 rounded-md font-bold shadow-lg">Skip to content</a>
+    <a href="#wildcard-container"
+        class="sr-only focus:not-sr-only focus:absolute focus:top-4 focus:left-4 focus:z-50 bg-indigo-600 text-white px-4 py-2 rounded-md font-bold shadow-lg">Skip
+        to content</a>
 
     <div id="aria-live-region" class="sr-only" role="status" aria-live="polite" aria-atomic="true"></div>
     <div id="toast-container" class="toast-container" aria-live="polite"></div>
@@ -104,7 +106,8 @@
                     </svg>
                 </button>
                 <a href="https://github.com/tazztone/wildcards-generator-gemini" target="_blank"
-                    class="p-2 rounded-full hover:bg-white/10 text-gray-300 transition-colors" title="View on GitHub" aria-label="View on GitHub">
+                    class="p-2 rounded-full hover:bg-white/10 text-gray-300 transition-colors" title="View on GitHub"
+                    aria-label="View on GitHub">
                     <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
                         <path fill-rule="evenodd"
                             d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.531 1.032 1.531 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0112 6.844c.85.004 1.705.115 2.504.337 1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.019 10.019 0 0022 12.017C22 6.484 17.522 2 12 2z"
@@ -189,18 +192,26 @@
                             <div>
                                 <label class="block text-sm font-medium text-gray-300 mb-1">API Key <span
                                         class="optional-text text-gray-500 text-xs hidden">(Optional)</span></label>
-                                <div class="relative">
-                                    <input type="password" class="api-key-input input-primary pr-10" autocomplete="off">
-                                    <button class="toggle-visibility-btn input-icon-btn" title="Show/Hide API Key">
-                                        <svg class="eye-icon h-5 w-5" fill="none" viewBox="0 0 24 24"
-                                            stroke="currentColor">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                                d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                                d="M2.458 12C3.732 5.943 7.523 2 12 2c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7S3.732 13.057 2.458 9c1.274-4.057 5.065-7 9.542-7z" />
-                                            <path class="eye-slash hidden" stroke-linecap="round"
-                                                stroke-linejoin="round" stroke-width="2" d="M17 17L7 7" />
-                                        </svg>
+                                <div class="flex gap-2">
+                                    <div class="relative flex-grow">
+                                        <input type="password" class="api-key-input input-primary pr-10"
+                                            autocomplete="off">
+                                        <button class="toggle-visibility-btn input-icon-btn" title="Show/Hide API Key">
+                                            <svg class="eye-icon h-5 w-5" fill="none" viewBox="0 0 24 24"
+                                                stroke="currentColor">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                    d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                    d="M2.458 12C3.732 5.943 7.523 2 12 2c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7S3.732 13.057 2.458 9c1.274-4.057 5.065-7 9.542-7z" />
+                                                <path class="eye-slash hidden" stroke-linecap="round"
+                                                    stroke-linejoin="round" stroke-width="2" d="M17 17L7 7" />
+                                            </svg>
+                                        </button>
+                                    </div>
+                                    <button
+                                        class="test-conn-btn bg-indigo-600 hover:bg-indigo-700 text-white font-medium py-2 px-4 rounded-md transition-colors shadow-sm whitespace-nowrap"
+                                        title="Test API connection and fetch available models">
+                                        🔌 Test
                                     </button>
                                 </div>
                                 <label class="checkbox-label">
@@ -219,13 +230,16 @@
                                         <datalist class="model-list"></datalist>
                                     </div>
                                     <button
-                                        class="test-conn-btn bg-indigo-600 hover:bg-indigo-700 text-white font-medium py-2 px-4 rounded-md transition-colors shadow-sm whitespace-nowrap">Test
-                                        Connection</button>
+                                        class="test-model-btn bg-purple-600 hover:bg-purple-700 text-white font-medium py-2 px-4 rounded-md transition-colors shadow-sm whitespace-nowrap"
+                                        title="Send a quick test request to verify the model responds correctly">
+                                        🧪 Test Model
+                                    </button>
                                 </div>
                                 <div class="flex justify-between items-start mt-1">
                                     <p class="loading-indicator text-xs text-indigo-400 hidden animate-pulse">Loading
                                         models...</p>
                                     <p class="error-indicator text-xs text-red-400 hidden"></p>
+                                    <p class="model-stats text-xs text-green-400 hidden"></p>
                                 </div>
                             </div>
 
@@ -297,9 +311,12 @@
             <div class="relative">
                 <input type="text" id="search-wildcards" class="input-primary bg-gray-800 pr-10"
                     placeholder="Search for wildcards...">
-                <button id="search-clear-btn" class="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-white hidden transition-colors" aria-label="Clear search">
+                <button id="search-clear-btn"
+                    class="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-white hidden transition-colors"
+                    aria-label="Clear search">
                     <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M6 18L18 6M6 6l12 12" />
                     </svg>
                 </button>
             </div>
@@ -371,6 +388,25 @@
                     <button id="redo-btn" class="dropdown-item" title="Redo last undone action (Ctrl+Y)">
                         ↪️ Redo <span class="text-gray-500 text-xs ml-auto">Ctrl+Y</span>
                     </button>
+                    <div class="border-t border-gray-700 my-1"></div>
+                    <div class="dropdown-label text-xs text-gray-500 px-3 py-1 uppercase tracking-wider">Reset Options
+                    </div>
+                    <button id="reset-localstorage" class="dropdown-item text-yellow-400 hover:text-yellow-300"
+                        title="Clear all saved data from localStorage (API keys if remembered, settings)">
+                        🗑️ Clear Local Storage
+                    </button>
+                    <button id="reset-sessionstorage" class="dropdown-item text-yellow-400 hover:text-yellow-300"
+                        title="Clear session-only data (temporary API keys, UI state)">
+                        🧹 Clear Session Storage
+                    </button>
+                    <button id="reset-defaults" class="dropdown-item text-orange-400 hover:text-orange-300"
+                        title="Reset app to initial state (clears all wildcards and settings)">
+                        ⚠️ Reset to Defaults
+                    </button>
+                    <button id="reload-default-data" class="dropdown-item"
+                        title="Reload the default wildcard data without clearing settings">
+                        🔄 Reload Default Data
+                    </button>
                 </div>
             </div>
         </div>
@@ -408,10 +444,12 @@
                 <div class="flex items-center gap-3 flex-wrap flex-grow">
                     <h2 class="text-xl font-semibold text-indigo-400"><span contenteditable="true"
                             class="category-name outline-none focus:bg-indigo-400/50 rounded px-1"></span></h2>
-                    <button class="delete-btn text-red-400 hover:text-red-300 transition-all duration-200 p-1 rounded hover:bg-red-400/10"
+                    <button
+                        class="delete-btn text-red-400 hover:text-red-300 transition-all duration-200 p-1 rounded hover:bg-red-400/10"
                         title="Delete this category" aria-label="Delete this category">
                         <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
                         </svg>
                     </button>
                     <input type="text"
@@ -443,10 +481,12 @@
                 <h3 class="font-bold text-lg text-gray-100"><span contenteditable="true"
                         class="wildcard-name outline-none focus:bg-indigo-400/50 rounded px-1"></span> <span
                         class="wildcard-count text-gray-400 text-sm ml-2"></span></h3>
-                <button class="delete-btn text-red-400 hover:text-red-300 transition-all duration-200 p-1 rounded hover:bg-red-400/10"
+                <button
+                    class="delete-btn text-red-400 hover:text-red-300 transition-all duration-200 p-1 rounded hover:bg-red-400/10"
                     title="Delete this card" aria-label="Delete this card">
                     <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
                     </svg>
                 </button>
             </div>
@@ -467,9 +507,9 @@
                         class="btn-text">Generate More</span>
                     <div class="loader hidden"></div>
                 </button>
-                <button class="copy-btn text-gray-400 hover:text-white" title="Copy all wildcards" aria-label="Copy all wildcards"><svg width="20"
-                        height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-                        stroke-linecap="round" stroke-linejoin="round">
+                <button class="copy-btn text-gray-400 hover:text-white" title="Copy all wildcards"
+                    aria-label="Copy all wildcards"><svg width="20" height="20" viewBox="0 0 24 24" fill="none"
+                        stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                         <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
                         <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
                     </svg></button>
