@@ -1117,6 +1117,7 @@
 
         .card-wildcard {
             background-color: var(--bg-tertiary);
+            position: relative;
         }
 
         .text-accent {
@@ -1183,4 +1184,30 @@
 
         .reset-prompt-btn:hover {
             color: var(--accent-primary) !important;
+        }
+
+        /* =================================================================
+           HOVER-ONLY ACTION BUTTONS
+           ================================================================= */
+
+        /* Hide action buttons by default */
+        .btn-action-icon {
+            opacity: 0;
+            transition: opacity 0.2s ease;
+        }
+
+        /* Show on category header hover or focus */
+        summary:hover .btn-action-icon,
+        summary:focus-within .btn-action-icon {
+            opacity: 1;
+        }
+
+        /* Show on wildcard card hover (entire card) */
+        .wildcard-card:hover .btn-action-icon {
+            opacity: 1;
+        }
+
+        /* Always show pin icon for pinned categories (📌) */
+        .pin-btn:not([title="Pin to top"]) {
+            opacity: 1 !important;
         }
