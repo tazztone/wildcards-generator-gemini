@@ -10,7 +10,15 @@ export async function loadConfig() {
 
         const savedConfig = localStorage.getItem(defaultConfig.CONFIG_STORAGE_KEY);
 
-        Object.assign(Config, defaultConfig, savedConfig ? JSON.parse(savedConfig) : {});
+        // Define defaults for user settings that are no longer in config.json
+        const userDefaults = {
+            API_URL_CUSTOM: "http://127.0.0.1:1234/v1",
+            MODEL_NAME_GEMINI: "",
+            MODEL_NAME_OPENROUTER: "",
+            MODEL_NAME_CUSTOM: ""
+        };
+
+        Object.assign(Config, defaultConfig, userDefaults, savedConfig ? JSON.parse(savedConfig) : {});
 
         // Initialize empty API keys - users enter keys via Settings panel
         // Check for persisted keys
@@ -43,12 +51,33 @@ export async function saveConfig() {
         if (!response.ok) throw new Error('Could not fetch default configuration for saving.');
         const defaultConfig = await response.json();
 
+        // Include user defaults for comparison
+        const userDefaults = {
+            API_URL_CUSTOM: "http://127.0.0.1:1234/v1",
+            MODEL_NAME_GEMINI: "",
+            MODEL_NAME_OPENROUTER: "",
+            MODEL_NAME_CUSTOM: ""
+        };
+        const allDefaults = { ...defaultConfig, ...userDefaults };
+
         const changedConfig = {};
         for (const key in Config) {
+            // Skip runtime-only keys
             if (key.startsWith('API_KEY')) continue;
+            if (key === 'API_ENDPOINT') continue;
 
-            if (Config.hasOwnProperty(key) && defaultConfig.hasOwnProperty(key) && JSON.stringify(Config[key]) !== JSON.stringify(defaultConfig[key])) {
-                changedConfig[key] = Config[key];
+            // Save if it's a known config key AND it's different from default OR it's a new user setting
+            if (Config.hasOwnProperty(key)) {
+                // If present in defaults, check if changed
+                if (allDefaults.hasOwnProperty(key)) {
+                    if (JSON.stringify(Config[key]) !== JSON.stringify(allDefaults[key])) {
+                        changedConfig[key] = Config[key];
+                    }
+                }
+                // If it's a user setting loaded from storage (not in static defaults but valid config)
+                else if (['API_URL_CUSTOM', 'MODEL_NAME_GEMINI', 'MODEL_NAME_OPENROUTER', 'MODEL_NAME_CUSTOM'].includes(key)) {
+                    changedConfig[key] = Config[key];
+                }
             }
         }
 

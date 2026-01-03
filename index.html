@@ -299,6 +299,24 @@
                         </div>
                     </details>
                 </div>
+                <!-- Settings Modal Footer -->
+                <div class="p-5 border-t border-gray-700/50 flex flex-wrap gap-3 justify-between bg-gray-900/30">
+                    <div class="flex gap-2">
+                        <button id="load-settings-btn"
+                            class="bg-gray-700 hover:bg-gray-600 text-white text-sm font-medium py-2 px-4 rounded-md transition-colors flex items-center gap-2">
+                            📥 Load Settings
+                        </button>
+                        <button id="export-settings-btn"
+                            class="bg-gray-700 hover:bg-gray-600 text-white text-sm font-medium py-2 px-4 rounded-md transition-colors flex items-center gap-2">
+                            📤 Export Settings
+                        </button>
+                    </div>
+                    <button id="reset-settings-btn"
+                        class="bg-red-900/30 hover:bg-red-900/50 text-red-300 hover:text-red-200 border border-red-800/50 text-sm font-medium py-2 px-4 rounded-md transition-colors flex items-center gap-2">
+                        🗑️ Reset Settings
+                    </button>
+                </div>
+                <input type="file" id="settings-file-input" accept=".json" class="hidden">
             </div>
         </dialog>
 
@@ -410,13 +428,6 @@
                 </button>
                 <div id="overflow-menu-dropdown"
                     class="hidden absolute right-0 mt-2 w-48 bg-gray-800 border border-gray-700 rounded-lg shadow-xl z-50">
-                    <button id="export-config" class="dropdown-item" title="Export application configuration">
-                        📤 Export Config
-                    </button>
-                    <button id="import-config" class="dropdown-item" title="Import application configuration">
-                        📥 Import Config
-                    </button>
-                    <div class="border-t border-gray-700 my-1"></div>
                     <button id="undo-btn" class="dropdown-item" title="Undo last action (Ctrl+Z)">
                         ↩️ Undo <span class="text-gray-500 text-xs ml-auto">Ctrl+Z</span>
                     </button>
@@ -424,23 +435,15 @@
                         ↪️ Redo <span class="text-gray-500 text-xs ml-auto">Ctrl+Y</span>
                     </button>
                     <div class="border-t border-gray-700 my-1"></div>
-                    <div class="dropdown-label text-xs text-gray-500 px-3 py-1 uppercase tracking-wider">Reset Options
+                    <div class="dropdown-label text-xs text-gray-500 px-3 py-1 uppercase tracking-wider">Data Management
                     </div>
-                    <button id="reset-localstorage" class="dropdown-item text-yellow-400 hover:text-yellow-300"
-                        title="Clear all saved data from localStorage (API keys if remembered, settings)">
-                        🗑️ Clear Local Storage
-                    </button>
-                    <button id="reset-sessionstorage" class="dropdown-item text-yellow-400 hover:text-yellow-300"
-                        title="Clear session-only data (temporary API keys, UI state)">
-                        🧹 Clear Session Storage
-                    </button>
-                    <button id="reset-defaults" class="dropdown-item text-orange-400 hover:text-orange-300"
-                        title="Reset app to initial state (clears all wildcards and settings)">
-                        ⚠️ Reset to Defaults
-                    </button>
                     <button id="reload-default-data" class="dropdown-item"
                         title="Reload the default wildcard data without clearing settings">
-                        🔄 Reload Default Data
+                        🔄 Restore Default Wildcards
+                    </button>
+                    <button id="factory-reset" class="dropdown-item text-orange-400 hover:text-orange-300"
+                        title="Reset app to initial state (clears all wildcards and settings)">
+                        ⚠️ Factory Reset
                     </button>
                 </div>
             </div>

@@ -446,14 +446,15 @@ test.describe('Wildcard Generator E2E Tests', () => {
             expect(download.suggestedFilename()).toBe('wildcard_collection.zip');
         });
 
-        test('export config button triggers download', async ({ page }) => {
-            const downloadPromise = page.waitForEvent('download');
-            // Open dropdown
-            await page.locator('#overflow-menu-btn').click();
-            await page.locator('#export-config').click();
+        test('export settings button triggers download', async ({ page }) => {
+            // Open Settings Modal first
+            await page.click('#settings-btn');
+            await expect(page.locator('#settings-dialog')).toBeVisible();
 
+            const downloadPromise = page.waitForEvent('download');
+            await page.click('#export-settings-btn');
             const download = await downloadPromise;
-            expect(download.suggestedFilename()).toBe('config.json');
+            expect(download.suggestedFilename()).toBe('settings.json');
         });
 
         test('import YAML button is functional', async ({ page }) => {
@@ -462,13 +463,19 @@ test.describe('Wildcard Generator E2E Tests', () => {
             await expect(importBtn).toBeEnabled();
         });
 
-        test('import config button is functional', async ({ page }) => {
-            // Open dropdown
-            await page.locator('#overflow-menu-btn').click();
-            const importBtn = page.locator('#import-config');
-            await expect(importBtn).toBeVisible();
-            // We can't easily test 'enabled' if it's a label for file input, assuming structure
-            // Just visibility is enough here or verify input exists
+        test('load settings button is functional', async ({ page }) => {
+            // Open Settings Modal first
+            await page.click('#settings-btn');
+            await expect(page.locator('#settings-dialog')).toBeVisible();
+
+            // Check if file input exists and is hidden
+            const fileInput = page.locator('#settings-file-input');
+            await expect(fileInput).toBeAttached();
+
+            // Trigger click on load button and verify it would open file dialog (conceptually)
+            // In Playwright, we set the input file directly
+            const loadBtn = page.locator('#load-settings-btn');
+            await expect(loadBtn).toBeVisible();
         });
     });
 

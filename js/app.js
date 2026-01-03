@@ -365,22 +365,47 @@ export const App = {
             if (e.target.matches('#download-all-zip')) {
                 this.handleExportZIP();
             }
-            // Export Config
-            if (e.target.matches('#export-config')) {
-                this.handleExportConfig();
+            // Settings Management Handlers (Modal)
+            if (e.target.matches('#export-settings-btn')) {
+                this.handleExportSettings();
             }
+            if (e.target.matches('#load-settings-btn')) {
+                document.getElementById('settings-file-input').click();
+            }
+            if (e.target.matches('#reset-settings-btn')) {
+                this.handleResetSettings();
+            }
+
             // Import YAML
             if (e.target.matches('#import-yaml')) {
                 this.handleImportYAML();
             }
-            // Import Config
-            if (e.target.matches('#import-config')) {
-                this.handleImportConfig();
-            }
+
             // Batch Operations
             if (e.target.matches('#batch-expand')) this.handleBatchAction('expand');
             if (e.target.matches('#batch-collapse')) this.handleBatchAction('collapse');
             if (e.target.matches('#batch-delete')) this.handleBatchAction('delete');
+        });
+
+        // Settings File Input Handler
+        document.getElementById('settings-file-input')?.addEventListener('change', (e) => this.handleLoadSettings(e));
+
+        // Settings Management -> Reset Handlers
+        document.addEventListener('click', (e) => {
+            if (e.target.matches('#reload-default-data')) {
+                UI.showNotification('Reload default wildcard data? This will overwrite your current wildcards but keep settings.', true, async () => {
+                    UI.toggleOverflowMenu(false);
+                    await State.resetToDefaults(); // Actually reloads data
+                });
+            }
+            if (e.target.matches('#factory-reset')) {
+                UI.showNotification('⚠️ Factory Reset? This will delete ALL wildcards and settings. Cannot be undone.', true, () => {
+                    UI.toggleOverflowMenu(false);
+                    localStorage.clear();
+                    sessionStorage.clear();
+                    window.location.reload();
+                });
+            }
         });
 
         // Batch Select All
@@ -1133,9 +1158,10 @@ export const App = {
         }
     },
 
-    handleExportConfig() {
+    handleExportSettings() {
         try {
-            const config = {
+            const settings = {
+                _comment: "User settings for Wildcards Generator",
                 apiEndpoint: Config.API_ENDPOINT,
                 modelNameGemini: Config.MODEL_NAME_GEMINI,
                 modelNameOpenrouter: Config.MODEL_NAME_OPENROUTER,
@@ -1143,12 +1169,13 @@ export const App = {
                 apiUrlCustom: Config.API_URL_CUSTOM,
                 historyLimit: Config.HISTORY_LIMIT,
                 searchDebounceDelay: Config.SEARCH_DEBOUNCE_DELAY
+                // API Keys are intentionally NOT exported for security
             };
-            const jsonContent = JSON.stringify(config, null, 2);
-            this._downloadFile(jsonContent, 'config.json', 'application/json');
-            UI.showToast('Config exported successfully', 'success');
+            const jsonContent = JSON.stringify(settings, null, 2);
+            this._downloadFile(jsonContent, 'settings.json', 'application/json');
+            UI.showToast('Settings exported successfully', 'success');
         } catch (e) {
-            console.error('Export Config failed:', e);
+            console.error('Export Settings failed:', e);
             UI.showToast('Export failed', 'error');
         }
     },
@@ -1206,44 +1233,54 @@ export const App = {
         input.click();
     },
 
-    handleImportConfig() {
-        const input = document.createElement('input');
-        input.type = 'file';
-        input.accept = '.json';
-        input.title = 'Select a JSON config file to import settings';
-        input.onchange = async (e) => {
-            const file = e.target.files[0];
-            if (!file) return;
+    async handleLoadSettings(e) {
+        const file = e.target.files[0];
+        if (!file) return;
 
-            try {
-                const text = await file.text();
-                const config = JSON.parse(text);
+        try {
+            const text = await file.text();
+            const config = JSON.parse(text);
 
-                // Apply config values
-                if (config.apiEndpoint) Config.API_ENDPOINT = config.apiEndpoint;
-                if (config.modelNameGemini) Config.MODEL_NAME_GEMINI = config.modelNameGemini;
-                if (config.modelNameOpenrouter) Config.MODEL_NAME_OPENROUTER = config.modelNameOpenrouter;
-                if (config.modelNameCustom) Config.MODEL_NAME_CUSTOM = config.modelNameCustom;
-                if (config.apiUrlCustom) Config.API_URL_CUSTOM = config.apiUrlCustom;
-                if (config.historyLimit) Config.HISTORY_LIMIT = config.historyLimit;
-                if (config.searchDebounceDelay) Config.SEARCH_DEBOUNCE_DELAY = config.searchDebounceDelay;
+            // Apply config values
+            if (config.apiEndpoint) Config.API_ENDPOINT = config.apiEndpoint;
+            if (config.modelNameGemini) Config.MODEL_NAME_GEMINI = config.modelNameGemini;
+            if (config.modelNameOpenrouter) Config.MODEL_NAME_OPENROUTER = config.modelNameOpenrouter;
+            if (config.modelNameCustom) Config.MODEL_NAME_CUSTOM = config.modelNameCustom;
+            if (config.apiUrlCustom) Config.API_URL_CUSTOM = config.apiUrlCustom;
+            if (config.historyLimit) Config.HISTORY_LIMIT = config.historyLimit;
+            if (config.searchDebounceDelay) Config.SEARCH_DEBOUNCE_DELAY = config.searchDebounceDelay;
 
-                // Persist to storage
-                saveConfig();
+            // Persist to storage
+            saveConfig();
 
-                // Update UI
-                const endpointSelect = document.getElementById('api-endpoint');
-                if (endpointSelect) endpointSelect.value = Config.API_ENDPOINT;
-                UI.updateSettingsVisibility(Config.API_ENDPOINT);
-                UI.renderApiSettings();
+            // Update UI
+            const endpointSelect = document.getElementById('api-endpoint');
+            if (endpointSelect) endpointSelect.value = Config.API_ENDPOINT;
+            UI.updateSettingsVisibility(Config.API_ENDPOINT);
+            UI.renderApiSettings();
 
-                UI.showToast(`Config imported from ${file.name}`, 'success');
-            } catch (err) {
-                console.error('Import Config failed:', err);
-                UI.showToast(`Import failed: ${err.message}`, 'error');
-            }
-        };
-        input.click();
+            // Reload page to ensure all settings take effect (like history limit)
+            UI.showNotification('Settings loaded. Reloading page...', false);
+            setTimeout(() => window.location.reload(), 1000);
+
+        } catch (err) {
+            console.error('Load Settings failed:', err);
+            UI.showToast(`Import failed: ${err.message}`, 'error');
+        }
+        // Clear input so same file can be selected again
+        e.target.value = '';
+    },
+
+    handleResetSettings() {
+        UI.showNotification('Reset all settings and API keys? Wildcard data will stay.', true, () => {
+            localStorage.removeItem(Config.CONFIG_STORAGE_KEY);
+            localStorage.removeItem('wildcards_api_key_openrouter');
+            localStorage.removeItem('wildcards_api_key_gemini');
+            localStorage.removeItem('wildcards_api_key_custom');
+
+            UI.showNotification('Settings reset. Reloading...', false);
+            setTimeout(() => window.location.reload(), 1000);
+        });
     },
 
     _downloadFile(content, filename, mimeType) {
