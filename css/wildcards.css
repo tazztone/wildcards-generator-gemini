@@ -1146,6 +1146,7 @@
 
         .prompt-field-wrapper {
             /* Container for prompt fields with badges */
+            display: block;
         }
 
         .prompt-status-badge {
