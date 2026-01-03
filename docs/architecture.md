@@ -20,6 +20,14 @@ The application logic is modularized in the `js/` directory:
 | **Config** | `config.js` | Manages configuration settings (history limit, debounce delays, etc.) and provides default values. |
 | **Utils** | `utils.js` | Contains helper functions for debouncing, sanitizing strings, and other utility tasks. |
 
+### Feature Modules (`js/modules/`)
+
+| Module | File | Responsibilities |
+|--------|------|------------------|
+| **Drag & Drop** | `drag-drop.js` | Handles all drag-and-drop functionality for reordering categories and wildcards. |
+| **Import/Export** | `import-export.js` | Manages file I/O operations for YAML, ZIP, and Settings JSON files. |
+| **Settings** | `settings.js` | Handles API key verification and settings-related operations on startup. |
+
 1.  **User Interaction**: The user interacts with the UI (clicks, typing, etc.).
 2.  **Event Handling**: `app.js` catches these events via event delegation on the main container.
 3.  **State Update**: `app.js` calls methods in `state.js` to modify the application data (e.g., updating a wildcard).

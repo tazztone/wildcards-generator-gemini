@@ -3,6 +3,9 @@ import { UI } from './ui.js';
 import { Api } from './api.js';
 import { Config, saveApiKey, saveConfig } from './config.js';
 import { debounce } from './utils.js';
+import { DragDrop } from './modules/drag-drop.js';
+import { ImportExport } from './modules/import-export.js';
+import { Settings } from './modules/settings.js';
 
 export const App = {
     draggedPath: null,
@@ -20,57 +23,7 @@ export const App = {
         this.updateThemeIcon(theme);
 
         // Auto-verify stored keys
-        setTimeout(() => this.verifyStoredApiKeys(), 500);
-    },
-
-    async verifyStoredApiKeys() {
-        const providers = ['openrouter', 'gemini', 'custom'];
-        for (const provider of providers) {
-            const panel = document.getElementById(`settings-${provider}`);
-            if (!panel) continue;
-
-            const input = panel.querySelector('.api-key-input');
-            const key = input ? input.value.trim() : '';
-
-            if (key) {
-                const btn = panel.querySelector('.test-conn-btn');
-                if (btn) {
-                    btn.disabled = true;
-                    btn.textContent = '⏳ ...'; // Minimal loading text
-
-                    try {
-                        // Pass validation callback to update UI or null to silent toast
-                        // We want to fetch models silently but update button state
-                        const models = await Api.testConnection(provider, null, key);
-                        UI.populateModelList(provider, models);
-
-                        btn.textContent = '✓ Verified';
-                        btn.classList.remove('bg-indigo-600', 'hover:bg-indigo-700');
-                        btn.classList.add('bg-green-600', 'hover:bg-green-700');
-
-                        setTimeout(() => {
-                            btn.textContent = '🔌 Test';
-                            btn.disabled = false;
-                            btn.classList.add('bg-indigo-600', 'hover:bg-indigo-700');
-                            btn.classList.remove('bg-green-600', 'hover:bg-green-700');
-                        }, 2000);
-                    } catch (e) {
-                        console.warn(`Auto-verify failed for ${provider}:`, e);
-                        btn.textContent = '⚠️ Invalid';
-                        btn.className = 'test-conn-btn bg-red-600 hover:bg-red-700 text-white font-medium py-2 px-4 rounded-md transition-colors shadow-sm whitespace-nowrap';
-                        btn.disabled = false;
-
-                        // Reset on input
-                        input.addEventListener('input', () => {
-                            if (btn.textContent === '⚠️ Invalid') {
-                                btn.textContent = '🔌 Test';
-                                btn.className = 'test-conn-btn bg-indigo-600 hover:bg-indigo-700 text-white font-medium py-2 px-4 rounded-md transition-colors shadow-sm whitespace-nowrap';
-                            }
-                        }, { once: true });
-                    }
-                }
-            }
-        }
+        setTimeout(() => Settings.verifyStoredApiKeys(), 500);
     },
 
     bindEvents() {
@@ -118,12 +71,8 @@ export const App = {
             }
         });
 
-        // Drag and Drop
-        UI.elements.container.addEventListener('dragstart', (e) => this.handleDragStart(e));
-        UI.elements.container.addEventListener('dragover', (e) => this.handleDragOver(e));
-        UI.elements.container.addEventListener('dragleave', (e) => this.handleDragLeave(e));
-        UI.elements.container.addEventListener('drop', (e) => this.handleDrop(e));
-        UI.elements.container.addEventListener('dragend', (e) => this.handleDragEnd(e));
+        // Drag and Drop - delegated to DragDrop module
+        DragDrop.bindEvents(UI.elements.container);
 
         // Toolbar actions
         document.getElementById('theme-toggle')?.addEventListener('click', () => this.toggleTheme());
@@ -359,26 +308,26 @@ export const App = {
             }
             // Export YAML
             if (e.target.matches('#export-yaml')) {
-                this.handleExportYAML();
+                ImportExport.handleExportYAML();
             }
             // Export ZIP
             if (e.target.matches('#download-all-zip')) {
-                this.handleExportZIP();
+                ImportExport.handleExportZIP();
             }
             // Settings Management Handlers (Modal)
             if (e.target.matches('#export-settings-btn')) {
-                this.handleExportSettings();
+                ImportExport.handleExportSettings();
             }
             if (e.target.matches('#load-settings-btn')) {
                 document.getElementById('settings-file-input').click();
             }
             if (e.target.matches('#reset-settings-btn')) {
-                this.handleResetSettings();
+                ImportExport.handleResetSettings();
             }
 
             // Import YAML
             if (e.target.matches('#import-yaml')) {
-                this.handleImportYAML();
+                ImportExport.handleImportYAML();
             }
 
             // Batch Operations
@@ -388,7 +337,7 @@ export const App = {
         });
 
         // Settings File Input Handler
-        document.getElementById('settings-file-input')?.addEventListener('change', (e) => this.handleLoadSettings(e));
+        document.getElementById('settings-file-input')?.addEventListener('change', (e) => ImportExport.handleLoadSettings(e));
 
         // Settings Management -> Reset Handlers
         document.addEventListener('click', (e) => {
@@ -944,354 +893,9 @@ export const App = {
         // Call API suggest
         // Then show modal
         // On confirm, update State
-    },
-
-    // Drag and Drop Logic
-    handleDragStart(e) {
-        const target = e.target.closest('[data-path]');
-        if (target) {
-            this.draggedPath = target.dataset.path;
-            e.dataTransfer.setData('text/plain', this.draggedPath);
-            e.dataTransfer.effectAllowed = 'move';
-            requestAnimationFrame(() => target.classList.add('dragging'));
-            document.body.classList.add('dragging-active');
-        }
-    },
-
-    handleDragOver(e) {
-        e.preventDefault();
-        const target = e.target.closest('[data-path]');
-        if (!target || target.dataset.path === this.draggedPath) return;
-
-        // Clean up any existing classes on other elements
-        document.querySelectorAll('.drop-target-active, .drop-line-before, .drop-line-after, .drop-inside').forEach(el => {
-            if (el !== target) {
-                el.classList.remove('drop-target-active', 'drop-line-before', 'drop-line-after', 'drop-inside');
-            }
-        });
-
-        const rect = target.getBoundingClientRect();
-        const relY = e.clientY - rect.top;
-        const height = rect.height;
-
-        target.classList.add('drop-target-active');
-
-        // Remove all classes first
-        target.classList.remove('drop-line-before', 'drop-line-after', 'drop-inside');
-
-        // Check for separator
-        if (target.classList.contains('dnd-separator')) {
-            target.classList.add('drop-inside');
-            return;
-        }
-
-        // If it's a category (details), allow dropping inside
-        const isCategory = target.tagName === 'DETAILS';
-
-        if (isCategory && relY > height * 0.25 && relY < height * 0.75) {
-            target.classList.add('drop-inside');
-        } else if (relY < height / 2) {
-            target.classList.add('drop-line-before');
-        } else {
-            target.classList.add('drop-line-after');
-        }
-    },
-
-    handleDragLeave(e) {
-        const target = e.target.closest('[data-path]');
-        if (target) {
-            target.classList.remove('drop-target-active', 'drop-line-before', 'drop-line-after', 'drop-inside');
-        }
-    },
-
-    handleDrop(e) {
-        e.preventDefault();
-        const target = e.target.closest('[data-path]');
-
-        // Capture draggedPath before cleanup
-        const srcPath = this.draggedPath;
-        this.handleDragEnd(e); // Clean visuals immediately
-
-        if (!target || !srcPath) return;
-
-        const destPath = target.dataset.path; // This is the item we dropped ON
-
-        if (srcPath === destPath) return;
-
-        // Determine position based on the class we added (tracked via e or re-calced? Hard to track via class since we removed them)
-        // Re-calc simply
-        const rect = target.getBoundingClientRect();
-        const relY = e.clientY - rect.top;
-        const height = rect.height;
-        let position = 'after';
-        const isCategory = target.tagName === 'DETAILS';
-        const isSeparator = target.classList.contains('dnd-separator');
-
-        if (isSeparator) position = 'inside';
-        else if (isCategory && relY > height * 0.25 && relY < height * 0.75) position = 'inside';
-        else if (relY < height / 2) position = 'before';
-
-        // Execute Move
-        State.saveStateToHistory();
-        this.moveItem(srcPath, destPath, position);
-    },
-
-    moveItem(srcPath, destPath, position) {
-        // Complex move logic:
-        // 1. Get Source Data
-        const srcParent = State.getParentObjectByPath(srcPath);
-        const srcKey = srcPath.split('/').pop();
-        const srcData = srcParent[srcKey];
-
-        // 2. Identify Dest Parent and Key
-        let destParent, destKey, newKey;
-
-        if (position === 'inside') {
-            destParent = State.getObjectByPath(destPath); // The category itself is the parent
-            // Ensure it's not a wildcard leaf
-            if (Array.isArray(destParent.wildcards)) {
-                UI.showToast("Cannot drop inside a wildcard list", 'error');
-                return;
-            }
-            destKey = null; // Appending to end
-        } else {
-            destParent = State.getParentObjectByPath(destPath);
-            destKey = destPath.split('/').pop();
-        }
-
-        // Validation: Cannot move parent inside child
-        if (destPath.startsWith(srcPath)) {
-            UI.showToast("Cannot move parent inside child", 'error');
-            return;
-        }
-
-        // 3. Remove from Source
-        delete srcParent[srcKey]; // Proxy triggers
-
-        // 4. Insert into Dest
-        // If sorting is automatic (keys sorted), we just add it to parent.
-        // But if user wants manual ordering, we'd need an array.
-        // Current architecture uses Object keys, so specific ordering 'before/after' is hard unless we use a prefix or special array.
-        // The current app sorts keys alphabetically in render.
-        // So 'before/after' drops effectively just mean 'move to this parent'.
-        // UNLESS we change the data structure to support manual ordering.
-        // For V1 refactor, let's respect the user's wish for "visual drop targets" but acknowledge alphabetical sort limitation?
-        // OR: Rename the key if necessary? No, that breaks links.
-        // Use 'pinned' for top level?
-
-        // Compromise: Just move to the parent. 'Inside' moves to subfolder. 'Before/After' moves to same folder.
-        // Ideally we would support ordering.
-
-        // Check for key collision in dest
-        if (destParent[srcKey]) {
-            // Append copy or number
-            UI.showToast("Item with this name already exists in destination", 'error');
-            // Revert?
-            srcParent[srcKey] = srcData;
-            return;
-        }
-
-        destParent[srcKey] = srcData;
-
-        // If we really wanted to support 'before' 'after', we'd need to change State structure to Array, or use a 'order' property.
-        // Staying with Object structure implies alphabetical sort usually.
-        // We'll trust the alphabetical sort for now, effectively ignoring 'before'/'after' distinction for persistent order,
-        // but it still correctly targets the PARENT. 
-        // Example: Dropping 'before' Item B (which is in Folder X) puts it in Folder X.
-    },
-
-    handleDragEnd(e) {
-        this.draggedPath = null;
-        document.body.classList.remove('dragging-active');
-        document.querySelectorAll('.dragging, .drop-target-active, .drop-line-before, .drop-line-after, .drop-inside')
-            .forEach(el => el.classList.remove('dragging', 'drop-target-active', 'drop-line-before', 'drop-line-after', 'drop-inside'));
-    },
-
-    // Export handlers
-    async handleExportYAML() {
-        try {
-            const YAML = (await import('https://cdn.jsdelivr.net/npm/yaml@2.8.2/browser/index.js')).default;
-            const yamlContent = YAML.stringify({ wildcards: State.state.wildcards, systemPrompt: State.state.systemPrompt, suggestItemPrompt: State.state.suggestItemPrompt });
-            this._downloadFile(yamlContent, 'wildcards.yaml', 'application/x-yaml');
-            UI.showToast('YAML exported successfully', 'success');
-        } catch (e) {
-            console.error('Export YAML failed:', e);
-            UI.showToast('Export failed', 'error');
-        }
-    },
-
-    async handleExportZIP() {
-        try {
-            // Use globally loaded JSZip
-            const zip = new window.JSZip();
-
-            const wildcards = State.state.wildcards;
-
-            // Add each category as a separate file
-            const addToZip = (data, prefix = '') => {
-                if (data.wildcards && Array.isArray(data.wildcards)) {
-                    const content = data.wildcards.join('\n');
-                    zip.file(`${prefix || 'root'}.txt`, content);
-                }
-                if (data.categories) {
-                    for (const [key, catData] of Object.entries(data.categories)) {
-                        addToZip(catData, prefix ? `${prefix}/${key}` : key);
-                    }
-                }
-            };
-
-            for (const [key, data] of Object.entries(wildcards)) {
-                addToZip(data, key);
-            }
-
-            const blob = await zip.generateAsync({ type: 'blob' });
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = 'wildcard_collection.zip';
-            a.click();
-            URL.revokeObjectURL(url);
-            UI.showToast('ZIP exported successfully', 'success');
-        } catch (e) {
-            console.error('Export ZIP failed:', e);
-            UI.showToast('Export failed', 'error');
-        }
-    },
-
-    handleExportSettings() {
-        try {
-            const settings = {
-                _comment: "User settings for Wildcards Generator",
-                apiEndpoint: Config.API_ENDPOINT,
-                modelNameGemini: Config.MODEL_NAME_GEMINI,
-                modelNameOpenrouter: Config.MODEL_NAME_OPENROUTER,
-                modelNameCustom: Config.MODEL_NAME_CUSTOM,
-                apiUrlCustom: Config.API_URL_CUSTOM,
-                historyLimit: Config.HISTORY_LIMIT,
-                searchDebounceDelay: Config.SEARCH_DEBOUNCE_DELAY
-                // API Keys are intentionally NOT exported for security
-            };
-            const jsonContent = JSON.stringify(settings, null, 2);
-            this._downloadFile(jsonContent, 'settings.json', 'application/json');
-            UI.showToast('Settings exported successfully', 'success');
-        } catch (e) {
-            console.error('Export Settings failed:', e);
-            UI.showToast('Export failed', 'error');
-        }
-    },
-
-    handleImportYAML() {
-        const input = document.createElement('input');
-        input.type = 'file';
-        input.accept = '.yaml,.yml';
-        input.title = 'Select a YAML file to import wildcards';
-        input.onchange = async (e) => {
-            const file = e.target.files[0];
-            if (!file) return;
-
-            try {
-                const text = await file.text();
-                const YAML = (await import('https://cdn.jsdelivr.net/npm/yaml@2.8.2/browser/index.js')).default;
-                const data = YAML.parse(text);
-
-                if (!data || typeof data !== 'object') {
-                    throw new Error('Invalid YAML structure');
-                }
-
-                // Merge or replace - ask user
-                const hasExisting = Object.keys(State.state.wildcards).length > 0;
-                if (hasExisting) {
-                    UI.showNotification('Merge with existing data or replace everything?', true, () => {
-                        // Replace mode
-                        State.saveStateToHistory();
-                        if (data.wildcards) {
-                            State.state.wildcards = data.wildcards;
-                        } else {
-                            State.state.wildcards = data;
-                        }
-                        if (data.systemPrompt) State.state.systemPrompt = data.systemPrompt;
-                        if (data.suggestItemPrompt) State.state.suggestItemPrompt = data.suggestItemPrompt;
-                        UI.showToast(`Imported ${file.name} (replaced)`, 'success');
-                    });
-                    // For merge, we'd need a separate button. For now, confirm = replace
-                } else {
-                    State.saveStateToHistory();
-                    if (data.wildcards) {
-                        State.state.wildcards = data.wildcards;
-                    } else {
-                        State.state.wildcards = data;
-                    }
-                    if (data.systemPrompt) State.state.systemPrompt = data.systemPrompt;
-                    if (data.suggestItemPrompt) State.state.suggestItemPrompt = data.suggestItemPrompt;
-                    UI.showToast(`Imported ${file.name}`, 'success');
-                }
-            } catch (err) {
-                console.error('Import YAML failed:', err);
-                UI.showToast(`Import failed: ${err.message}`, 'error');
-            }
-        };
-        input.click();
-    },
-
-    async handleLoadSettings(e) {
-        const file = e.target.files[0];
-        if (!file) return;
-
-        try {
-            const text = await file.text();
-            const config = JSON.parse(text);
-
-            // Apply config values
-            if (config.apiEndpoint) Config.API_ENDPOINT = config.apiEndpoint;
-            if (config.modelNameGemini) Config.MODEL_NAME_GEMINI = config.modelNameGemini;
-            if (config.modelNameOpenrouter) Config.MODEL_NAME_OPENROUTER = config.modelNameOpenrouter;
-            if (config.modelNameCustom) Config.MODEL_NAME_CUSTOM = config.modelNameCustom;
-            if (config.apiUrlCustom) Config.API_URL_CUSTOM = config.apiUrlCustom;
-            if (config.historyLimit) Config.HISTORY_LIMIT = config.historyLimit;
-            if (config.searchDebounceDelay) Config.SEARCH_DEBOUNCE_DELAY = config.searchDebounceDelay;
-
-            // Persist to storage
-            saveConfig();
-
-            // Update UI
-            const endpointSelect = document.getElementById('api-endpoint');
-            if (endpointSelect) endpointSelect.value = Config.API_ENDPOINT;
-            UI.updateSettingsVisibility(Config.API_ENDPOINT);
-            UI.renderApiSettings();
-
-            // Reload page to ensure all settings take effect (like history limit)
-            UI.showNotification('Settings loaded. Reloading page...', false);
-            setTimeout(() => window.location.reload(), 1000);
-
-        } catch (err) {
-            console.error('Load Settings failed:', err);
-            UI.showToast(`Import failed: ${err.message}`, 'error');
-        }
-        // Clear input so same file can be selected again
-        e.target.value = '';
-    },
-
-    handleResetSettings() {
-        UI.showNotification('Reset all settings and API keys? Wildcard data will stay.', true, () => {
-            localStorage.removeItem(Config.CONFIG_STORAGE_KEY);
-            localStorage.removeItem('wildcards_api_key_openrouter');
-            localStorage.removeItem('wildcards_api_key_gemini');
-            localStorage.removeItem('wildcards_api_key_custom');
-
-            UI.showNotification('Settings reset. Reloading...', false);
-            setTimeout(() => window.location.reload(), 1000);
-        });
-    },
-
-    _downloadFile(content, filename, mimeType) {
-        const blob = new Blob([content], { type: mimeType });
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = filename;
-        a.click();
-        URL.revokeObjectURL(url);
     }
-
+    // Drag-and-drop functionality is now in js/modules/drag-drop.js
+    // Import/export functionality is now in js/modules/import-export.js
+    // Settings verification is now in js/modules/settings.js
 };
 
