@@ -14,7 +14,8 @@ This file contains context and rules for AI agents working on this repository.
 ├── index.html           # Entry point
 ├── js/                  # App modules (app.js, ui.js, state.js, etc.)
 ├── wildcards.css        # Custom Styling
-├── config.json          # Default settings
+├── config/              # Configuration directory
+│   └── config.json      # Default settings
 ├── data/                # Default data
 ├── docs/                # Documentation
 └── tests/               # Playwright tests
