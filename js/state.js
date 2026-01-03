@@ -43,6 +43,66 @@ function createDeepProxy(target, path = [], onChange) {
     return new Proxy(target, handler);
 }
 
+/**
+ * Calculate differences between two objects.
+ * Returns an array of { path: string[], type: 'add'|'remove'|'modify', value: any }
+ */
+function deepDiff(oldObj, newObj, path = []) {
+    const changes = [];
+
+    // Handle primitives or null
+    if (typeof oldObj !== 'object' || oldObj === null ||
+        typeof newObj !== 'object' || newObj === null) {
+        if (oldObj !== newObj) {
+            changes.push({ path, type: 'modify', value: newObj, oldValue: oldObj });
+        }
+        return changes;
+    }
+
+    // Handle arrays
+    if (Array.isArray(oldObj) && Array.isArray(newObj)) {
+        // For simplicity, if arrays differ in length or content, treat as full replacement
+        // This avoids complex array diffing for now
+        const oldStr = JSON.stringify(oldObj);
+        const newStr = JSON.stringify(newObj);
+        if (oldStr !== newStr) {
+            changes.push({ path, type: 'modify', value: newObj, oldValue: oldObj });
+        }
+        return changes;
+    }
+
+    // Handle objects
+    const allKeys = new Set([...Object.keys(oldObj), ...Object.keys(newObj)]);
+
+    for (const key of allKeys) {
+        const newPath = [...path, key];
+        const oldVal = oldObj[key];
+        const newVal = newObj[key];
+
+        if (!(key in oldObj)) {
+            // Key added
+            changes.push({ path: newPath, type: 'add', value: newVal });
+        } else if (!(key in newObj)) {
+            // Key removed
+            changes.push({ path: newPath, type: 'remove', oldValue: oldVal });
+        } else if (typeof oldVal === 'object' && oldVal !== null &&
+            typeof newVal === 'object' && newVal !== null &&
+            !Array.isArray(oldVal) && !Array.isArray(newVal)) {
+            // Both are objects, recurse
+            changes.push(...deepDiff(oldVal, newVal, newPath));
+        } else {
+            // Primitive or array comparison
+            const oldStr = JSON.stringify(oldVal);
+            const newStr = JSON.stringify(newVal);
+            if (oldStr !== newStr) {
+                changes.push({ path: newPath, type: 'modify', value: newVal, oldValue: oldVal });
+            }
+        }
+    }
+
+    return changes;
+}
+
 const State = {
     _rawData: { wildcards: {}, systemPrompt: '', suggestItemPrompt: '', pinnedCategories: [], availableModels: [] }, // internal raw storage
     state: null, // The public reactive proxy
@@ -207,12 +267,25 @@ const State = {
 
     undo() {
         if (this.historyIndex > 0) {
+            const oldData = this._rawData;
             this.historyIndex--;
-            this._rawData = JSON.parse(this.history[this.historyIndex]);
+            const newData = JSON.parse(this.history[this.historyIndex]);
+
+            // Calculate diff for granular UI updates
+            const changes = deepDiff(oldData, newData);
+
+            this._rawData = newData;
             this._saveHistoryToStorage();
-            this._saveToLocalStorage(); // Sync state
-            this._initProxy(); // Re-bind proxy to new raw object
-            this.events.dispatchEvent(new CustomEvent('state-reset')); // Treat as full reset for UI to re-render all
+            this._saveToLocalStorage();
+            this._initProxy();
+
+            // Dispatch patch event if we have specific changes, otherwise fallback to reset
+            if (changes.length > 0 && changes.length < 50) {
+                this.events.dispatchEvent(new CustomEvent('state-patch', { detail: changes }));
+            } else {
+                // Too many changes or structural change - do full reset
+                this.events.dispatchEvent(new CustomEvent('state-reset'));
+            }
             return true;
         }
         return false;
@@ -220,12 +293,24 @@ const State = {
 
     redo() {
         if (this.historyIndex < this.history.length - 1) {
+            const oldData = this._rawData;
             this.historyIndex++;
-            this._rawData = JSON.parse(this.history[this.historyIndex]);
+            const newData = JSON.parse(this.history[this.historyIndex]);
+
+            // Calculate diff for granular UI updates
+            const changes = deepDiff(oldData, newData);
+
+            this._rawData = newData;
             this._saveHistoryToStorage();
             this._saveToLocalStorage();
             this._initProxy();
-            this.events.dispatchEvent(new CustomEvent('state-reset'));
+
+            // Dispatch patch event if we have specific changes, otherwise fallback to reset
+            if (changes.length > 0 && changes.length < 50) {
+                this.events.dispatchEvent(new CustomEvent('state-patch', { detail: changes }));
+            } else {
+                this.events.dispatchEvent(new CustomEvent('state-reset'));
+            }
             return true;
         }
         return false;

@@ -207,7 +207,8 @@ jobs:
 
 ### Architecture Insights
 *   **Global State:** Using global classes on `body` is robust for app-wide modes like dragging.
-*   **Re-rendering:** Be aware that the current full-element replacement strategy affects UX and testing state persistence.
+*   **Granular Updates:** The app recently shifted from full-element replacement on every update to granular updates via `state-patch` and `deepDiff`. This significantly improves test reliability as DOM elements (and their local state like `<details open>`) are preserved during standard undo/redo operations.
+*   **Re-rendering:** Be aware that while `state-patch` handles most updates, some operations (like pining or batch deletions) may still trigger a full `renderAll()`.
 *   **Exposing Modules for Testing:** To test internal logic of modules (State, UI), we expose them to `window` in `main.js` when running locally, allowing `page.evaluate` to access them.
 
 ## Key Takeaways from Recent Improvements
@@ -216,3 +217,4 @@ jobs:
 *   **Test Data Validity:** When testing logic that depends on data structure (like Drag & Drop rejection rules), ensure your test setup perfectly matches the expected structure (e.g., Categories must not have a `wildcards` array if they are folders).
 *   **Robust YAML Processing:** When processing YAML, always check for `null` values explicitly, as `typeof null` is `'object'`, which can cause runtime errors if property access is attempted.
 *   **Event Handling in Tests:** For interactions like Search `input` events, standard `page.fill` might sometimes race with event listener attachment in parallel execution. Using `page.waitForFunction` to ensure UI initialization or forcing event dispatch can improve reliability.
+*   **Diff-Based Stability:** Using `State.undo()`/`redo()` in tests is now safer because it uses granular patches. However, always verify that the expected DOM element is still present or has been updated correctly after a state patch.

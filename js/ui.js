@@ -149,6 +149,7 @@ export const UI = {
     bindGlobalEvents() {
         State.events.addEventListener('state-updated', (e) => this.handleStateUpdate(e));
         State.events.addEventListener('state-reset', () => this.renderAll());
+        State.events.addEventListener('state-patch', (e) => this.handleStatePatch(e.detail));
         State.events.addEventListener('notification', (e) => this.showNotification(e.detail));
 
         // Listen for new custom events for focus/navigation
@@ -360,6 +361,54 @@ export const UI = {
         }
 
         this.updateStats();
+    },
+
+    /**
+     * Handle batch of state changes from undo/redo operations.
+     * Applies granular updates instead of full re-render.
+     * @param {Array<{path: string[], type: string, value: any}>} changes
+     */
+    handleStatePatch(changes) {
+        console.log('[UI] State patch received:', changes.length, 'changes');
+
+        // Track paths that need stats update
+        let needsStatsUpdate = false;
+
+        for (const change of changes) {
+            const { path, type, value } = change;
+
+            // Skip non-wildcard changes or handle them specially
+            if (path[0] === 'systemPrompt') {
+                const globalPrompt = document.getElementById('global-prompt');
+                if (globalPrompt) globalPrompt.value = value || '';
+                continue;
+            }
+
+            if (path[0] === 'suggestItemPrompt') {
+                const suggestionPrompt = document.getElementById('suggestion-prompt');
+                if (suggestionPrompt) suggestionPrompt.value = value || '';
+                continue;
+            }
+
+            if (path[0] === 'pinnedCategories') {
+                // Full re-render needed for pinned changes
+                this.renderAll();
+                return;
+            }
+
+            // Delegate to handleStateUpdate for wildcards changes
+            if (path[0] === 'wildcards') {
+                needsStatsUpdate = true;
+                // Create a synthetic event detail to reuse handleStateUpdate logic
+                this.handleStateUpdate({
+                    detail: { path, value, type }
+                });
+            }
+        }
+
+        if (needsStatsUpdate) {
+            this.updateStats();
+        }
     },
 
     findElement(path) {

@@ -32,6 +32,9 @@ This document details the features of the Wildcard Generator application.
 - **Advanced API Tools**:
   - **Streaming Generation**: Watch the AI generate wildcards character-by-character with a live elapsed timer.
   - **Test Model Dialog**: Detailed modal showing full JSON response, response time, and validation checks for the selected model.
+- **High-Performance Undo/Redo**:
+  - **Diff-Based Updates**: Only changed UI elements are re-rendered, making undo/redo instantaneous even with thousands of wildcards.
+  - **Granular Patches**: Uses a custom `deepDiff` algorithm to apply minimal DOM updates.
 - **Visual Refinements**: Fixed light theme contrast issues and improved spacing.
 
 ### v2.12 Features
