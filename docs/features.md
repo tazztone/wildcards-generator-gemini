@@ -39,12 +39,10 @@ This document details the features of the Wildcard Generator application.
 
 ### v2.12 Features
 
-- **Import YAML/Config**: Fully functional import buttons for YAML wildcards and JSON config files.
-- **Reset Options**: Multiple reset actions in the overflow menu:
-  - Clear Local Storage (removes saved settings)
-  - Clear Session Storage (removes temporary API keys)
-  - Reset to Defaults (full app reset)
-  - Reload Default Data (refresh from source without clearing settings)
+- **Import YAML/Settings**: functional import buttons for YAML wildcards and JSON settings files.
+- **Data Management**: Simplified overflow menu with clear options:
+  - **Restore Default Wildcards**: Reloads the starter data set without clearing your settings.
+  - **Factory Reset**: Completely wipes all data and settings for a fresh start.
 - **Enhanced Duplicate Detection**:
   - Visual highlighting with pulsing amber indicators
   - Filter view to show only duplicate-containing cards
@@ -59,7 +57,7 @@ This document details the features of the Wildcard Generator application.
     - **Select All**: Select all categories or items in a list.
     - **Bulk Actions**: Expand, collapse, or delete multiple selected categories at once.
 - **Search Highlighting**: Search terms are visually highlighted in the results for easier scanning.
-- **Secure Settings**: API keys and sensitive settings are stored in session memory only, ensuring they are not persisted to disk or exposed.
+- **Secure Settings**: API keys are stored in session memory by default (not persisted) unless explicitly saved by the user.
 
 ### v2.10 Features
 

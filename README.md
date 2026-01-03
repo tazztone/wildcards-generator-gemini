@@ -10,7 +10,7 @@ A standalone Single Page Application (SPA) for managing and generating "wildcard
 2. **Setup API Key** (Required for AI features)
    - Click **Global Settings** (top of the page)
    - Select your preferred AI provider (OpenRouter, Gemini, or Custom).
-   - Enter your API Key. Keys are stored safely in **session memory only**.
+   - Enter your API Key. Keys are stored in **session memory** by default, with an option to remember them (saved to local storage).
 
 ## Documentation
 
