@@ -15,7 +15,10 @@ export async function loadConfig() {
             API_URL_CUSTOM: "http://127.0.0.1:1234/v1",
             MODEL_NAME_GEMINI: "",
             MODEL_NAME_OPENROUTER: "",
-            MODEL_NAME_CUSTOM: ""
+            MODEL_NAME_CUSTOM: "",
+            API_ENDPOINT: "openrouter",
+            CUSTOM_SYSTEM_PROMPT: null,  // null = use default from config.json
+            CUSTOM_SUGGEST_PROMPT: null  // null = use default from config.json
         };
 
         Object.assign(Config, defaultConfig, userDefaults, savedConfig ? JSON.parse(savedConfig) : {});
@@ -56,7 +59,10 @@ export async function saveConfig() {
             API_URL_CUSTOM: "http://127.0.0.1:1234/v1",
             MODEL_NAME_GEMINI: "",
             MODEL_NAME_OPENROUTER: "",
-            MODEL_NAME_CUSTOM: ""
+            MODEL_NAME_CUSTOM: "",
+            API_ENDPOINT: "openrouter",
+            CUSTOM_SYSTEM_PROMPT: null,
+            CUSTOM_SUGGEST_PROMPT: null
         };
         const allDefaults = { ...defaultConfig, ...userDefaults };
 
@@ -64,7 +70,6 @@ export async function saveConfig() {
         for (const key in Config) {
             // Skip runtime-only keys
             if (key.startsWith('API_KEY')) continue;
-            if (key === 'API_ENDPOINT') continue;
 
             // Save if it's a known config key AND it's different from default OR it's a new user setting
             if (Config.hasOwnProperty(key)) {
@@ -75,7 +80,7 @@ export async function saveConfig() {
                     }
                 }
                 // If it's a user setting loaded from storage (not in static defaults but valid config)
-                else if (['API_URL_CUSTOM', 'MODEL_NAME_GEMINI', 'MODEL_NAME_OPENROUTER', 'MODEL_NAME_CUSTOM'].includes(key)) {
+                else if (['API_URL_CUSTOM', 'MODEL_NAME_GEMINI', 'MODEL_NAME_OPENROUTER', 'MODEL_NAME_CUSTOM', 'API_ENDPOINT', 'CUSTOM_SYSTEM_PROMPT', 'CUSTOM_SUGGEST_PROMPT'].includes(key)) {
                     changedConfig[key] = Config[key];
                 }
             }
@@ -113,4 +118,81 @@ export function saveApiKey(provider, key, persist) {
     } else {
         localStorage.removeItem(storageKey);
     }
+}
+
+/**
+ * Check if a setting is using its default value
+ * @param {string} key - The config key to check
+ * @returns {boolean} - True if using default, false if custom
+ */
+export function isUsingDefault(key) {
+    if (key === 'CUSTOM_SYSTEM_PROMPT') {
+        return Config.CUSTOM_SYSTEM_PROMPT === null;
+    }
+    if (key === 'CUSTOM_SUGGEST_PROMPT') {
+        return Config.CUSTOM_SUGGEST_PROMPT === null;
+    }
+    if (key === 'API_ENDPOINT') {
+        return Config.API_ENDPOINT === 'openrouter';
+    }
+    return false;
+}
+
+/**
+ * Reset a setting to its default value
+ * @param {string} key - The config key to reset
+ */
+export function resetToDefault(key) {
+    if (key === 'CUSTOM_SYSTEM_PROMPT') {
+        Config.CUSTOM_SYSTEM_PROMPT = null;
+        saveConfig();
+    } else if (key === 'CUSTOM_SUGGEST_PROMPT') {
+        Config.CUSTOM_SUGGEST_PROMPT = null;
+        saveConfig();
+    } else if (key === 'API_ENDPOINT') {
+        Config.API_ENDPOINT = 'openrouter';
+        saveConfig();
+    }
+}
+
+/**
+ * Get the effective prompt value (custom if set, else default)
+ * @param {string} key - 'system' or 'suggest'
+ * @returns {string} - The prompt to use
+ */
+export function getEffectivePrompt(key) {
+    if (key === 'system') {
+        return Config.CUSTOM_SYSTEM_PROMPT !== null
+            ? Config.CUSTOM_SYSTEM_PROMPT
+            : Config.DEFAULT_SYSTEM_PROMPT;
+    }
+    if (key === 'suggest') {
+        return Config.CUSTOM_SUGGEST_PROMPT !== null
+            ? Config.CUSTOM_SUGGEST_PROMPT
+            : Config.DEFAULT_SUGGEST_ITEM_PROMPT;
+    }
+    return '';
+}
+
+/**
+ * Set a custom prompt value
+ * @param {string} key - 'system' or 'suggest'
+ * @param {string} value - The new prompt value
+ */
+export function setCustomPrompt(key, value) {
+    if (key === 'system') {
+        // Check if value matches default
+        if (value === Config.DEFAULT_SYSTEM_PROMPT) {
+            Config.CUSTOM_SYSTEM_PROMPT = null;
+        } else {
+            Config.CUSTOM_SYSTEM_PROMPT = value;
+        }
+    } else if (key === 'suggest') {
+        if (value === Config.DEFAULT_SUGGEST_ITEM_PROMPT) {
+            Config.CUSTOM_SUGGEST_PROMPT = null;
+        } else {
+            Config.CUSTOM_SUGGEST_PROMPT = value;
+        }
+    }
+    saveConfig();
 }

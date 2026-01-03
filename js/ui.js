@@ -1,6 +1,6 @@
 import { State } from './state.js';
 import { sanitize } from './utils.js';
-import { Config } from './config.js';
+import { Config, saveConfig, getEffectivePrompt, setCustomPrompt, isUsingDefault, resetToDefault } from './config.js';
 
 export const UI = {
     elements: {},
@@ -155,18 +155,21 @@ export const UI = {
         // Listen for new custom events for focus/navigation
         document.addEventListener('request-focus-path', (e) => this.focusPath(e.detail.path));
 
-        // Prompt change handlers
+        // Prompt change handlers - save custom prompts via config
         document.getElementById('global-prompt')?.addEventListener('input', (e) => {
-            State.state.systemPrompt = e.target.value;
+            setCustomPrompt('system', e.target.value);
+            this.updatePromptStatusBadge('global-prompt', 'CUSTOM_SYSTEM_PROMPT');
         });
         document.getElementById('suggestion-prompt')?.addEventListener('input', (e) => {
-            State.state.suggestItemPrompt = e.target.value;
+            setCustomPrompt('suggest', e.target.value);
+            this.updatePromptStatusBadge('suggestion-prompt', 'CUSTOM_SUGGEST_PROMPT');
         });
 
-        // API endpoint change handler
+        // API endpoint change handler - persist selection
         document.getElementById('api-endpoint')?.addEventListener('change', (e) => {
             const provider = e.target.value;
             Config.API_ENDPOINT = provider;
+            saveConfig(); // Persist provider selection
             this.updateSettingsVisibility(provider);
         });
     },
@@ -194,10 +197,12 @@ export const UI = {
         const apiEndpoint = document.getElementById('api-endpoint');
 
         if (globalPrompt) {
-            globalPrompt.value = State.state.systemPrompt || Config.DEFAULT_SYSTEM_PROMPT || '';
+            globalPrompt.value = getEffectivePrompt('system');
+            this.updatePromptStatusBadge('global-prompt', 'CUSTOM_SYSTEM_PROMPT');
         }
         if (suggestionPrompt) {
-            suggestionPrompt.value = State.state.suggestItemPrompt || Config.DEFAULT_SUGGEST_ITEM_PROMPT || '';
+            suggestionPrompt.value = getEffectivePrompt('suggest');
+            this.updatePromptStatusBadge('suggestion-prompt', 'CUSTOM_SUGGEST_PROMPT');
         }
         if (apiEndpoint) {
             apiEndpoint.value = Config.API_ENDPOINT || 'openrouter';
@@ -1250,5 +1255,57 @@ export const UI = {
             loadingInd.classList.remove('hidden', 'animate-pulse');
             loadingInd.classList.add('text-green-400');
         }
+    },
+
+    /**
+     * Update the status badge next to a prompt textarea
+     * @param {string} textareaId - ID of the textarea element
+     * @param {string} configKey - Config key to check (CUSTOM_SYSTEM_PROMPT or CUSTOM_SUGGEST_PROMPT)
+     */
+    updatePromptStatusBadge(textareaId, configKey) {
+        const textarea = document.getElementById(textareaId);
+        if (!textarea) return;
+
+        const wrapper = textarea.closest('.prompt-field-wrapper');
+        if (!wrapper) return;
+
+        const badge = wrapper.querySelector('.prompt-status-badge');
+        const resetBtn = wrapper.querySelector('.reset-prompt-btn');
+
+        if (!badge) return;
+
+        const usingDefault = isUsingDefault(configKey);
+
+        if (usingDefault) {
+            badge.textContent = 'Default';
+            badge.classList.remove('badge-custom');
+            badge.classList.add('badge-default');
+            if (resetBtn) resetBtn.classList.add('hidden');
+        } else {
+            badge.textContent = 'Custom';
+            badge.classList.remove('badge-default');
+            badge.classList.add('badge-custom');
+            if (resetBtn) resetBtn.classList.remove('hidden');
+        }
+    },
+
+    /**
+     * Handle reset button click for prompts
+     * @param {string} promptType - 'system' or 'suggest'
+     */
+    handleResetPrompt(promptType) {
+        const textareaId = promptType === 'system' ? 'global-prompt' : 'suggestion-prompt';
+        const configKey = promptType === 'system' ? 'CUSTOM_SYSTEM_PROMPT' : 'CUSTOM_SUGGEST_PROMPT';
+
+        resetToDefault(configKey);
+
+        const textarea = document.getElementById(textareaId);
+        if (textarea) {
+            textarea.value = getEffectivePrompt(promptType);
+        }
+
+        this.updatePromptStatusBadge(textareaId, configKey);
+        this.showToast('Reset to default', 'info');
     }
 };
+

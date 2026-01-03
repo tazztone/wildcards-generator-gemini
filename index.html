@@ -136,15 +136,32 @@
                 </div>
                 <!-- Modal Body - Scrollable -->
                 <div class="p-5 space-y-6 overflow-y-auto custom-scrollbar text-left">
-                    <div>
-                        <label for="global-prompt" class="block text-lg font-semibold text-indigo-300 mb-2">Global
-                            System Prompt (for Wildcard Generation)</label>
+                    <div class="prompt-field-wrapper">
+                        <div class="flex justify-between items-center mb-2">
+                            <label for="global-prompt" class="text-lg font-semibold text-indigo-300">Global
+                                System Prompt (for Wildcard Generation)</label>
+                            <div class="flex items-center gap-2">
+                                <span
+                                    class="prompt-status-badge badge-default text-xs px-2 py-0.5 rounded-full">Default</span>
+                                <button type="button"
+                                    class="reset-prompt-btn hidden text-xs text-gray-400 hover:text-white underline"
+                                    onclick="UI.handleResetPrompt('system')">Reset</button>
+                            </div>
+                        </div>
                         <textarea id="global-prompt" class="input-primary custom-scrollbar" rows="4"></textarea>
-
                     </div>
-                    <div>
-                        <label for="suggestion-prompt" class="block text-lg font-semibold text-indigo-300 mb-2">Item
-                            Suggestion Prompt</label>
+                    <div class="prompt-field-wrapper">
+                        <div class="flex justify-between items-center mb-2">
+                            <label for="suggestion-prompt" class="text-lg font-semibold text-indigo-300">Item
+                                Suggestion Prompt</label>
+                            <div class="flex items-center gap-2">
+                                <span
+                                    class="prompt-status-badge badge-default text-xs px-2 py-0.5 rounded-full">Default</span>
+                                <button type="button"
+                                    class="reset-prompt-btn hidden text-xs text-gray-400 hover:text-white underline"
+                                    onclick="UI.handleResetPrompt('suggest')">Reset</button>
+                            </div>
+                        </div>
                         <textarea id="suggestion-prompt" class="input-primary custom-scrollbar" rows="4"></textarea>
                     </div>
                     <!-- API Provider Selection -->
