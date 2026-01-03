@@ -151,7 +151,35 @@ export const App = {
                     const jsonEl = document.getElementById('api-test-json');
                     const responseEl = document.getElementById('api-test-response');
                     const iconEl = document.getElementById('api-test-status-icon');
+                    // New elements
+                    const urlEl = document.getElementById('api-test-url');
+                    const payloadEl = document.getElementById('api-test-payload');
+                    const previewSection = document.getElementById('api-test-preview-section');
+                    const previewEl = document.getElementById('api-test-preview');
                     const closeBtn = document.getElementById('api-test-close-btn');
+
+                    // Reset state
+                    previewSection.classList.add('hidden');
+                    previewEl.innerHTML = '';
+
+                    // Populate Common Data
+                    timeEl.textContent = result.stats?.responseTime ? `${result.stats.responseTime} ms` : '-- ms';
+
+                    // Populate Request Info
+                    if (result.stats?.request) {
+                        urlEl.textContent = result.stats.request.url;
+                        try {
+                            // Redact API Key in payload display for safety/screenshots
+                            const safePayload = JSON.parse(JSON.stringify(result.stats.request.payload));
+                            // Also check headers if we displayed them
+                            payloadEl.textContent = JSON.stringify(safePayload, null, 2);
+                        } catch (e) {
+                            payloadEl.textContent = String(result.stats.request.payload);
+                        }
+                    } else {
+                        urlEl.textContent = 'Unknown';
+                        payloadEl.textContent = '--';
+                    }
 
                     if (result.success) {
                         // Update stats in settings panel
@@ -160,25 +188,32 @@ export const App = {
                             statsEl.classList.remove('hidden');
                         }
 
-                        // Populate Dialog
-                        timeEl.textContent = `${result.stats.responseTime} ms`;
-                        jsonEl.textContent = result.stats.supportsJson ? 'Yes' : 'No';
-                        jsonEl.className = `text-lg font-mono ${result.stats.supportsJson ? 'text-green-400' : 'text-yellow-400'}`;
+                        // JSON Status
+                        jsonEl.textContent = `JSON: ${result.stats.supportsJson ? 'YES' : 'NO'}`;
+                        jsonEl.className = `text-sm font-bold bg-gray-900/50 px-2 py-1 rounded border border-gray-700 ${result.stats.supportsJson ? 'text-green-400 border-green-900' : 'text-yellow-400 border-yellow-900'}`;
                         iconEl.textContent = '✅';
 
-                        try {
-                            const parsed = JSON.parse(result.stats.rawResponse);
-                            responseEl.textContent = JSON.stringify(parsed, null, 2);
-                        } catch (e) {
-                            responseEl.textContent = result.stats.rawResponse || '(No content)';
+                        // Formatted Preview
+                        if (result.stats.parsedContent && Array.isArray(result.stats.parsedContent)) {
+                            previewSection.classList.remove('hidden');
+                            previewEl.innerHTML = result.stats.parsedContent.map(item =>
+                                `<span class="px-2 py-1 bg-indigo-900/50 text-indigo-200 border border-indigo-700/50 rounded text-xs">${item}</span>`
+                            ).join('');
+                        } else if (typeof result.stats.parsedContent === 'object') {
+                            previewSection.classList.remove('hidden');
+                            previewEl.innerHTML = `<span class="text-gray-400 text-xs italic">Result is an object, not an array. (Count: ${Object.keys(result.stats.parsedContent).length})</span>`;
                         }
-                        responseEl.className = "bg-gray-950 p-3 rounded border border-gray-800 text-xs font-mono overflow-auto max-h-[300px] text-green-300 custom-scrollbar";
+
+                        // Raw Response
+                        responseEl.textContent = result.stats.rawResponse;
+                        responseEl.className = "bg-gray-950 p-3 rounded border border-gray-800 text-xs font-mono overflow-auto max-h-[300px] text-green-300 custom-scrollbar whitespace-pre-wrap";
                     } else {
                         iconEl.textContent = '❌';
-                        timeEl.textContent = result.stats?.responseTime ? `${result.stats.responseTime} ms` : '--';
-                        jsonEl.textContent = 'N/A';
+                        jsonEl.textContent = 'JSON: N/A';
+                        jsonEl.className = "text-sm font-bold bg-gray-900/50 px-2 py-1 rounded border border-gray-700 text-gray-500";
+
                         responseEl.textContent = result.error;
-                        responseEl.className = "bg-gray-950 p-3 rounded border border-gray-800 text-xs font-mono overflow-auto max-h-[300px] text-red-400 custom-scrollbar";
+                        responseEl.className = "bg-gray-950 p-3 rounded border border-gray-800 text-xs font-mono overflow-auto max-h-[300px] text-red-400 custom-scrollbar whitespace-pre-wrap";
                     }
 
                     dialog.showModal();

@@ -544,8 +544,10 @@ Example: ["kirin", "thunderbird", "basilisk"]`;
                 supportsJson: supportsJson,
                 provider: provider,
                 rawResponse: rawContent,
+                parsedContent: parsedContent, // Pass the full parsed object
                 parsedCount: Array.isArray(parsedContent) ? parsedContent.length : 0,
-                usage: result.usage || null
+                usage: result.usage || null,
+                request: { url, headers, payload } // Return request details
             };
 
             if (uiCallback) {

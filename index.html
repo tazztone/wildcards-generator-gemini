@@ -521,35 +521,68 @@
 
     <!-- API Test Results Dialog -->
     <dialog id="api-test-dialog"
-        class="bg-gray-800 text-gray-200 p-6 rounded-lg shadow-xl backdrop:bg-gray-900/80 max-w-2xl w-full border border-gray-700">
-        <div class="flex justify-between items-center mb-4 border-b border-gray-700 pb-2">
+        class="bg-gray-800 text-gray-200 p-6 rounded-lg shadow-xl backdrop:bg-gray-900/80 max-w-3xl w-full border border-gray-700 max-h-[90vh] hidden open:flex flex-col">
+        <div class="flex justify-between items-center mb-4 border-b border-gray-700 pb-2 bg-gray-800 sticky top-0 z-10">
             <h3 class="text-xl font-bold text-white flex items-center gap-2">
                 <span id="api-test-status-icon">🔌</span> API Test Results
             </h3>
-            <button id="api-test-close-btn"
-                class="p-1 rounded-full hover:bg-white/10 text-gray-400 hover:text-white transition-colors"
-                title="Close">
-                <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-                </svg>
-            </button>
+            <div class="flex items-center gap-3">
+                <span id="api-test-time"
+                    class="text-sm font-mono text-green-400 bg-gray-900/50 px-2 py-1 rounded border border-gray-700">--
+                    ms</span>
+                <span id="api-test-json"
+                    class="text-sm font-bold bg-gray-900/50 px-2 py-1 rounded border border-gray-700">JSON: --</span>
+                <button id="api-test-close-btn"
+                    class="p-1 rounded-full hover:bg-white/10 text-gray-400 hover:text-white transition-colors"
+                    title="Close">
+                    <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                </button>
+            </div>
         </div>
-        <div id="api-test-content" class="space-y-4">
-            <div class="grid grid-cols-2 gap-4 text-sm mb-4">
-                <div class="bg-gray-900/50 p-3 rounded border border-gray-700">
-                    <span class="text-gray-400 block">Response Time</span>
-                    <span id="api-test-time" class="text-lg font-mono text-green-400">-- ms</span>
-                </div>
-                <div class="bg-gray-900/50 p-3 rounded border border-gray-700">
-                    <span class="text-gray-400 block">JSON Support</span>
-                    <span id="api-test-json" class="text-lg font-mono">--</span>
+
+        <div id="api-test-content" class="space-y-4 overflow-y-auto custom-scrollbar flex-grow pr-2">
+            <!-- Formatted Wildcards Preview -->
+            <div id="api-test-preview-section" class="hidden">
+                <h4 class="text-sm font-semibold text-indigo-300 mb-2 flex items-center gap-2">
+                    <span>✨ Formatted Result</span>
+                    <span class="text-xs font-normal text-gray-500">(How it looks in the app)</span>
+                </h4>
+                <div id="api-test-preview"
+                    class="flex flex-wrap gap-2 bg-gray-900/50 p-3 rounded-lg border border-gray-700 min-h-[50px]">
                 </div>
             </div>
-            <div>
-                <span class="text-sm text-gray-400 block mb-1">Raw Response</span>
-                <pre id="api-test-response"
-                    class="bg-gray-950 p-3 rounded border border-gray-800 text-xs font-mono overflow-auto max-h-[300px] text-gray-300 custom-scrollbar"></pre>
-            </div>
+
+            <!-- API Request Details -->
+            <details class="bg-gray-900/30 rounded border border-gray-700/50 group">
+                <summary
+                    class="p-3 cursor-pointer text-sm font-medium text-gray-400 hover:text-white flex justify-between items-center select-none">
+                    <span>📤 Outgoing API Request</span>
+                    <span class="arrow-down transition-transform duration-300 group-open:rotate-180">▼</span>
+                </summary>
+                <div class="p-3 border-t border-gray-700/50 text-xs font-mono overflow-x-auto">
+                    <div class="mb-2"><span class="text-indigo-400 font-bold">Endpoint:</span> <span id="api-test-url"
+                            class="text-gray-300 break-all"></span></div>
+                    <div class="mb-2"><span class="text-indigo-400 font-bold">Payload:</span></div>
+                    <pre id="api-test-payload"
+                        class="bg-gray-950 p-2 rounded text-gray-400 whitespace-pre-wrap break-all"></pre>
+                </div>
+            </details>
+
+            <!-- Raw Response -->
+            <details class="bg-gray-900/30 rounded border border-gray-700/50 group" open>
+                <summary
+                    class="p-3 cursor-pointer text-sm font-medium text-gray-400 hover:text-white flex justify-between items-center select-none">
+                    <span>📥 Raw API Response</span>
+                    <span class="arrow-down transition-transform duration-300 group-open:rotate-180">▼</span>
+                </summary>
+                <div class="p-3 border-t border-gray-700/50">
+                    <pre id="api-test-response"
+                        class="bg-gray-950 p-3 rounded border border-gray-800 text-xs font-mono overflow-auto max-h-[300px] text-gray-300 custom-scrollbar whitespace-pre-wrap"></pre>
+                </div>
+            </details>
         </div>
     </dialog>
 
