@@ -728,6 +728,25 @@ export const App = {
 
     handleContainerKeydown(e) {
         if (e.key === 'Enter') {
+            // Rapid Entry for Wildcard Items
+            if (e.target.classList.contains('add-wildcard-input')) {
+                e.preventDefault(); // Prevent blur
+                const input = e.target;
+                const val = input.value.trim();
+                const pathElement = input.closest('[data-path]');
+                if (val && pathElement) {
+                    const path = pathElement.dataset.path;
+                    State.saveStateToHistory();
+                    const obj = State.getObjectByPath(path);
+                    if (obj && Array.isArray(obj.wildcards)) {
+                        obj.wildcards.push(val);
+                        input.value = '';
+                        input.focus(); // Ensure focus remains
+                    }
+                }
+                return;
+            }
+
             // If it's a contenteditable element, blur it to save
             if (e.target.isContentEditable) {
                 e.preventDefault();
