@@ -662,6 +662,42 @@ export const App = {
         if (target.closest('.generate-btn')) {
             this.handleGenerate(path);
         }
+
+        // Card Batch Actions
+        if (target.closest('.batch-delete-btn')) {
+            const card = target.closest('.wildcard-card');
+            if (!card) return;
+            const checked = card.querySelectorAll('.batch-select:checked');
+            if (checked.length === 0) {
+                 UI.showToast('No items selected', 'info');
+                 return;
+            }
+
+            // Delete selected items
+            // Must delete in descending order of index to preserve indices of earlier items during splice
+            const indices = Array.from(checked)
+                .map(cb => parseInt(cb.closest('.chip').dataset.index))
+                .sort((a, b) => b - a);
+
+            if (indices.length > 0) {
+                State.saveStateToHistory();
+                const obj = State.getObjectByPath(path);
+                indices.forEach(idx => {
+                    obj.wildcards.splice(idx, 1);
+                });
+                // Proxy will trigger update
+                UI.showToast(`Deleted ${indices.length} items`, 'success');
+            }
+        }
+
+        if (target.closest('.select-all-btn')) {
+            const card = target.closest('.wildcard-card');
+            if (!card) return;
+            const checkboxes = card.querySelectorAll('.batch-select');
+            // If any is unchecked, select all. If all checked, deselect all.
+            const allChecked = Array.from(checkboxes).every(cb => cb.checked);
+            checkboxes.forEach(cb => cb.checked = !allChecked);
+        }
     },
 
     handleContainerChange(e) {

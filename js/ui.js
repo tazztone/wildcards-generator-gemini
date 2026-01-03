@@ -499,7 +499,8 @@ export const UI = {
                 // Refresh Button
                 const refreshBtn = document.createElement('button');
                 refreshBtn.className = 'refresh-models-btn p-2 rounded-md bg-gray-700 hover:bg-gray-600 text-gray-300 transition-colors ml-1';
-                refreshBtn.innerHTML = '🔄';
+                refreshBtn.innerHTML = '<span aria-hidden="true">🔄</span>';
+                refreshBtn.setAttribute('aria-label', 'Refresh Model List');
                 refreshBtn.title = 'Refresh Model List';
                 refreshBtn.dataset.provider = p.id;
                 modelInput.parentNode.appendChild(refreshBtn);
@@ -834,8 +835,20 @@ export const UI = {
         const chipContainer = element.querySelector('.chip-container');
         if (chipContainer) {
             // Re-render chips. Diffing individual chips is Overkill for V1, but better than full page re-render.
-            chipContainer.innerHTML = (data.wildcards || []).map((wc, i) => this.createChip(wc, i)).join('');
+            const wildcards = data.wildcards || [];
+            chipContainer.innerHTML = wildcards.length > 0
+                ? wildcards.map((wc, i) => this.createChip(wc, i)).join('')
+                : this.getEmptyListHtml();
         }
+    },
+
+    getEmptyListHtml() {
+        return `
+            <div class="empty-state w-full flex flex-col items-center justify-center text-gray-500 italic py-2 select-none">
+                <span class="text-lg opacity-50" aria-hidden="true">📝</span>
+                <span class="text-xs mt-1">No items yet. Add one or Generate.</span>
+            </div>
+        `;
     },
 
     getCategoryFolderHtml(name, data, path) {
@@ -881,7 +894,7 @@ export const UI = {
             <span class="edit-icon" title="Double-click to edit">✏️</span>
         </div>
             <div class="chip-container custom-scrollbar flex flex-wrap gap-2 card-folder rounded-md p-2 w-full border border-gray-600 overflow-y-auto" style="max-height: 150px; min-height: 2.5rem;">
-                ${(data.wildcards || []).map((wc, i) => this.createChip(wc, i)).join('')}
+                ${(data.wildcards && data.wildcards.length > 0) ? data.wildcards.map((wc, i) => this.createChip(wc, i)).join('') : this.getEmptyListHtml()}
             </div>
             <div class="flex gap-2 mt-2">
                 <input type="text" aria-label="New wildcard text" placeholder="Add new wildcard..." class="add-wildcard-input flex-grow input-primary px-2 py-1 text-sm">
