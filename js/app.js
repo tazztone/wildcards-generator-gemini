@@ -113,36 +113,38 @@ export const App = {
 
         // Settings / API Keys
         document.getElementById('api-endpoint')?.addEventListener('change', (e) => {
-            const provider = e.target.value;
+            const provider = /** @type {HTMLSelectElement} */ (e.target).value;
             Config.API_ENDPOINT = provider;
             saveConfig(); // Persist choice
             UI.updateSettingsVisibility(provider);
         });
 
         document.addEventListener('change', (e) => {
-            if (e.target.matches('.api-key-input') || e.target.matches('.api-key-remember')) {
-                const panel = e.target.closest('.api-settings-panel');
+            const target = /** @type {HTMLElement} */ (e.target);
+            if (target.matches('.api-key-input') || target.matches('.api-key-remember')) {
+                const panel = target.closest('.api-settings-panel');
                 if (!panel) return;
 
                 const keyInput = panel.querySelector('.api-key-input');
-                const rememberCheck = panel.querySelector('.api-key-remember');
+                const rememberCheck = /** @type {HTMLInputElement|null} */ (panel.querySelector('.api-key-remember'));
                 if (!keyInput) return;
 
                 const provider = keyInput.id.replace('-api-key', '');
                 const persist = rememberCheck ? rememberCheck.checked : false;
 
-                saveApiKey(provider, keyInput.value.trim(), persist);
+                saveApiKey(provider, /** @type {HTMLInputElement} */(keyInput).value.trim(), persist);
             }
 
             // OpenRouter Filter Checkboxes
-            if (e.target.id === 'openrouter-free-only' || e.target.id === 'openrouter-json-only') {
+            if (target.id === 'openrouter-free-only' || target.id === 'openrouter-json-only') {
                 UI.filterAndRenderModels('openrouter');
             }
         });
 
         document.addEventListener('click', (e) => {
-            if (e.target.matches('.test-conn-btn') || e.target.closest('.test-conn-btn')) {
-                const btn = e.target.closest('.test-conn-btn') || e.target;
+            const target = /** @type {HTMLElement} */ (e.target);
+            if (target.matches('.test-conn-btn') || target.closest('.test-conn-btn')) {
+                const btn = /** @type {HTMLButtonElement} */ (target.closest('.test-conn-btn') || target);
                 const provider = btn.dataset.provider;
                 btn.disabled = true;
                 btn.textContent = '⏳';
@@ -156,12 +158,12 @@ export const App = {
                     });
             }
             // Test Model Button
-            if (e.target.matches('.test-model-btn') || e.target.closest('.test-model-btn')) {
-                const btn = e.target.closest('.test-model-btn') || e.target;
+            if (target.matches('.test-model-btn') || target.closest('.test-model-btn')) {
+                const btn = /** @type {HTMLButtonElement} */ (target.closest('.test-model-btn') || target);
                 const provider = btn.dataset.provider;
                 const panel = document.querySelector(`#settings-${provider}`);
-                const apiKey = panel?.querySelector('.api-key-input')?.value?.trim();
-                const modelName = panel?.querySelector('.model-name-input')?.value;
+                const apiKey = /** @type {HTMLInputElement|null} */ (panel?.querySelector('.api-key-input'))?.value?.trim();
+                const modelName = /** @type {HTMLInputElement|null} */ (panel?.querySelector('.model-name-input'))?.value;
                 const statsEl = panel?.querySelector('.model-stats');
 
                 if (!modelName?.trim()) {
@@ -248,11 +250,11 @@ export const App = {
                         responseEl.className = "bg-gray-950 p-3 rounded border border-gray-800 text-xs font-mono overflow-auto max-h-[300px] text-red-400 custom-scrollbar whitespace-pre-wrap";
                     }
 
-                    dialog.showModal();
+                    /** @type {HTMLDialogElement} */ (dialog).showModal();
 
                     // Close handlers
                     const closeHandler = () => {
-                        dialog.close();
+                        /** @type {HTMLDialogElement} */ (dialog).close();
                         closeBtn.removeEventListener('click', closeHandler);
                         dialog.removeEventListener('click', backdropHandler);
                     };
@@ -269,11 +271,11 @@ export const App = {
                 });
             }
             // Help Button
-            if (e.target.matches('#help-btn')) {
+            if (target.matches('#help-btn')) {
                 UI.showNotification(`
-<div class="text-left space-y-4 max-w-lg">
+<div class="text-left space-y-2 max-w-lg">
     <h3 class="text-xl font-bold text-indigo-300 flex items-center gap-2">🚀 Getting Started</h3>
-    <ul class="list-none space-y-2 text-sm">
+    <ul class="list-none space-y-1 text-sm">
         <li class="flex items-start gap-2">
             <span class="text-indigo-400">⚙️</span>
             <span><strong>Settings:</strong> Configure API keys via the gear icon in the toolbar</span>
@@ -292,8 +294,8 @@ export const App = {
         </li>
     </ul>
 
-    <h3 class="text-lg font-bold text-indigo-300 mt-4">⌨️ Keyboard Shortcuts</h3>
-    <div class="grid grid-cols-2 gap-2 text-sm bg-gray-800/50 rounded-lg p-3">
+    <h3 class="text-lg font-bold text-indigo-300 mt-2">⌨️ Keyboard Shortcuts</h3>
+    <div class="grid grid-cols-2 gap-1 text-sm bg-gray-800/50 rounded-lg p-2">
         <div><kbd class="px-2 py-1 bg-gray-700 rounded text-xs">Ctrl+S</kbd></div><div class="text-gray-400">Auto-save reminder</div>
         <div><kbd class="px-2 py-1 bg-gray-700 rounded text-xs">Ctrl+Z</kbd></div><div class="text-gray-400">Undo</div>
         <div><kbd class="px-2 py-1 bg-gray-700 rounded text-xs">Ctrl+Y</kbd></div><div class="text-gray-400">Redo</div>
@@ -301,8 +303,8 @@ export const App = {
         <div><kbd class="px-2 py-1 bg-gray-700 rounded text-xs">↑ / ↓</kbd></div><div class="text-gray-400">Navigate categories</div>
     </div>
 
-    <h3 class="text-lg font-bold text-indigo-300 mt-4">💡 Tips</h3>
-    <ul class="text-sm text-gray-300 list-disc list-inside space-y-1">
+    <h3 class="text-lg font-bold text-indigo-300 mt-2">💡 Tips</h3>
+    <ul class="text-sm text-gray-300 list-disc list-inside space-y-0.5">
         <li>Click any title to rename it inline</li>
         <li>Use "Check Duplicates" to find and manage repeated entries</li>
         <li>Pin frequently used categories to keep them at the top</li>
@@ -312,31 +314,31 @@ export const App = {
 `);
             }
             // Check Duplicates
-            if (e.target.matches('#check-duplicates')) {
+            if (target.matches('#check-duplicates')) {
                 this.handleCheckDuplicates();
             }
             // Reset Options
-            if (e.target.matches('#reset-localstorage')) {
+            if (target.matches('#reset-localstorage')) {
                 UI.showNotification('Clear all saved data from localStorage?\nThis includes remembered API keys and settings.', true, () => {
                     const keys = Object.keys(localStorage).filter(k => k.startsWith('wildcards'));
                     keys.forEach(k => localStorage.removeItem(k));
                     UI.showToast(`Cleared ${keys.length} localStorage items`, 'success');
                 });
             }
-            if (e.target.matches('#reset-sessionstorage')) {
+            if (target.matches('#reset-sessionstorage')) {
                 UI.showNotification('Clear session storage?\nThis includes temporary API keys and UI state.', true, () => {
                     const keys = Object.keys(sessionStorage).filter(k => k.startsWith('wildcards'));
                     keys.forEach(k => sessionStorage.removeItem(k));
                     UI.showToast(`Cleared ${keys.length} sessionStorage items`, 'success');
                 });
             }
-            if (e.target.matches('#reset-defaults')) {
+            if (target.matches('#reset-defaults')) {
                 UI.showNotification('Reset everything to defaults?\n⚠️ This will clear all wildcards, settings, and history!', true, () => {
                     State.resetState();
                     UI.showToast('Reset to defaults complete', 'success');
                 });
             }
-            if (e.target.matches('#reload-default-data')) {
+            if (target.matches('#reload-default-data')) {
                 UI.showNotification('Reload default wildcard data?\nYour settings will be preserved.', true, async () => {
                     UI.toggleOverflowMenu(false);
                     await State.resetState(); // Uses the fixed fetch('data/initial-data.yaml') in State.js
@@ -345,7 +347,7 @@ export const App = {
                 });
             }
             // Factory Reset
-            if (e.target.matches('#factory-reset')) {
+            if (target.matches('#factory-reset')) {
                 UI.showNotification('⚠️ Factory Reset? This will delete ALL wildcards and settings. Cannot be undone.', true, () => {
                     UI.toggleOverflowMenu(false);
                     localStorage.clear();
@@ -354,11 +356,11 @@ export const App = {
                 });
             }
             // Legacy reset button (if exists)
-            if (e.target.matches('#reset-btn')) {
+            if (target.matches('#reset-btn')) {
                 UI.showNotification('Are you sure you want to reset everything?', true, () => State.resetState());
             }
             // Add Category Placeholder
-            if (e.target.matches('#add-category-placeholder-btn')) {
+            if (target.matches('#add-category-placeholder-btn')) {
                 UI.showNotification('Enter new top-level category name:', true, (name) => {
                     if (name && name.trim()) {
                         const key = name.trim().replace(/\s+/g, '_');
@@ -370,7 +372,7 @@ export const App = {
                 }, true);
             }
             // Suggest Top-Level
-            if (e.target.matches('#suggest-toplevel-btn')) {
+            if (target.matches('#suggest-toplevel-btn')) {
                 this.suggestItems(null, 'folder');
             }
             // Export YAML
@@ -388,49 +390,50 @@ export const App = {
             };
 
             // Export YAML
-            if (e.target.matches('#export-yaml') || e.target.closest('#export-yaml')) {
+            if (target.matches('#export-yaml') || target.closest('#export-yaml')) {
                 ImportExport.handleExportYAML();
-                showExportFeedback(e.target);
+                showExportFeedback(target);
             }
             // Export ZIP
-            if (e.target.matches('#download-all-zip') || e.target.closest('#download-all-zip')) {
+            if (target.matches('#download-all-zip') || target.closest('#download-all-zip')) {
                 ImportExport.handleExportZIP();
-                showExportFeedback(e.target);
+                showExportFeedback(target);
             }
             // Settings Management Handlers (Modal)
-            if (e.target.matches('#export-settings-btn')) {
+            if (target.matches('#export-settings-btn')) {
                 ImportExport.handleExportSettings();
             }
-            if (e.target.matches('#load-settings-btn')) {
-                document.getElementById('settings-file-input').click();
+            if (target.matches('#load-settings-btn')) {
+                document.getElementById('settings-file-input')?.click();
             }
-            if (e.target.matches('#reset-settings-btn')) {
+            if (target.matches('#reset-settings-btn')) {
                 ImportExport.handleResetSettings();
             }
 
             // Import YAML
-            if (e.target.matches('#import-yaml')) {
+            if (target.matches('#import-yaml')) {
                 ImportExport.handleImportYAML();
             }
 
             // Batch Operations
-            if (e.target.matches('#batch-expand')) this.handleBatchAction('expand');
-            if (e.target.matches('#batch-collapse')) this.handleBatchAction('collapse');
-            if (e.target.matches('#batch-delete')) this.handleBatchAction('delete');
+            if (target.matches('#batch-expand')) this.handleBatchAction('expand');
+            if (target.matches('#batch-collapse')) this.handleBatchAction('collapse');
+            if (target.matches('#batch-delete')) this.handleBatchAction('delete');
         });
 
         // Settings File Input Handler
-        document.getElementById('settings-file-input')?.addEventListener('change', (e) => ImportExport.handleLoadSettings(e));
+        document.getElementById('settings-file-input')?.addEventListener('change', (e) => ImportExport.handleLoadSettings(/** @type {Event & { target: HTMLInputElement }} */(e)));
 
         // Settings Management -> Reset Handlers
         // Batch Select All
         document.getElementById('batch-select-all')?.addEventListener('change', (e) => {
-            const checked = e.target.checked;
-            document.querySelectorAll('.category-batch-checkbox').forEach(cb => cb.checked = checked);
+            const checked = /** @type {HTMLInputElement} */ (e.target).checked;
+            document.querySelectorAll('.category-batch-checkbox').forEach(cb => /** @type {HTMLInputElement} */(cb).checked = checked);
             this.updateBatchUI();
         });
         UI.elements.container.addEventListener('change', (e) => {
-            if (e.target.matches('.category-batch-checkbox')) {
+            const containerTarget = /** @type {HTMLElement} */ (e.target);
+            if (containerTarget.matches('.category-batch-checkbox')) {
                 this.updateBatchUI();
             }
         });
@@ -465,9 +468,9 @@ export const App = {
                 const prevIndex = currentIndex > 0 ? currentIndex - 1 : categories.length - 1;
                 categories[prevIndex].querySelector('summary').focus();
             } else if (e.key === 'Enter' && currentCategory) {
-                currentCategory.open = !currentCategory.open;
+                /** @type {HTMLDetailsElement} */ (currentCategory).open = !/** @type {HTMLDetailsElement} */ (currentCategory).open;
             } else if (e.key === 'Escape') {
-                categories.forEach(c => c.open = false);
+                categories.forEach(c => /** @type {HTMLDetailsElement} */(c).open = false);
                 UI.showToast('All categories collapsed', 'info');
             }
         }
@@ -517,25 +520,25 @@ export const App = {
         // Show actionable dialog
         const totalOccurrences = duplicates.reduce((sum, d) => sum + d.count, 0);
         const message = `
-<div class="text-left space-y-3">
+<div class="text-left space-y-2">
     <p class="text-lg">Found <strong class="text-indigo-400">${duplicates.length}</strong> duplicate wildcards (${totalOccurrences} total occurrences)</p>
-    <div class="space-y-2">
-        <button id="dupe-highlight" class="w-full text-left px-3 py-2 bg-yellow-900/30 hover:bg-yellow-800/50 rounded-md transition-colors" title="Add visual highlights to all duplicate wildcards in the UI">
+    <div class="space-y-1">
+        <button id="dupe-highlight" class="w-full text-left px-2 py-1 bg-yellow-900/30 hover:bg-yellow-800/50 rounded-md transition-colors" title="Add visual highlights to all duplicate wildcards in the UI">
             🔆 <strong>Highlight Duplicates</strong>
             <span class="text-sm text-gray-400 block ml-6">Add visual indicators to duplicate wildcards</span>
         </button>
-        <button id="dupe-filter" class="w-full text-left px-3 py-2 bg-blue-900/30 hover:bg-blue-800/50 rounded-md transition-colors" title="Filter view to show only cards containing duplicate wildcards">
+        <button id="dupe-filter" class="w-full text-left px-2 py-1 bg-blue-900/30 hover:bg-blue-800/50 rounded-md transition-colors" title="Filter view to show only cards containing duplicate wildcards">
             🔍 <strong>Show Duplicates Only</strong>
             <span class="text-sm text-gray-400 block ml-6">Filter to show only cards with duplicates</span>
         </button>
-        <button id="dupe-clear" class="w-full text-left px-3 py-2 bg-gray-700/30 hover:bg-gray-600/50 rounded-md transition-colors" title="Remove all duplicate highlights and filters">
+        <button id="dupe-clear" class="w-full text-left px-2 py-1 bg-gray-700/30 hover:bg-gray-600/50 rounded-md transition-colors" title="Remove all duplicate highlights and filters">
             ✖️ <strong>Clear Highlights</strong>
             <span class="text-sm text-gray-400 block ml-6">Remove all duplicate visual indicators</span>
         </button>
     </div>
-    <details class="mt-4">
+    <details class="mt-2">
         <summary class="cursor-pointer text-indigo-400 hover:text-indigo-300">View duplicate list (${duplicates.length})</summary>
-        <ul class="mt-2 text-sm max-h-40 overflow-y-auto custom-scrollbar space-y-1">
+        <ul class="mt-1 text-sm max-h-40 overflow-y-auto custom-scrollbar space-y-1">
             ${duplicates.slice(0, 20).map(d => `<li class="text-gray-300">"${d.locations[0].original}" - ${d.count} occurrences</li>`).join('')}
             ${duplicates.length > 20 ? `<li class="text-gray-500">...and ${duplicates.length - 20} more</li>` : ''}
         </ul>
@@ -588,7 +591,7 @@ export const App = {
 
         // Hide cards not in the set
         document.querySelectorAll('.wildcard-card').forEach(card => {
-            const path = card.dataset.path;
+            const path = /** @type {HTMLElement} */ (card).dataset.path;
             if (pathsWithDupes.has(path)) {
                 card.classList.remove('hidden');
                 card.classList.add('duplicate-focus');
@@ -603,7 +606,7 @@ export const App = {
             let currentPath = '';
             parts.forEach((part, i) => {
                 currentPath += (i > 0 ? '/' : '') + part;
-                const el = document.querySelector(`details[data-path="${currentPath}"]`);
+                const el = /** @type {HTMLDetailsElement|null} */ (document.querySelector(`details[data-path="${currentPath}"]`));
                 if (el) el.open = true;
             });
         });
@@ -623,7 +626,7 @@ export const App = {
         });
         UI.showToast('Duplicate highlights cleared', 'info');
         // Re-run search to restore proper visibility
-        const searchInput = document.getElementById('search-wildcards');
+        const searchInput = /** @type {HTMLInputElement|null} */ (document.getElementById('search-wildcards'));
         if (searchInput && searchInput.value) {
             searchInput.dispatchEvent(new Event('input', { bubbles: true }));
         }
@@ -632,7 +635,7 @@ export const App = {
     handleBatchAction(action) {
         const selectedCheckboxes = document.querySelectorAll('.category-batch-checkbox:checked');
         if (selectedCheckboxes.length === 0) return;
-        const categories = Array.from(selectedCheckboxes).map(cb => cb.closest('details[data-path]'));
+        const categories = /** @type {HTMLDetailsElement[]} */ (Array.from(selectedCheckboxes).map(cb => cb.closest('details[data-path]')));
         if (action === 'expand') {
             categories.forEach(cat => { if (cat) cat.open = true; });
             UI.showToast(`Expanded ${categories.length} categories`, 'success');
@@ -654,7 +657,7 @@ export const App = {
                 UI.showToast(`Deleted ${categories.length} categories`, 'success');
             });
         }
-        document.getElementById('batch-select-all').checked = false;
+        /** @type {HTMLInputElement|null} */ (document.getElementById('batch-select-all')).checked = false;
         this.updateBatchUI();
     },
 
@@ -665,23 +668,23 @@ export const App = {
         const hasSelection = count > 0;
 
         // Enhancement #2: Add explanatory tooltips for disabled buttons
-        const expandBtn = document.getElementById('batch-expand');
-        const collapseBtn = document.getElementById('batch-collapse');
-        const deleteBtn = document.getElementById('batch-delete');
+        const expandBtn = /** @type {HTMLButtonElement|null} */ (document.getElementById('batch-expand'));
+        const collapseBtn = /** @type {HTMLButtonElement|null} */ (document.getElementById('batch-collapse'));
+        const deleteBtn = /** @type {HTMLButtonElement|null} */ (document.getElementById('batch-delete'));
 
-        expandBtn.disabled = !hasSelection;
-        collapseBtn.disabled = !hasSelection;
-        deleteBtn.disabled = !hasSelection;
+        if (expandBtn) expandBtn.disabled = !hasSelection;
+        if (collapseBtn) collapseBtn.disabled = !hasSelection;
+        if (deleteBtn) deleteBtn.disabled = !hasSelection;
 
         // Update titles to explain state
         if (hasSelection) {
-            expandBtn.title = `Expand ${count} selected categories`;
-            collapseBtn.title = `Collapse ${count} selected categories`;
-            deleteBtn.title = `Delete ${count} selected categories`;
+            if (expandBtn) expandBtn.title = `Expand ${count} selected categories`;
+            if (collapseBtn) collapseBtn.title = `Collapse ${count} selected categories`;
+            if (deleteBtn) deleteBtn.title = `Delete ${count} selected categories`;
         } else {
-            expandBtn.title = 'Select categories to expand';
-            collapseBtn.title = 'Select categories to collapse';
-            deleteBtn.title = 'Select categories to delete';
+            if (expandBtn) expandBtn.title = 'Select categories to expand';
+            if (collapseBtn) collapseBtn.title = 'Select categories to collapse';
+            if (deleteBtn) deleteBtn.title = 'Select categories to delete';
         }
 
         document.getElementById('batch-ops-bar').classList.toggle('hidden', !hasSelection);
@@ -1080,11 +1083,10 @@ export const App = {
 				</div>
 			`;
 
-            // Show confirmation dialog
             UI.showNotification(dialogContent, true, () => {
                 // Get selected suggestions
                 const checkboxes = document.querySelectorAll('.suggestion-checkbox:checked');
-                const selectedIndices = Array.from(checkboxes).map(cb => parseInt(cb.dataset.index));
+                const selectedIndices = Array.from(checkboxes).map(cb => parseInt(/** @type {HTMLElement} */(cb).dataset.index ?? '0'));
                 const selectedSuggestions = selectedIndices.map(i => suggestions[i]);
 
                 if (selectedSuggestions.length === 0) {
@@ -1112,10 +1114,10 @@ export const App = {
             // Bind Select All/None helpers inside the dialog
             setTimeout(() => {
                 document.getElementById('suggest-select-all')?.addEventListener('click', () => {
-                    document.querySelectorAll('.suggestion-checkbox').forEach(cb => cb.checked = true);
+                    document.querySelectorAll('.suggestion-checkbox').forEach(cb => /** @type {HTMLInputElement} */(cb).checked = true);
                 });
                 document.getElementById('suggest-select-none')?.addEventListener('click', () => {
-                    document.querySelectorAll('.suggestion-checkbox').forEach(cb => cb.checked = false);
+                    document.querySelectorAll('.suggestion-checkbox').forEach(cb => /** @type {HTMLInputElement} */(cb).checked = false);
                 });
             }, 100);
 

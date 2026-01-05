@@ -17,3 +17,10 @@
 
 **Learning:** Keyboard shortcuts that lack visual hints remain undiscovered by most users, even when the functionality exists in code. Adding "(Press Enter)" to input placeholders had immediate UX value with zero implementation cost.
 **Action:** For any input field with keyboard shortcuts, include hints in placeholder text. This is especially important for rapid-entry patterns where the Enter key adds items.
+## 2026-01-05 - Ghost Features & Selector Robustness
+
+**Learning:** Reviewing `docs/features.md` revealed that "Search Highlighting" was listed as a v2.11 feature, but the code had no implementation for it (only unused CSS).
+**Action:** Always verify "existing" features in the actual codebase before assuming they work. Documentation can drift from reality (or be aspirational).
+
+**Learning:** Searching for wildcard chips using `contenteditable` attribute selectors is fragile because the attribute is only applied during active editing. 
+**Action:** Use robust class names like `.editable-name` that persist regardless of interaction state, rather than relying on transient state attributes like `[contenteditable]` or `[aria-pressed]`.

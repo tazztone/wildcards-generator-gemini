@@ -1367,7 +1367,7 @@ export const UI = {
         if (withInput) {
             inputElement = document.createElement('input');
             inputElement.type = 'text';
-            inputElement.className = 'bg-gray-900 border border-gray-600 rounded-md p-2 text-sm w-full mt-4';
+            inputElement.className = 'bg-gray-900 border border-gray-600 rounded-md p-2 text-sm w-full mt-2';
             this.elements.dialogMessage.appendChild(inputElement);
             setTimeout(() => inputElement.focus(), 100);
         }
