@@ -1,64 +1,29 @@
 
 const { chromium } = require('playwright');
 const path = require('path');
-const fs = require('fs');
 
 (async () => {
-    // Ensure directory exists
-    const dir = '/home/jules/verification';
-    if (!fs.existsSync(dir)){
-        fs.mkdirSync(dir, { recursive: true });
-    }
-
-    const browser = await chromium.launch();
+    const browser = await chromium.launch({ headless: true });
     const page = await browser.newPage();
 
-    try {
-        await page.goto('http://localhost:8080');
+    // Navigate to local server
+    await page.goto('http://localhost:8080');
 
-        // Reset state
-        await page.evaluate(() => {
-            localStorage.clear();
-            sessionStorage.clear();
-        });
-        await page.reload();
-        await page.waitForSelector('#wildcard-container');
+    // Wait for the page to load
+    await page.waitForSelector('#wildcard-container');
 
-        // 1. Create Data for Empty State Verification
-        // Add Category
-        await page.click('#add-category-placeholder-btn');
-        await page.waitForSelector('#notification-dialog[open]');
-        await page.fill('#notification-message input', 'Visual Test Category');
-        await page.click('#confirm-btn');
-        await page.waitForTimeout(500); // Wait for anim
+    // Take a screenshot of the main page to verify layout and icons
+    await page.screenshot({ path: 'verification/main_page.png', fullPage: true });
 
-        // Open Category
-        const category = page.locator('details[data-path="Visual Test Category"]');
-        await category.evaluate(el => el.open = true);
+    // Open settings to check API settings (Clear button, etc.)
+    await page.click('#settings-btn');
+    await page.waitForSelector('#api-settings-container');
 
-        // Add Wildcard List
-        await category.locator('.add-wildcard-list-btn').click();
-        await page.waitForSelector('#notification-dialog[open]');
-        await page.fill('#notification-message input', 'Empty List');
-        await page.click('#confirm-btn');
-        await page.locator('#notification-dialog').waitFor({ state: 'hidden' });
+    // Ensure "OpenRouter" is selected or visible
+    // Wait for the dynamic content in settings
+    await page.waitForTimeout(500); // Wait for animations/rendering
 
-        // Wait for card
-        const card = page.locator('.wildcard-card').filter({ hasText: 'Empty List' });
-        await card.waitFor();
+    await page.screenshot({ path: 'verification/settings_dialog.png' });
 
-        // 2. Open Settings for Refresh Button Verification
-        await page.click('#settings-btn');
-        await page.waitForSelector('#settings-dialog');
-        await page.selectOption('#api-endpoint', 'openrouter');
-
-        // Take Screenshot
-        await page.screenshot({ path: path.join(dir, 'verification.png'), fullPage: true });
-        console.log('Screenshot saved to ' + path.join(dir, 'verification.png'));
-
-    } catch (e) {
-        console.error('Error:', e);
-    } finally {
-        await browser.close();
-    }
+    await browser.close();
 })();

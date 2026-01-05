@@ -590,7 +590,7 @@
         <div class="flex justify-between items-center">
             <label for="search-wildcards" class="block text-lg font-semibold text-indigo-300 mb-2">Search
                 Wildcards</label>
-            <span id="search-results-count" class="text-sm text-gray-400 mb-2"></span>
+            <span id="search-results-count" class="text-sm text-gray-400 mb-2" aria-live="polite"></span>
         </div>
         <div class="relative">
             <input type="text" id="search-wildcards" class="input-primary bg-gray-800 pr-10"
@@ -598,7 +598,7 @@
             <button id="search-clear-btn"
                 class="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-white hidden transition-colors"
                 aria-label="Clear search">
-                <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <svg class="w-5 h-5" aria-hidden="true" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
                 </svg>
             </button>
