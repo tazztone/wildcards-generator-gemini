@@ -10,7 +10,7 @@ This document describes the testing strategy and framework for the Wildcard Gene
 | Test Type | End-to-End (E2E) & Unit/Integration Logic |
 | Browsers | Chromium |
 | Test Location | `tests/` |
-| **Total Tests** | **120** |
+| **Total Tests** | **150** |
 | **Status** | **Passed** ✅ |
 
 ## Quick Start
@@ -30,13 +30,19 @@ npx playwright test --headed
 npx playwright test -g "page loads"
 
 # View HTML report
-npx playwright show-report
+npx playwright test --show-report
+
+# Re-run only failing tests (saves time!)
+npx playwright test --last-failed
+
+# Debug Mode (opens inspector)
+npx playwright test --debug
 ```
 
 ## Test Files
 
 - `tests/e2e.spec.js`: Comprehensive core functionality tests (UI, Categories, Wildcards, Batch Ops).
-- `tests/e2e-new-features.spec.js`: Newer features like API Settings, Theme Toggle, Toolbar.
+- `tests/e2e-new-features.spec.js`: Toolbar dropdown tests.
 - `tests/bug_repro.spec.js`: Regression tests for complex scenarios (e.g., nested renaming).
 - `tests/bug-fixes.spec.js`: General bug fix verification (Category addition, UI interactions).
 - `tests/extended_coverage.spec.js`: Advanced scenarios like API Error Handling, Drag & Drop, Import/Export content verification.
@@ -47,12 +53,17 @@ npx playwright show-report
 - `tests/dnd_logic.spec.js`: Logic tests for Drag & Drop state mutations and rejection rules.
 - `tests/state_proxy.spec.js`: Deep proxy update verification and YAML scalar edge cases.
 - `tests/search_logic.spec.js`: Verifies search filtering and recursive visibility checks.
-- `tests/config_merging.spec.js`: **NEW** - Logic for merging user settings with global Config.
-- `tests/duplicate_detection.spec.js`: **NEW** - Logic for detecting and managing duplicate wildcards.
-- `tests/breadcrumbs_focus.spec.js`: **NEW** - Focus management and auto-expansion for breadcrumb navigation.
-- `tests/pinned_sort.spec.js`: **NEW** - Sorting logic for pinned vs unpinned categories.
-- `tests/tinting.spec.js`: **NEW** - Category color tinting based on depth and index.
-- `tests/ui_ux.spec.js`: **NEW** - UX improvements like empty state messages and feedback.
+- `tests/config_merging.spec.js`: Logic for merging user settings with global Config.
+- `tests/duplicate_detection.spec.js`: Logic for detecting and managing duplicate wildcards.
+- `tests/breadcrumbs_focus.spec.js`: Focus management and auto-expansion for breadcrumb navigation.
+- `tests/pinned_sort.spec.js`: Sorting logic for pinned vs unpinned categories.
+- `tests/tinting.spec.js`: Category color tinting based on depth and index.
+- `tests/ui_ux.spec.js`: UX improvements like empty state messages, feedback, and hover actions.
+- `tests/settings_persistence.spec.js`: **NEW** - Model name, provider, and prompt persistence across sessions.
+- `tests/double_click_edit.spec.js`: **NEW** - Double-click editing for category names and instructions.
+- `tests/import_export_flows.spec.js`: **NEW** - Import/export workflows for YAML and settings files.
+- `tests/test_model.spec.js`: **NEW** - Test connection button and model list functionality.
+- `tests/suggest_dialog.spec.js`: **NEW** - Suggest popup structure and button placement.
 
 ## Test Categories
 
@@ -236,3 +247,39 @@ jobs:
 *   **Robust YAML Processing:** When processing YAML, always check for `null` values explicitly, as `typeof null` is `'object'`, which can cause runtime errors if property access is attempted.
 *   **Event Handling in Tests:** For interactions like Search `input` events, standard `page.fill` might sometimes race with event listener attachment in parallel execution. Using `page.waitForFunction` to ensure UI initialization or forcing event dispatch can improve reliability.
 *   **Diff-Based Stability:** Using `State.undo()`/`redo()` in tests is now safer because it uses granular patches. However, always verify that the expected DOM element is still present or has been updated correctly after a state patch.
+
+## Best Practices & Learnings
+
+### Handling Hover States and Visibility
+- **Visibility vs. Attachment:** `toBeVisible()` waits for an element to be both in the DOM *and* visually perceptible (opacity > 0, visibility: visible). For elements that only appear on hover (like pin/delete buttons), use `toBeAttached()` if you just want to verify existence in the DOM, or ensure you programmatically trigger the hover state first before asserting visibility.
+  ```javascript
+  // Trigger hover then check visibility
+  await element.hover();
+  await expect(childButton).toBeVisible(); 
+  
+  // Or just check DOM presence (less flaky)
+  await expect(childButton).toBeAttached();
+  ```
+
+### State Management
+- **LocalStorage:** Tests share the same browser context storage unless explicitly cleared. Always clear `localStorage` in `beforeEach` for tests that modify settings or data to ensuring isolation.
+  ```javascript
+  test.beforeEach(async ({ page }) => {
+    await page.goto('/');
+    await page.evaluate(() => localStorage.clear());
+    await page.reload();
+  });
+  ```
+
+### Mocking API Calls
+- **Avoid Real Requests:** For features like "Suggest" or "Test Model", mock the API response using `page.route()`. This makes tests faster and deterministic and avoids API rate limits or costs.
+  ```javascript
+  await page.route('**/chat/completions', route => route.fulfill({
+      status: 200,
+      body: JSON.stringify({ ... })
+  }));
+  ```
+
+### Selectors
+- **Stability:** Use stable attributes like `id` or `data-path` over loose text matching.
+- **Dynamic Content:** For generated content (like wildcards), relying on the specific `data-path` structure (e.g., `Category/List`) is more robust than CSS structure selectors like `div > div > button`.

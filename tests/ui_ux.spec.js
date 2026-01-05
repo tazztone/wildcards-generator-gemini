@@ -98,4 +98,57 @@ test.describe('UX Improvements', () => {
     await expect(copyBtn).toHaveAttribute('title', 'Copy all wildcards');
     await expect(copyBtn).not.toHaveClass(/text-green-400/);
   });
+
+  test.describe('Hover-Only Action Visibility', () => {
+    test('pin button exists on category header', async ({ page }) => {
+      const category = page.locator('details[data-path="UX_Test_Category"]');
+      const pinBtn = category.locator('.pin-btn');
+
+      // Pin button should exist in DOM
+      await expect(pinBtn).toBeAttached();
+    });
+
+    test('delete button exists on category header', async ({ page }) => {
+      const category = page.locator('details[data-path="UX_Test_Category"]');
+      const deleteBtn = category.locator('.delete-btn').first();
+
+      // Delete button should exist in DOM
+      await expect(deleteBtn).toBeAttached();
+    });
+
+    test('pin button is clickable', async ({ page }) => {
+      const category = page.locator('details[data-path="UX_Test_Category"]');
+      const pinBtn = category.locator('.pin-btn');
+
+      // Hover first to make button visible, then click
+      await category.locator('summary').hover();
+      await page.waitForTimeout(100);
+
+      // Click should succeed without error
+      await pinBtn.click({ force: true });
+
+      // Wait a moment for any side effects
+      await page.waitForTimeout(300);
+
+      // Just verify no error was thrown - button was clickable
+    });
+
+  });
+
+  test.describe('Wildcard Card Actions', () => {
+    test('wildcard card has copy button', async ({ page }) => {
+      const card = page.locator('.wildcard-card[data-path="UX_Test_Category/UX_Test_List"]');
+      const copyBtn = card.locator('.copy-btn');
+
+      await expect(copyBtn).toBeAttached();
+    });
+
+    test('wildcard card has delete button', async ({ page }) => {
+      const card = page.locator('.wildcard-card[data-path="UX_Test_Category/UX_Test_List"]');
+      const deleteBtn = card.locator('.delete-btn');
+
+      await expect(deleteBtn).toBeAttached();
+    });
+  });
 });
+

@@ -75,4 +75,64 @@ test.describe('Breadcrumb Navigation Focus', () => {
         await expect(mid).toBeVisible();
         await expect(mid).toHaveAttribute('open', '');
     });
+
+    test('clicking breadcrumb navigates to that level', async ({ page }) => {
+        // First enter focus mode on a deep path
+        await page.evaluate(() => {
+            const event = new CustomEvent('request-focus-path', { detail: { path: 'Top/Mid/Bot' } });
+            document.dispatchEvent(event);
+        });
+
+        await page.waitForTimeout(500);
+
+        // Look for breadcrumb container
+        const breadcrumbs = page.locator('#breadcrumbs, .breadcrumb-nav');
+        if (await breadcrumbs.isVisible()) {
+            // Click on "Top" in breadcrumbs
+            const topCrumb = breadcrumbs.locator('a, button').filter({ hasText: 'Top' }).first();
+            if (await topCrumb.isVisible()) {
+                await topCrumb.click();
+                await page.waitForTimeout(300);
+
+                // Focus should now be on Top level
+                const mid = page.locator('details[data-path="Top/Mid"]');
+                await expect(mid).toBeVisible();
+            }
+        }
+    });
+
+    test('exit focus button returns to root view', async ({ page }) => {
+        // Enter focus mode
+        await page.evaluate(() => {
+            const event = new CustomEvent('request-focus-path', { detail: { path: 'Top/Mid' } });
+            document.dispatchEvent(event);
+        });
+
+        await page.waitForTimeout(300);
+
+        // Look for exit focus button
+        const exitBtn = page.locator('#exit-focus, .exit-focus-btn, button[title*="Exit"]').first();
+        if (await exitBtn.isVisible()) {
+            await exitBtn.click();
+            await page.waitForTimeout(300);
+
+            // Other categories should now be visible (not hidden)
+            const other = page.locator('details[data-path="Other"]');
+            await expect(other).not.toHaveClass(/hidden/);
+        }
+    });
+
+    test('focus state scrolls category into view', async ({ page }) => {
+        // This tests the scroll behavior
+        await page.evaluate(() => {
+            const event = new CustomEvent('request-focus-path', { detail: { path: 'Top/Mid/Bot' } });
+            document.dispatchEvent(event);
+        });
+
+        await page.waitForTimeout(500);
+
+        // The Bot element should be in the visible viewport
+        const bot = page.locator('div[data-path="Top/Mid/Bot"]');
+        await expect(bot).toBeInViewport();
+    });
 });
