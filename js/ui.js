@@ -879,6 +879,38 @@ export const UI = {
         const topLevel = this.elements.container.querySelectorAll(':scope > .category-item');
         topLevel.forEach(el => scan(el));
 
+        // Enhancement #6: Empty Search State
+        let emptyState = document.getElementById('search-empty-state');
+        if (matchCount === 0 && normalizedQuery !== '') {
+            if (!emptyState) {
+                emptyState = document.createElement('div');
+                emptyState.id = 'search-empty-state';
+                emptyState.className = 'text-center p-8 text-gray-500 animate-fade-in';
+                emptyState.innerHTML = `
+                    <div class="text-4xl mb-2 opacity-50">🔍</div>
+                    <p class="text-lg">No wildcards found for "<span class="font-bold text-gray-400 search-term"></span>"</p>
+                    <button class="clear-search-link text-indigo-400 hover:text-indigo-300 underline mt-2 text-sm">Clear search</button>
+                `;
+                this.elements.container.appendChild(emptyState);
+
+                // Add click handler
+                const link = emptyState.querySelector('.clear-search-link');
+                if (link) link.onclick = () => {
+                    const searchInput = document.getElementById('search-wildcards');
+                    if (searchInput) {
+                        searchInput.value = '';
+                        searchInput.dispatchEvent(new Event('input'));
+                        searchInput.focus();
+                    }
+                };
+            }
+            const termSpan = emptyState.querySelector('.search-term');
+            if (termSpan) termSpan.textContent = query;
+            emptyState.classList.remove('hidden');
+        } else {
+            if (emptyState) emptyState.classList.add('hidden');
+        }
+
         if (this.elements.searchResultsCount) {
             this.elements.searchResultsCount.textContent = normalizedQuery ? `${matchCount} matches` : '';
         }
@@ -1142,10 +1174,10 @@ export const UI = {
             </button>
             <div class="text-xs text-gray-400 mb-1 uppercase tracking-wider">${sanitize(parentPath)}</div>
             <div class="flex justify-between items-center mb-2">
-                <h3 class="font-bold text-lg text-gray-100 flex-grow editable-wrapper"><span class="editable-name wildcard-name outline-none rounded px-1" tabindex="0" aria-label="Double-click to edit list name">${name.replace(/_/g, ' ')}</span><span class="edit-icon" title="Double-click to edit">✏️</span> <span class="wildcard-count text-gray-400 text-sm ml-2">(${(data.wildcards || []).length})</span></h3>
+                <h3 class="font-bold text-lg text-gray-100 flex-grow editable-wrapper"><span class="editable-name wildcard-name outline-none rounded px-1" tabindex="0" aria-label="Double-click to edit list name">${name.replace(/_/g, ' ')}</span><span class="edit-icon" title="Double-click to edit">✏️</span> <span class="wildcard-count text-gray-400 text-sm ml-2" title="${(data.wildcards || []).length} items in this list">(${(data.wildcards || []).length})</span></h3>
             </div>
             <div class="editable-wrapper w-full items-center my-2">
-            <input type="text" readonly aria-label="Custom instructions" class="editable-input custom-instructions-input input-ghost bg-transparent text-sm border border-transparent rounded-md px-2 py-1 w-full focus:ring-indigo-500 focus:border-indigo-500 transition-all duration-200" placeholder="Custom generation instructions..." value="${sanitize(data.instruction || '')}">
+            <input type="text" readonly aria-label="Custom instructions" class="editable-input custom-instructions-input input-ghost bg-transparent text-sm border border-transparent rounded-md px-2 py-1 w-full focus:ring-indigo-500 focus:border-indigo-500 transition-all duration-200" placeholder="Custom generation instructions..." value="${sanitize(data.instruction || '')}" title="Length: ${(data.instruction || '').length} chars">
             <span class="edit-icon" title="Double-click to edit">✏️</span>
         </div>
             <div class="chip-container custom-scrollbar flex flex-wrap gap-2 card-folder rounded-md p-2 w-full border border-gray-600 overflow-y-auto" style="max-height: 150px; min-height: 2.5rem;">
@@ -1286,6 +1318,12 @@ export const UI = {
         this.elements.dialogClose.onclick = () => this.elements.dialog.close('close');
 
         this.elements.dialog.showModal();
+
+        // Enhancement #9: Auto-focus first input
+        const firstInput = this.elements.dialog.querySelector('input:not([type="hidden"]), textarea, select');
+        if (firstInput) {
+            setTimeout(() => firstInput.focus(), 50);
+        }
     },
 
     saveAllSettings() {

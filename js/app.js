@@ -374,12 +374,28 @@ export const App = {
                 this.suggestItems(null, 'folder');
             }
             // Export YAML
-            if (e.target.matches('#export-yaml')) {
+            // Enhancement #7: Export Confirmation Feedback helper
+            const showExportFeedback = (target) => {
+                const btn = target.closest('button') || target;
+                if (!btn) return;
+                const originalHtml = btn.innerHTML;
+                btn.innerHTML = '✓ Exported!';
+                btn.classList.add('text-green-400');
+                setTimeout(() => {
+                    btn.innerHTML = originalHtml;
+                    btn.classList.remove('text-green-400');
+                }, 2000);
+            };
+
+            // Export YAML
+            if (e.target.matches('#export-yaml') || e.target.closest('#export-yaml')) {
                 ImportExport.handleExportYAML();
+                showExportFeedback(e.target);
             }
             // Export ZIP
-            if (e.target.matches('#download-all-zip')) {
+            if (e.target.matches('#download-all-zip') || e.target.closest('#download-all-zip')) {
                 ImportExport.handleExportZIP();
+                showExportFeedback(e.target);
             }
             // Settings Management Handlers (Modal)
             if (e.target.matches('#export-settings-btn')) {
