@@ -647,9 +647,27 @@ export const App = {
         const count = selected.length;
         document.getElementById('batch-count').textContent = `(${count} selected)`;
         const hasSelection = count > 0;
-        document.getElementById('batch-expand').disabled = !hasSelection;
-        document.getElementById('batch-collapse').disabled = !hasSelection;
-        document.getElementById('batch-delete').disabled = !hasSelection;
+
+        // Enhancement #2: Add explanatory tooltips for disabled buttons
+        const expandBtn = document.getElementById('batch-expand');
+        const collapseBtn = document.getElementById('batch-collapse');
+        const deleteBtn = document.getElementById('batch-delete');
+
+        expandBtn.disabled = !hasSelection;
+        collapseBtn.disabled = !hasSelection;
+        deleteBtn.disabled = !hasSelection;
+
+        // Update titles to explain state
+        if (hasSelection) {
+            expandBtn.title = `Expand ${count} selected categories`;
+            collapseBtn.title = `Collapse ${count} selected categories`;
+            deleteBtn.title = `Delete ${count} selected categories`;
+        } else {
+            expandBtn.title = 'Select categories to expand';
+            collapseBtn.title = 'Select categories to collapse';
+            deleteBtn.title = 'Select categories to delete';
+        }
+
         document.getElementById('batch-ops-bar').classList.toggle('hidden', !hasSelection);
     },
 
@@ -754,8 +772,8 @@ export const App = {
                     const iconSpan = btn.querySelector('.btn-icon');
 
                     if (iconSpan) {
-                         // Swap to Checkmark
-                         iconSpan.innerHTML = `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-green-400"><polyline points="20 6 9 17 4 12"></polyline></svg>`;
+                        // Swap to Checkmark
+                        iconSpan.innerHTML = `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-green-400"><polyline points="20 6 9 17 4 12"></polyline></svg>`;
                     }
 
                     btn.classList.add('text-green-400');
@@ -948,6 +966,12 @@ export const App = {
 
         UI.toggleLoader(path, true);
 
+        // Enhancement #3: Update button text during loading
+        const pathElement = document.querySelector(`[data-path="${path}"]`);
+        const generateBtn = pathElement?.querySelector('.generate-btn .btn-text');
+        const originalText = generateBtn?.textContent || 'Generate More';
+        if (generateBtn) generateBtn.textContent = 'Generating...';
+
         try {
             const newItems = await Api.generateWildcards(
                 State.state.systemPrompt,
@@ -969,6 +993,8 @@ export const App = {
             UI.showNotification(e.message);
         } finally {
             UI.toggleLoader(path, false);
+            // Restore original button text
+            if (generateBtn) generateBtn.textContent = originalText;
         }
     },
 

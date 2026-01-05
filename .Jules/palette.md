@@ -12,3 +12,8 @@
 
 **Learning:** For rapid data entry (e.g., adding multiple items to a list), merely preventing the default 'Enter' behavior isn't enough. Reactive UI updates (like adding an item to the state) often trigger re-renders that destroy and recreate DOM elements, causing focus loss.
 **Action:** When implementing rapid entry, ensure that the UI update mechanism either (a) uses targeted updates that preserve the input element (as `updateCardContent` does here) or (b) explicitly re-focuses the input element after the update operation. In this case, `input.focus()` was added to `js/app.js` to ensure robustness even if timing is tight.
+
+## 2026-01-05 - Placeholder Text for Discoverability
+
+**Learning:** Keyboard shortcuts that lack visual hints remain undiscovered by most users, even when the functionality exists in code. Adding "(Press Enter)" to input placeholders had immediate UX value with zero implementation cost.
+**Action:** For any input field with keyboard shortcuts, include hints in placeholder text. This is especially important for rapid-entry patterns where the Enter key adds items.
