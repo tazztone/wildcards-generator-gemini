@@ -246,10 +246,10 @@ export const Api = {
         const getKey = (id) => document.getElementById(id)?.value?.trim() || '';
         const getVal = (id) => document.getElementById(id)?.value?.trim() || '';
 
-        // Common Parameters from Config
-        const temp = Config.MODEL_TEMPERATURE ?? 0.7;
-        const maxTokens = Config.MODEL_MAX_TOKENS ?? 1000;
-        const topP = Config.MODEL_TOP_P ?? 1.0;
+        // Common Parameters from Config - only use if not default
+        const temp = Config.MODEL_TEMPERATURE;
+        const maxTokens = Config.MODEL_MAX_TOKENS;
+        const topP = Config.MODEL_TOP_P;
         const topK = Config.MODEL_TOP_K ?? 0;
 
         if (endpoint === 'gemini') {
@@ -259,11 +259,12 @@ export const Api = {
             url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
 
             const geminiGenConfig = {
-                temperature: temp,
-                maxOutputTokens: maxTokens,
-                topP: topP,
                 ...generationConfig // Allow overrides
             };
+            // Only include parameters if they differ from defaults
+            if (temp !== undefined && temp !== 0.7) geminiGenConfig.temperature = temp;
+            if (maxTokens && maxTokens !== 1000) geminiGenConfig.maxOutputTokens = maxTokens;
+            if (topP !== undefined && topP !== 1.0) geminiGenConfig.topP = topP;
             if (topK > 0) geminiGenConfig.topK = topK;
 
             payload = {
@@ -295,11 +296,13 @@ export const Api = {
                 model,
                 messages: [
                     { role: "user", content: `${globalPrompt}\n\n${userPrompt}` }
-                ],
-                temperature: temp,
-                max_tokens: maxTokens,
-                top_p: topP
+                ]
             };
+
+            // Only include parameters if they differ from defaults
+            if (temp !== undefined && temp !== 0.7) payload.temperature = temp;
+            if (maxTokens && maxTokens !== 1000) payload.max_tokens = maxTokens;
+            if (topP !== undefined && topP !== 1.0) payload.top_p = topP;
 
             // Add extended parameters if not default
             if (topK > 0) payload.top_k = topK;
@@ -391,9 +394,10 @@ export const Api = {
         try {
             let url, headers, payload;
 
-            const temp = Config.MODEL_TEMPERATURE ?? 0.7;
-            const maxTokens = Config.MODEL_MAX_TOKENS ?? 1000;
-            const topP = Config.MODEL_TOP_P ?? 1.0;
+            // Only include parameters if they differ from defaults
+            const temp = Config.MODEL_TEMPERATURE;
+            const maxTokens = Config.MODEL_MAX_TOKENS;
+            const topP = Config.MODEL_TOP_P;
             const topK = Config.MODEL_TOP_K ?? 0;
 
             if (provider === 'gemini') {
@@ -402,11 +406,12 @@ export const Api = {
 
                 const geminiGenConfig = {
                     responseMimeType: 'application/json',
-                    responseSchema: { type: 'ARRAY', items: { type: 'STRING' } },
-                    temperature: temp,
-                    maxOutputTokens: maxTokens,
-                    topP: topP
+                    responseSchema: { type: 'ARRAY', items: { type: 'STRING' } }
                 };
+                // Only include if different from defaults
+                if (temp !== undefined && temp !== 0.7) geminiGenConfig.temperature = temp;
+                if (maxTokens && maxTokens !== 1000) geminiGenConfig.maxOutputTokens = maxTokens;
+                if (topP !== undefined && topP !== 1.0) geminiGenConfig.topP = topP;
                 if (topK > 0) geminiGenConfig.topK = topK;
 
                 payload = {
@@ -438,11 +443,13 @@ export const Api = {
                     messages: [
                         { role: 'user', content: `${systemPrompt}\n\n${userPrompt}` }
                     ],
-                    response_format: { type: 'json_object' },
-                    temperature: temp,
-                    max_tokens: maxTokens,
-                    top_p: topP
+                    response_format: { type: 'json_object' }
                 };
+
+                // Only include if different from defaults
+                if (temp !== undefined && temp !== 0.7) payload.temperature = temp;
+                if (maxTokens && maxTokens !== 1000) payload.max_tokens = maxTokens;
+                if (topP !== undefined && topP !== 1.0) payload.top_p = topP;
 
                 // Add extended parameters if not default
                 if (topK > 0) payload.top_k = topK;
