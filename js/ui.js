@@ -556,7 +556,50 @@ export const UI = {
             if (toggleBtn) {
                 toggleBtn.setAttribute('aria-label', 'Show API Key');
                 toggleBtn.setAttribute('aria-pressed', 'false');
+
+                // Toggle Visibility Logic
+                toggleBtn.addEventListener('click', () => {
+                    const isVisible = apiKeyInput.type === 'text';
+                    apiKeyInput.type = isVisible ? 'password' : 'text';
+                    toggleBtn.setAttribute('aria-label', isVisible ? 'Show API Key' : 'Hide API Key');
+                    toggleBtn.setAttribute('aria-pressed', (!isVisible).toString());
+                    toggleBtn.querySelector('.eye-icon .eye-slash').classList.toggle('hidden', isVisible);
+                    toggleBtn.querySelector('.eye-icon path:not(.eye-slash)').classList.toggle('hidden', !isVisible);
+                });
             }
+
+            // Copy API Key Button (UX Improvement)
+            const copyKeyBtn = document.createElement('button');
+            copyKeyBtn.className = 'input-icon-btn right-8 mr-1 text-gray-500 hover:text-white transition-colors';
+            copyKeyBtn.title = 'Copy API Key';
+            copyKeyBtn.setAttribute('aria-label', 'Copy API Key to clipboard');
+            copyKeyBtn.innerHTML = `
+                <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3" />
+                </svg>
+            `;
+
+            // Adjust input padding to accommodate both buttons
+            apiKeyInput.classList.remove('pr-10');
+            apiKeyInput.classList.add('pr-20');
+
+            // Insert copy button before toggle button
+            if (toggleBtn) {
+                toggleBtn.parentNode.insertBefore(copyKeyBtn, toggleBtn);
+            }
+
+            copyKeyBtn.addEventListener('click', async () => {
+                if (apiKeyInput.value) {
+                    try {
+                        await navigator.clipboard.writeText(apiKeyInput.value);
+                        UI.showToast('API Key copied to clipboard', 'success');
+                    } catch (err) {
+                        UI.showToast('Failed to copy', 'error');
+                    }
+                } else {
+                    UI.showToast('No API Key to copy', 'info');
+                }
+            });
 
             if (p.apiKeyOptional) {
                 clone.querySelector('.optional-text').classList.remove('hidden');
