@@ -111,6 +111,75 @@ test.describe('Bug Fix Tests', () => {
             // Cancel to avoid reset
             await dialog.locator('#cancel-btn').click();
         });
+
+        test('restore default wildcards removes manually added categories', async ({ page }) => {
+            // Track console errors
+            const errors = [];
+            page.on('console', msg => {
+                if (msg.type() === 'error') {
+                    errors.push(msg.text());
+                }
+            });
+
+            // Step 1: Add a custom category
+            const addBtn = page.locator('#add-category-placeholder-btn');
+            await addBtn.scrollIntoViewIfNeeded();
+            await addBtn.click();
+
+            const dialog = page.locator('#notification-dialog');
+            await expect(dialog).toBeVisible({ timeout: 3000 });
+
+            const testCategoryName = `TestCategory_${Date.now()}`;
+            const input = dialog.locator('input[type="text"]');
+            await input.fill(testCategoryName);
+            await dialog.locator('#confirm-btn').click();
+
+            // Wait for toast confirmation
+            await expect(page.locator('.toast')).toContainText('Created', { timeout: 3000 });
+            await page.waitForTimeout(500);
+
+            // Verify the category was created
+            const customCategory = page.locator(`details[data-path="${testCategoryName.replace(/\s+/g, '_')}"]`);
+            await expect(customCategory).toBeVisible();
+
+            // Step 2: Open overflow menu
+            const overflowBtn = page.locator('#overflow-menu-btn');
+            await overflowBtn.click();
+
+            // Wait for dropdown
+            const dropdown = page.locator('#overflow-menu-dropdown');
+            await expect(dropdown).toBeVisible({ timeout: 3000 });
+
+            // Step 3: Click "Restore Default Wildcards"
+            const reloadBtn = page.locator('#reload-default-data');
+            await expect(reloadBtn).toBeVisible();
+            await reloadBtn.click();
+
+            // Step 4: Confirm the action
+            await expect(dialog).toBeVisible({ timeout: 3000 });
+            await expect(dialog).toContainText('Reload default wildcard data');
+
+            const confirmBtn = dialog.locator('#confirm-btn');
+            await expect(confirmBtn).toBeVisible();
+            await confirmBtn.click();
+
+            // Step 5: Wait for success toast
+            await expect(page.locator('.toast').last()).toContainText('Default data reloaded', { timeout: 5000 });
+
+            // Step 6: Verify the overflow menu is closed
+            await expect(dropdown).toBeHidden();
+
+            // Step 7: Verify the manually added category is gone
+            await page.waitForTimeout(500);
+            await expect(customCategory).not.toBeVisible();
+
+            // Step 8: Verify default categories are present
+            const container = page.locator('#wildcard-container');
+            await expect(container.locator('details')).not.toHaveCount(0);
+
+            // Step 9: Verify no console errors occurred
+            expect(errors.filter(e => !e.includes('Download the Vue Devtools'))).toHaveLength(0);
+        });
     });
 
     test.describe('Import YAML', () => {

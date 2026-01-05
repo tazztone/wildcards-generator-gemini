@@ -1436,6 +1436,19 @@ export const UI = {
 
         this.updatePromptStatusBadge(textareaId, configKey);
         this.showToast('Reset to default', 'info');
+    },
+
+    /**
+     * Toggle the overflow menu visibility
+     * @param {boolean} show - true to show, false to hide
+     */
+    toggleOverflowMenu(show) {
+        if (!this.elements.overflowMenuDropdown) return;
+        if (show) {
+            this.elements.overflowMenuDropdown.classList.remove('hidden');
+        } else {
+            this.elements.overflowMenuDropdown.classList.add('hidden');
+        }
     }
 };
 
