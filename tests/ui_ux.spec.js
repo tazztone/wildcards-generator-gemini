@@ -12,8 +12,8 @@ test.describe('UX Improvements', () => {
 
     // Reset state to ensure clean slate (clears localStorage)
     await page.evaluate(() => {
-        localStorage.clear();
-        sessionStorage.clear();
+      localStorage.clear();
+      sessionStorage.clear();
     });
     await page.reload();
     await page.waitForSelector('#wildcard-container');
