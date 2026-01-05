@@ -10,6 +10,7 @@ This document describes the testing strategy and framework for the Wildcard Gene
 | Test Type | End-to-End (E2E) & Unit/Integration Logic |
 | Browsers | Chromium |
 | Test Location | `tests/` |
+| **Total Tests** | **120** |
 | **Status** | **Passed** ✅ |
 
 ## Quick Start
@@ -34,17 +35,24 @@ npx playwright show-report
 
 ## Test Files
 
-- `tests/e2e.spec.js`: Core functionality tests (UI, Categories, Wildcards, Batch Ops).
+- `tests/e2e.spec.js`: Comprehensive core functionality tests (UI, Categories, Wildcards, Batch Ops).
 - `tests/e2e-new-features.spec.js`: Newer features like API Settings, Theme Toggle, Toolbar.
-- `tests/bug_repro.spec.js`: Regression tests ensuring reported bugs (e.g., nested renaming) are fixed.
-- `tests/extended_coverage.spec.js`: Advanced scenarios like API Error Handling, Drag & Drop (wip), Import/Export content verification.
-- `tests/state_logic.spec.js`: **NEW** - Unit/Integration tests for `js/state.js` logic (Deep Proxy, Undo/Redo, YAML processing).
-- `tests/ui_logic.spec.js`: **NEW** - Logic tests for UI rendering rules (Sorting, Hiding instructions).
-- `tests/utils.spec.js`: **NEW** - Unit tests for utility functions (`sanitize`, `debounce`).
-- `tests/api_logic.spec.js`: **NEW** - Unit/Integration tests for `js/api.js` (Request prep, response parsing, error handling).
-- `tests/dnd_logic.spec.js`: **NEW** - Logic tests for Drag & Drop state mutations.
-- `tests/state_proxy.spec.js`: **NEW** - Logic tests for deep proxy updates and YAML scalar edge cases.
-- `tests/search_logic.spec.js`: **NEW** - Verifies search filtering and result counting (includes recursive visibility checks).
+- `tests/bug_repro.spec.js`: Regression tests for complex scenarios (e.g., nested renaming).
+- `tests/bug-fixes.spec.js`: General bug fix verification (Category addition, UI interactions).
+- `tests/extended_coverage.spec.js`: Advanced scenarios like API Error Handling, Drag & Drop, Import/Export content verification.
+- `tests/state_logic.spec.js`: Unit/Integration tests for `js/state.js` (Proxy, Undo/Redo, YAML).
+- `tests/ui_logic.spec.js`: Logic tests for UI rendering rules (Sorting, Hiding instructions).
+- `tests/utils.spec.js`: Unit tests for utility functions (`sanitize`, `debounce`).
+- `tests/api_logic.spec.js`: Unit/Integration tests for `js/api.js` (Provider logic, Request/Response).
+- `tests/dnd_logic.spec.js`: Logic tests for Drag & Drop state mutations and rejection rules.
+- `tests/state_proxy.spec.js`: Deep proxy update verification and YAML scalar edge cases.
+- `tests/search_logic.spec.js`: Verifies search filtering and recursive visibility checks.
+- `tests/config_merging.spec.js`: **NEW** - Logic for merging user settings with global Config.
+- `tests/duplicate_detection.spec.js`: **NEW** - Logic for detecting and managing duplicate wildcards.
+- `tests/breadcrumbs_focus.spec.js`: **NEW** - Focus management and auto-expansion for breadcrumb navigation.
+- `tests/pinned_sort.spec.js`: **NEW** - Sorting logic for pinned vs unpinned categories.
+- `tests/tinting.spec.js`: **NEW** - Category color tinting based on depth and index.
+- `tests/ui_ux.spec.js`: **NEW** - UX improvements like empty state messages and feedback.
 
 ## Test Categories
 
@@ -152,11 +160,21 @@ Test config in `playwright.config.js`:
 module.exports = defineConfig({
     testDir: './tests',
     fullyParallel: true,
+    forbidOnly: !!process.env.CI,
+    retries: process.env.CI ? 2 : 0,
+    workers: process.env.CI ? 1 : undefined,
+    reporter: 'html',
     use: {
         baseURL: 'http://localhost:8080',
         trace: 'on-first-retry',
         screenshot: 'only-on-failure',
     },
+    projects: [
+        {
+            name: 'chromium',
+            use: { ...devices['Desktop Chrome'] },
+        },
+    ],
     webServer: {
         command: 'npx http-server . -p 8080 -c-1',
         url: 'http://localhost:8080',
