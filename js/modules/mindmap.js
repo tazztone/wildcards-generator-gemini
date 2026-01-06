@@ -223,8 +223,8 @@ const Mindmap = {
             name: '✨ Generate More',
             onclick: (data) => {
                 // Validate: skip for root node or wildcard items
-                if (!data.data?.path || data.root || data.data?.isWildcard) {
-                    UI.showToast('Select a category to generate wildcards for', 'warning');
+                if (data.root || data.data?.isWildcard) {
+                    UI.showToast('Select a category to use this action', 'warning');
                     return;
                 }
                 this.handleGenerateAction(data);
@@ -236,8 +236,8 @@ const Mindmap = {
             name: '💡 Suggest Children',
             onclick: (data) => {
                 // Validate: skip for root node or wildcard items
-                if (!data.data?.path || data.root || data.data?.isWildcard) {
-                    UI.showToast('Select a category to get suggestions for', 'warning');
+                if (data.root || data.data?.isWildcard) {
+                    UI.showToast('Select a category to use this action', 'warning');
                     return;
                 }
                 this.handleSuggestAction(data);
@@ -291,8 +291,29 @@ const Mindmap = {
         // Add tooltips to toolbar icons
         this.addToolbarTooltips(container);
 
-        // Auto-center the view
-        setTimeout(() => instance.toCenter(), 200);
+        // Auto-center and zoom to fit (start slightly zoomed out for better overview)
+        setTimeout(() => {
+            instance.toCenter();
+            instance.scale(0.4); // Zoom out more for better overview
+        }, 300);
+
+        // Smart Context Menu Observer
+        this.observer = new MutationObserver((mutations) => {
+            mutations.forEach((mutation) => {
+                mutation.addedNodes.forEach((node) => {
+                    if (node.tagName === 'UL' && (node.className.includes('mind-elixir-menu') || node.className.includes('menu-list'))) {
+                        this.optimizeContextMenu(node);
+                    }
+                });
+                if (mutation.type === 'attributes' && mutation.attributeName === 'style') {
+                    const target = mutation.target;
+                    if ((target.className.includes('mind-elixir-menu') || target.className.includes('menu-list')) && target.style.display !== 'none') {
+                        this.optimizeContextMenu(target);
+                    }
+                }
+            });
+        });
+        this.observer.observe(document.body, { childList: true, subtree: true, attributes: true, attributeFilter: ['style'] });
 
         this.isInitialized = true;
         console.log('Mind Elixir initialized:', containerSelector);
@@ -432,7 +453,8 @@ const Mindmap = {
 
             case VIEW_MODES.MINDMAP:
                 mindmapContainer?.classList.remove('hidden');
-                searchSection?.classList.add('hidden');
+                // Keep search section visible in Mindmap view per user request
+                searchSection?.classList.remove('hidden');
                 // Keep stats bar visible in all modes
                 statsBar?.classList.remove('hidden');
 
@@ -467,7 +489,9 @@ const Mindmap = {
         const toggleBtn = document.getElementById('mindmap-toggle-wildcards');
         if (toggleBtn) {
             toggleBtn.classList.toggle('active', !this.showWildcards);
-            toggleBtn.textContent = this.showWildcards ? '📦 Collapse' : '📦 Expand';
+            toggleBtn.innerHTML = this.showWildcards ?
+                '<svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21" /></svg> Hide Wildcards' :
+                '<svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 5.943 7.523 2 12 2c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7S3.732 13.057 2.458 9c1.274-4.057 5.065-7 9.542-7z" /></svg> Show Wildcards';
             toggleBtn.title = this.showWildcards ? 'Hide wildcards (show categories only)' : 'Show wildcards';
         }
 
@@ -502,9 +526,6 @@ const Mindmap = {
      * @param {Object} node - Selected Mind Elixir node
      */
     syncSelectionToList(node) {
-        if (!node.data?.path) return;
-
-        const path = node.data.path;
         const dualList = document.getElementById('dual-list');
         if (!dualList) return;
 
@@ -513,19 +534,70 @@ const Mindmap = {
             el.classList.remove('dual-highlight');
         });
 
-        // Find and highlight the corresponding element
-        // For categories, look for details with matching data-path
-        const categoryName = path[0];
-        const targetCategory = dualList.querySelector(`details[data-path="${categoryName}"]`);
+        if (!node) return;
 
-        if (targetCategory) {
-            targetCategory.classList.add('dual-highlight');
-            targetCategory.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        // Strategy: Use robust path matching if available (added during transform)
+        // Fallback to topic match if path is missing
+        let targetPath = null;
 
-            // If it's a wildcard, also try to highlight the chip
-            if (node.data.isWildcard && path.length > 2) {
-                // Find chip container and highlight specific chip
-                // This would require more complex DOM traversal
+        // Check for path in node data
+        const nodePathData = node.data?.path || node.nodeObj?.data?.path;
+
+        if (nodePathData && Array.isArray(nodePathData)) {
+            const isWildcard = node.data?.isWildcard || node.nodeObj?.data?.isWildcard;
+            if (isWildcard) {
+                // Wildcard items are inside a Card (Category). Path is [...catPath, 'wildcards', index]
+                // We want to highlight the Card container.
+                const catPath = nodePathData.slice(0, -2); // Remove 'wildcards' and index
+                targetPath = catPath.join('/');
+            } else {
+                // Category path
+                targetPath = nodePathData.join('/');
+            }
+        }
+
+        let target = null;
+        if (targetPath) {
+            // Find by data-path attribute (100% reliable)
+            target = dualList.querySelector(`[data-path="${targetPath}"]`);
+
+            // If we found a details element (category), the highlight target should be its summary?
+            // Or we highlight the summary inside it.
+            // If we found a div (card), highlight the div.
+        } else {
+            // Fallback to name matching (legacy)
+            const topic = node.topic || node.text || node.nodeObj?.topic;
+            if (topic) {
+                const candidates = Array.from(dualList.querySelectorAll('.category-name, .wildcard-name'));
+                const matchSpan = (span) => span.textContent.trim().toLowerCase() === topic.trim().toLowerCase();
+                const span = candidates.find(matchSpan);
+                if (span) target = span.closest('details, .wildcard-card');
+            }
+        }
+
+        if (target) {
+            // Determine highlight visual target
+            let highlightTarget = target;
+            if (target.tagName === 'DETAILS') {
+                highlightTarget = target.querySelector('summary');
+            }
+
+            if (highlightTarget) {
+                highlightTarget.classList.add('dual-highlight');
+
+                // Expand all parent details
+                let parent = target.parentElement;
+                while (parent && parent !== dualList) {
+                    if (parent.tagName === 'DETAILS') {
+                        parent.open = true;
+                    }
+                    parent = parent.parentElement;
+                }
+
+                // Scroll into view
+                setTimeout(() => {
+                    highlightTarget.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                }, 100);
             }
         }
     },
@@ -573,71 +645,100 @@ const Mindmap = {
 
     /**
      * Handle AI Generate action from context menu
-     * @param {Object} nodeData - Node data from context menu
+     * @param {Object} dataIgnored - Ignored, using instance.currentNode
      */
-    handleGenerateAction(nodeData) {
-        if (!nodeData.data?.path) {
-            UI.showToast('Cannot generate for this node', 'error');
+    handleGenerateAction(dataIgnored) {
+        // Retrieve reliable node from captured state (fallback to current)
+        const node = this.lastContextNode || this.instance?.currentNode;
+
+
+        const topic = node?.topic || node?.nodeObj?.topic;
+        const data = node?.data || node?.nodeObj?.data || {};
+
+        if (!node || (!data.path && !topic)) {
+            console.error('Mindmap: Cannot Resolve Node for Generate', node);
+            UI.showToast('Cannot generate: Missing topic data', 'error');
             return;
         }
 
-        const path = nodeData.data.path;
+        // Reconstruct path if array
+        let path = data.path;
+        if (Array.isArray(path)) path = path;
+        if (!path) path = [topic];
 
         // Dispatch event for App to handle
         const event = new CustomEvent('mindmap-generate', {
-            detail: { path, nodeTopic: nodeData.topic }
+            detail: { path, nodeTopic: topic }
         });
         document.dispatchEvent(event);
 
-        UI.showToast(`Generating wildcards for "${nodeData.topic}"...`, 'info');
+        UI.showToast(`Generating wildcards for "${topic}"...`, 'info');
     },
 
     /**
      * Handle AI Suggest action from context menu
-     * @param {Object} nodeData - Node data from context menu
+     * @param {Object} dataIgnored - Ignored, using captured state
      */
-    handleSuggestAction(nodeData) {
-        if (!nodeData.data?.path) {
-            UI.showToast('Cannot suggest for this node', 'error');
+    handleSuggestAction(dataIgnored) {
+        // Retrieve reliable node from captured state (fallback to current)
+        const node = this.lastContextNode || this.instance?.currentNode;
+
+
+        const topic = node?.topic || node?.nodeObj?.topic;
+        const data = node?.data || node?.nodeObj?.data || {};
+
+        // Validation: Must have a topic
+        if (!node || !topic) {
+            console.error('Mindmap: Cannot Resolve Node for Suggest', node);
+            UI.showToast('Cannot suggest: Missing topic data', 'error');
             return;
         }
 
-        const path = nodeData.data.path;
+        const path = data.path || [topic];
 
         // Dispatch event for App to handle
         const event = new CustomEvent('mindmap-suggest', {
-            detail: { path, nodeTopic: nodeData.topic }
+            detail: { path, nodeTopic: topic }
         });
         document.dispatchEvent(event);
 
-        UI.showToast(`Getting suggestions for "${nodeData.topic}"...`, 'info');
+        UI.showToast(`Getting suggestions for "${topic}"...`, 'info');
     },
 
     /**
-     * Toggle wildcard visibility in mindmap
-     * When hidden, categories show wildcard count instead
+     * Toggle wildcard visibility in both list and mindmap views
      */
     toggleWildcards() {
         this.showWildcards = !this.showWildcards;
-        this.refresh();
 
-        // Auto-fit after toggling
-        if (this.instance) {
-            setTimeout(() => this.instance.toCenter(), 100);
-        }
+        // Toggle in List View
+        const details = document.querySelectorAll('#wildcard-container details');
+        details.forEach(detail => {
+            detail.open = this.showWildcards;
+        });
+
+        // Toggle in Mindmap View(s)
+        this.refresh();
         if (this.dualInstance) {
-            setTimeout(() => this.dualInstance.toCenter(), 100);
+            const data = this.transformToMindElixir(State._rawData.wildcards || {});
+            this.dualInstance.refresh(data);
         }
+
+        // Auto-fit mindmaps after toggling
+        if (this.instance) setTimeout(() => this.instance.toCenter(), 100);
+        if (this.dualInstance) setTimeout(() => this.dualInstance.toCenter(), 100);
 
         // Update toggle button state
         const toggleBtn = document.getElementById('mindmap-toggle-wildcards');
         if (toggleBtn) {
             toggleBtn.classList.toggle('active', !this.showWildcards);
+            toggleBtn.innerHTML = this.showWildcards ?
+                '<svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21" /></svg> Hide Wildcards' :
+                '<svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 5.943 7.523 2 12 2c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7S3.732 13.057 2.458 9c1.274-4.057 5.065-7 9.542-7z" /></svg> Show Wildcards';
             toggleBtn.title = this.showWildcards ? 'Hide wildcards (show categories only)' : 'Show wildcards';
-            toggleBtn.textContent = this.showWildcards ? '📦 Collapse' : '📦 Expand';
         }
 
-        UI.showToast(this.showWildcards ? 'Showing wildcards' : 'Wildcards hidden (categories only)', 'info');
+        UI.showToast(this.showWildcards ? 'Wildcards expanded' : 'Wildcards collapsed', 'info');
     },
 
     /**
@@ -680,9 +781,50 @@ const Mindmap = {
     },
 
     /**
+     * optimize Context Menu options based on selection
+     * @param {HTMLElement} menuEl - The context menu element
+     */
+    optimizeContextMenu(menuEl) {
+        // Capture the current node immediately when menu opens
+        this.lastContextNode = this.instance?.currentNode;
+
+        if (!this.instance || !this.instance.currentNode) return;
+
+        const node = this.instance.currentNode;
+        // Robust check for Wildcard type (leaf)
+        const isWildcard = node.data?.isWildcard || node.nodeObj?.data?.isWildcard || (node.nodeObj && !node.nodeObj.children && !node.root);
+        // Robust check for Root
+        const isRoot = node.root || node.nodeObj?.root;
+
+        const items = menuEl.querySelectorAll('li');
+        items.forEach(item => {
+            const text = item.textContent.toLowerCase().trim();
+            // Reset visibility first
+            item.style.display = 'block';
+
+            if (isWildcard) {
+                // Hide actions irrelevant for wildcards (children/summary)
+                if (text.includes('child') || text.includes('summary')) {
+                    item.style.display = 'none';
+                }
+            }
+            if (isRoot) {
+                // Hide actions irrelevant for root
+                if (text.includes('parent') || text.includes('sibling') || text.includes('remove') || text.includes('up') || text.includes('down')) {
+                    item.style.display = 'none';
+                }
+            }
+        });
+    },
+
+    /**
      * Cleanup on destroy
      */
     destroy() {
+        if (this.observer) {
+            this.observer.disconnect();
+            this.observer = null;
+        }
         if (this.instance) {
             this.instance.destroy?.();
             this.instance = null;
