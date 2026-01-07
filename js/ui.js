@@ -885,6 +885,16 @@ export const UI = {
         // Apply highlights after filtering if there's a query
         if (normalizedQuery) {
             this.applySearchHighlights(normalizedQuery);
+
+            // Also highlight in Mindmap view if available
+            if (window.Mindmap?.highlightSearch) {
+                window.Mindmap.highlightSearch(normalizedQuery);
+            }
+        } else {
+            // Clear mindmap highlights when search is cleared
+            if (window.Mindmap?.highlightSearch) {
+                window.Mindmap.highlightSearch('');
+            }
         }
 
         // Enhancement #6: Empty Search State

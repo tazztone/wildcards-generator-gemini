@@ -519,6 +519,31 @@
             background: linear-gradient(135deg, #fcd34d, #fbbf24);
         }
 
+        /* Mindmap Search Highlighting */
+        .mindmap-search-highlight {
+            background: rgba(251, 191, 36, 0.5) !important;
+            border-radius: 4px;
+            box-shadow: 0 0 0 2px rgba(251, 191, 36, 0.4);
+            animation: pulse-highlight 1.5s ease-in-out infinite;
+        }
+
+        @keyframes pulse-highlight {
+
+            0%,
+            100% {
+                box-shadow: 0 0 0 2px rgba(251, 191, 36, 0.4);
+            }
+
+            50% {
+                box-shadow: 0 0 0 4px rgba(251, 191, 36, 0.6);
+            }
+        }
+
+        html.light .mindmap-search-highlight {
+            background: rgba(252, 211, 77, 0.6) !important;
+            box-shadow: 0 0 0 2px rgba(252, 211, 77, 0.5);
+        }
+
         /* Duplicate Highlighting */
         .chip-duplicate {
             position: relative;

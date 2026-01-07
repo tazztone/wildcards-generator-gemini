@@ -13,7 +13,21 @@ const VIEW_MODES = {
     DUAL: 'dual'
 };
 
+/**
+ * @typedef {Object} MindElixirInstance
+ * @property {Function} changeTheme
+ * @property {Function} refresh
+ * @property {Function} getData
+ * @property {Function} toCenter
+ * @property {Function} scale
+ * @property {Function} destroy
+ * @property {Function} init
+ * @property {Object} bus
+ * @property {Object} currentNode
+ */
+
 const Mindmap = {
+    /** @type {MindElixirInstance|null} */
     instance: null,
     dualInstance: null,
     currentView: VIEW_MODES.LIST,
@@ -24,7 +38,7 @@ const Mindmap = {
 
     /**
      * Load Mind Elixir library dynamically
-     * @returns {Promise<typeof MindElixir>}
+     * @returns {Promise<any>}
      */
     async loadMindElixir() {
         if (this._MindElixir) {
@@ -32,6 +46,7 @@ const Mindmap = {
         }
 
         try {
+            // @ts-ignore - Dynamic import from CDN
             const module = await import('https://cdn.jsdelivr.net/npm/mind-elixir/dist/MindElixir.js');
             this._MindElixir = module.default || module;
             console.log('Mind Elixir loaded successfully');
@@ -203,7 +218,7 @@ const Mindmap = {
             return;
         }
 
-        const container = document.querySelector(containerSelector);
+        const container = /** @type {HTMLElement} */ (document.querySelector(containerSelector));
         if (!container) {
             console.warn(`Mindmap container not found: ${containerSelector}`);
             return;
@@ -301,14 +316,14 @@ const Mindmap = {
         this.observer = new MutationObserver((mutations) => {
             mutations.forEach((mutation) => {
                 mutation.addedNodes.forEach((node) => {
-                    if (node.tagName === 'UL' && (node.className.includes('mind-elixir-menu') || node.className.includes('menu-list'))) {
-                        this.optimizeContextMenu(node);
+                    if (node instanceof HTMLElement && node.tagName === 'UL' && (node.className.includes('mind-elixir-menu') || node.className.includes('menu-list'))) {
+                        requestAnimationFrame(() => this.optimizeContextMenu(/** @type {HTMLElement} */(node)));
                     }
                 });
                 if (mutation.type === 'attributes' && mutation.attributeName === 'style') {
-                    const target = mutation.target;
-                    if ((target.className.includes('mind-elixir-menu') || target.className.includes('menu-list')) && target.style.display !== 'none') {
-                        this.optimizeContextMenu(target);
+                    const target = /** @type {HTMLElement} */ (mutation.target);
+                    if (target instanceof HTMLElement && (target.className.includes('mind-elixir-menu') || target.className.includes('menu-list')) && target.style.display !== 'none') {
+                        requestAnimationFrame(() => this.optimizeContextMenu(target));
                     }
                 }
             });
@@ -321,7 +336,7 @@ const Mindmap = {
 
     /**
      * Setup bidirectional event listeners
-     * @param {MindElixir} instance - Mind Elixir instance
+     * @param {MindElixirInstance} instance - Mind Elixir instance
      * @param {string} containerSelector - Container selector for context
      */
     setupEventListeners(instance, containerSelector) {
@@ -353,7 +368,7 @@ const Mindmap = {
     /**
      * Handle Mind Elixir operations and sync to State
      * @param {Object} operation - Operation object from Mind Elixir
-     * @param {MindElixir} instance - The Mind Elixir instance
+     * @param {MindElixirInstance} instance - The Mind Elixir instance
      */
     handleMindmapOperation(operation, instance) {
         console.log('Mindmap operation:', operation.name, operation.obj);
@@ -589,7 +604,7 @@ const Mindmap = {
                 let parent = target.parentElement;
                 while (parent && parent !== dualList) {
                     if (parent.tagName === 'DETAILS') {
-                        parent.open = true;
+                        /** @type {HTMLDetailsElement} */ (parent).open = true;
                     }
                     parent = parent.parentElement;
                 }
@@ -604,7 +619,7 @@ const Mindmap = {
 
     /**
      * Sync theme between app and Mind Elixir
-     * @param {MindElixir} instance - Optional specific instance else uses this.instance
+     * @param {MindElixirInstance} instance - Optional specific instance else uses this.instance
      */
     syncTheme(instance = null) {
         const targetInstance = instance || this.instance;
@@ -714,7 +729,7 @@ const Mindmap = {
         // Toggle in List View
         const details = document.querySelectorAll('#wildcard-container details');
         details.forEach(detail => {
-            detail.open = this.showWildcards;
+            /** @type {HTMLDetailsElement} */ (detail).open = this.showWildcards;
         });
 
         // Toggle in Mindmap View(s)
@@ -788,7 +803,12 @@ const Mindmap = {
         // Capture the current node immediately when menu opens
         this.lastContextNode = this.instance?.currentNode;
 
-        if (!this.instance || !this.instance.currentNode) return;
+        console.log('[SmartMenu] Optimization triggered. Current Node:', this.lastContextNode);
+
+        if (!this.instance || !this.instance.currentNode) {
+            console.warn('[SmartMenu] Node undefined, aborting.');
+            return;
+        }
 
         const node = this.instance.currentNode;
         // Robust check for Wildcard type (leaf)
@@ -796,25 +816,88 @@ const Mindmap = {
         // Robust check for Root
         const isRoot = node.root || node.nodeObj?.root;
 
+        console.log('[SmartMenu] Type:', { isWildcard, isRoot });
+
         const items = menuEl.querySelectorAll('li');
         items.forEach(item => {
             const text = item.textContent.toLowerCase().trim();
-            // Reset visibility first
+            // Reset visibility first to ensure we don't permanently hide items
             item.style.display = 'block';
 
             if (isWildcard) {
-                // Hide actions irrelevant for wildcards (children/summary)
+                // Hide actions irrelevant for wildcards
+                // 'Add child' is typically first. 
                 if (text.includes('child') || text.includes('summary')) {
+                    console.log('[SmartMenu] Hiding for wildcard:', text);
                     item.style.display = 'none';
                 }
             }
             if (isRoot) {
                 // Hide actions irrelevant for root
-                if (text.includes('parent') || text.includes('sibling') || text.includes('remove') || text.includes('up') || text.includes('down')) {
+                if (text.includes('parent') || text.includes('sibling') || text.includes('remove') || text.includes('up') || text.includes('down') || text.includes('cut') || text.includes('copy')) {
+                    console.log('[SmartMenu] Hiding for root:', text);
                     item.style.display = 'none';
                 }
             }
         });
+    },
+
+    /**
+     * Highlight nodes in the mindmap that match a search query
+     * @param {string} query - Search query (empty string to clear highlights)
+     */
+    highlightSearch(query) {
+        // Get containers for both main and dual mindmaps
+        const containers = [
+            document.getElementById('mindmap-container'),
+            document.getElementById('dual-mindmap')
+        ].filter(Boolean);
+
+        // Clear previous highlights across all containers
+        containers.forEach(container => {
+            container.querySelectorAll('.mindmap-search-highlight').forEach(el => {
+                el.classList.remove('mindmap-search-highlight');
+            });
+        });
+
+        if (!query || !query.trim()) return [];
+
+        const normalizedQuery = query.toLowerCase().trim();
+        const matchedNodes = [];
+
+        containers.forEach(container => {
+            // Mind Elixir topic elements (various possible selectors)
+            const topicSelectors = [
+                '.mind-elixir-topic',
+                '.me-topic',
+                '[class*="topic"]',
+                'me-tpc'
+            ];
+
+            topicSelectors.forEach(selector => {
+                container.querySelectorAll(selector).forEach(topic => {
+                    const text = topic.textContent?.toLowerCase() || '';
+                    if (text.includes(normalizedQuery)) {
+                        topic.classList.add('mindmap-search-highlight');
+                        matchedNodes.push(topic);
+                    }
+                });
+            });
+        });
+
+        // Auto-scroll/center to first match if in mindmap view
+        if (matchedNodes.length > 0 && this.instance && this.currentView !== 'list') {
+            const firstMatch = matchedNodes[0];
+            // Optionally scroll the first match into view
+            try {
+                firstMatch.scrollIntoView({ behavior: 'smooth', block: 'center', inline: 'center' });
+            } catch (e) {
+                // Fallback - center the view
+                this.instance.toCenter?.();
+            }
+        }
+
+        return matchedNodes;
     },
 
     /**

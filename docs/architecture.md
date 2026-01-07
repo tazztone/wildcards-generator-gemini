@@ -26,6 +26,7 @@ The application logic is modularized in the `js/` directory:
 |--------|------|------------------|
 | **Drag & Drop** | `drag-drop.js` | Handles all drag-and-drop functionality for reordering categories and wildcards. |
 | **Import/Export** | `import-export.js` | Manages file I/O operations for YAML, ZIP, and Settings JSON files. |
+| **Mindmap** | `mindmap.js` | Provides interactive mindmap visualization. Manages Mind Elixir instance, bidirectional sync with State, and smart context menus. |
 | **Settings** | `settings.js` | Handles API key verification and settings-related operations on startup. |
 
 1.  **User Interaction**: The user interacts with the UI (clicks, typing, etc.).
@@ -48,6 +49,7 @@ The application uses a **Deep Proxy** pattern to manage state. This allows for d
 - **DOM Replacement**: For complex changes or top-level category updates, `ui.js` may replace the corresponding DOM element. Full re-renders (`renderAll`) are reserved for structural changes like pinning.
 - **State Preservation**: To prevent the UI from resetting, `ui.js` preserves the `open` state of `<details>` elements.
 - **Lazy Loading**: Categories are rendered with their content initially hidden or empty until expanded, improving performance for large datasets.
+- **View Modes**: Supports **List**, **Mindmap**, and **Dual Pane** views. The Mindmap view renders the state using the Mind Elixir library and synchronizes structural changes (drag-and-drop, renaming) back to the core State via the `operation` event bus.
 
 ## CSS & Styling
 
@@ -59,5 +61,6 @@ The application uses a **Deep Proxy** pattern to manage state. This allows for d
 
 All dependencies are loaded via CDN in `index.html`:
 - **Tailwind CSS**: Styling.
+- **Mind Elixir**: Visualization library for Mindmap interaction.
 - **YAML**: Parsing and stringifying YAML for import/export.
 - **JSZip**: Creating ZIP archives for export.
