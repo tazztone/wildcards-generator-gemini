@@ -188,7 +188,7 @@ test.describe('Wildcard Generator E2E Tests', () => {
         });
 
         test('generate more button exists in wildcard cards', async ({ page }) => {
-            const firstCategory = page.locator('#wildcard-container > details').first();
+            const firstCategory = page.locator('details[data-path^="1_"]').first();
             await firstCategory.locator(':scope > summary').click();
             await page.waitForTimeout(500);
 

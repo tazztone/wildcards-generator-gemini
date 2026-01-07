@@ -25,63 +25,50 @@ export const ImportExport = {
     },
 
     /**
-     * Recursively builds YAML nodes with instruction comments from internal data format.
+     * Recursively builds YAML string with inline instruction comments.
      * @param {object} data - Internal data object with instruction/wildcards properties
-     * @param {object} doc - YAML Document for creating nodes
-     * @returns {object} YAML node (YAMLMap or YAMLSeq)
+     * @param {number} indent - Current indentation level
+     * @returns {string} YAML string
      */
-    _buildExportNode(data, doc) {
-        const map = doc.createNode({});
+    _buildExportYaml(data, indent = 0) {
+        const spaces = '  '.repeat(indent);
+        let yaml = '';
 
         for (const [key, value] of Object.entries(data)) {
-            if (key === 'instruction') continue; // Skip instruction property, handled as comment
+            if (key === 'instruction') continue; // Skip instruction property
 
             if (value && typeof value === 'object' && !Array.isArray(value)) {
                 // Check if this is a leaf node (has wildcards array)
                 if (Array.isArray(value.wildcards)) {
-                    // Create sequence node for wildcards
-                    const seq = doc.createNode(value.wildcards);
-                    // Add instruction as inline comment on the key
-                    if (value.instruction) {
-                        seq.commentBefore = ` instruction: ${value.instruction}`;
+                    // Build inline comment if instruction exists
+                    const comment = value.instruction ? ` # instruction: ${value.instruction}` : '';
+                    yaml += `${spaces}${key}:${comment}\n`;
+                    // Add wildcards as array items
+                    for (const wildcard of value.wildcards) {
+                        yaml += `${spaces}  - ${wildcard}\n`;
                     }
-                    map.set(key, seq);
                 } else {
-                    // Nested category - recurse
-                    const nestedMap = this._buildExportNode(value, doc);
-                    // Add instruction as inline comment
-                    if (value.instruction) {
-                        nestedMap.commentBefore = ` instruction: ${value.instruction}`;
-                    }
-                    map.set(key, nestedMap);
+                    // Nested category - add key with optional inline comment
+                    const comment = value.instruction ? ` # instruction: ${value.instruction}` : '';
+                    yaml += `${spaces}${key}:${comment}\n`;
+                    // Recurse for nested content
+                    yaml += this._buildExportYaml(value, indent + 1);
                 }
             }
         }
 
-        return map;
+        return yaml;
     },
 
     /**
      * Exports all wildcards to a YAML file in the original comment-based format.
+     * Note: System prompts are NOT included in the export - they are separate settings.
      */
     async handleExportYAML() {
         try {
-            const YAML = (await import('https://cdn.jsdelivr.net/npm/yaml@2.8.2/browser/index.js')).default;
-            const doc = new YAML.Document();
+            // Build YAML string manually to preserve inline comment format
+            const yamlContent = this._buildExportYaml(State.state.wildcards);
 
-            // Build the wildcards structure with comments
-            const wildcardsNode = this._buildExportNode(State.state.wildcards, doc);
-            doc.contents = wildcardsNode;
-
-            // Add prompts at the end as regular properties
-            if (State.state.systemPrompt) {
-                wildcardsNode.set('systemPrompt', State.state.systemPrompt);
-            }
-            if (State.state.suggestItemPrompt) {
-                wildcardsNode.set('suggestItemPrompt', State.state.suggestItemPrompt);
-            }
-
-            const yamlContent = doc.toString();
             this._downloadFile(yamlContent, 'wildcards.yaml', 'application/x-yaml');
             UI.showToast('YAML exported successfully', 'success');
         } catch (e) {

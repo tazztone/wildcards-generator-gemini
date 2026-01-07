@@ -43,12 +43,20 @@ test.describe('Template Architect', () => {
     });
 
     test('Regular categories show "Generate More" button', async ({ page }) => {
-        // Open first category
-        const firstCategory = page.locator('details[data-path]').first();
-        await firstCategory.click();
+        // Open first regular category (skip 0_TEMPLATES)
+        const firstCategory = page.locator('details[data-path^="1_"]').first();
+        await firstCategory.locator('> summary').click();
+        await page.waitForTimeout(300);
 
-        // Find any wildcard card
-        const wildcardCard = page.locator('.wildcard-card').first();
+        // Open subcategory if present (traverse down to find leaf nodes)
+        const subDetails = firstCategory.locator('details').first();
+        if (await subDetails.count() > 0 && await subDetails.isVisible()) {
+            await subDetails.locator('> summary').click();
+            await page.waitForTimeout(300);
+        }
+
+        // Find any wildcard card inside the opened category
+        const wildcardCard = firstCategory.locator('.wildcard-card').first();
 
         if (await wildcardCard.count() > 0) {
             const generateBtn = wildcardCard.locator('.generate-btn .btn-text');
