@@ -20,7 +20,17 @@ This document details the features of the Wildcard Generator application.
 
 ## Advanced Features
 
-### v2.15 Features (Latest)
+### v2.16 Features (Latest)
+
+- **Mindmap UX Polish**:
+  - **Smart Context Menu**: Context menu actions dynamically hide based on node type (e.g., "Generate Wildcards" only shows for wildcard lists).
+  - **Unified Terminology**: Mindmap now uses the same "Category" and "Wildcard" terminology as the List view.
+  - **Enhanced Focus Mode**: 
+    - Dedicated floating exit button for clearer navigation.
+    - "Focus Mode" option hidden for wildcard items to prevent confusion.
+  - **Visual Improvements**: Better button positioning and animations.
+
+### v2.15 Features
 
 - **Mind Elixir Mindmap View**: Alternative interactive visualization of your wildcards hierarchy.
   - **Three View Modes**: Switch between List (default), Mindmap (full-screen), or Dual Pane (synchronized side-by-side).

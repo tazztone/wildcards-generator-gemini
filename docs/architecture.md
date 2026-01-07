@@ -26,7 +26,7 @@ The application logic is modularized in the `js/` directory:
 |--------|------|------------------|
 | **Drag & Drop** | `drag-drop.js` | Handles all drag-and-drop functionality for reordering categories and wildcards. |
 | **Import/Export** | `import-export.js` | Manages file I/O operations for YAML, ZIP, and Settings JSON files. |
-| **Mindmap** | `mindmap.js` | Provides interactive mindmap visualization. Manages Mind Elixir instance, bidirectional sync with State, and smart context menus. |
+| **Mindmap** | `mindmap.js` | Provides interactive mindmap visualization. Manages Mind Elixir instance, bidirectional sync with State, smart context menus, and focus mode UI overlay. |
 | **Settings** | `settings.js` | Handles API key verification and settings-related operations on startup. |
 
 1.  **User Interaction**: The user interacts with the UI (clicks, typing, etc.).
