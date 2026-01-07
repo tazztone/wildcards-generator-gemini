@@ -20,7 +20,20 @@ This document details the features of the Wildcard Generator application.
 
 ## Advanced Features
 
-### v2.16 Features (Latest)
+### v2.17 Features (Latest)
+
+- **Duplicate Finder Mode**:
+  - **Unified "Dupe Finder" Button**: A single toolbar button activates the mode.
+  - **Automated Actions**: Automatically enables "Show Wildcards", highlights duplicates, and filters the view to show only conflicts.
+  - **Floating Action Bar**: Contextual bar with "Clean Up" and "Exit" buttons appears at the bottom of the screen.
+  - **Mindmap Support**: Fully functional in Mindmap view with consistent highlighting and controls.
+- **Improved Clean Up Dialog**:
+  - **Simplified Interface**: Focused solely on resolving conflicts with "Keep Shortest" and "Keep Longest" tools.
+  - **Conflict Statistics**: Clearly displays the number of duplicates found.
+- **UI Refinements**:
+  - **Icon-Only Toggle**: The "Show/Hide Wildcards" button is now a cleaner icon-only toggle (eye/eye-slash).
+
+### v2.16 Features
 
 - **Mindmap UX Polish**:
   - **Smart Context Menu**: Context menu actions dynamically hide based on node type (e.g., "Generate Wildcards" only shows for wildcard lists).
