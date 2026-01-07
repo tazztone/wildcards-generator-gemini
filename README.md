@@ -4,8 +4,12 @@ A standalone Single Page Application (SPA) for managing and generating "wildcard
 
 ## Quick Start
 
-1. **Open the App**
-   Simply open `index.html` in your browser. No server or installation required.
+1. **Run a Local Server**
+   Because this app uses ES Modules and fetches local data files, modern browser security (CORS) requires it to be served via HTTP, not opened directly as a file.
+
+   - **VS Code**: Install the "Live Server" extension, right-click `index.html`, and choose "Open with Live Server".
+   - **Python**: Run `python -m http.server` in the project directory and open `http://localhost:8000`.
+   - **Node**: Run `npx http-server` and open the provided URL.
 
 2. **Setup API Key** (Required for AI features)
    - Click **Global Settings** (top of the page)
