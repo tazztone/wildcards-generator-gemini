@@ -702,9 +702,8 @@
         /* Mindmap Duplicate Highlighting */
         .mindmap-node-duplicate {
             background: linear-gradient(135deg, #7f1d1d, #991b1b) !important;
-            border: 2px solid #ef4444 !important;
-            border-radius: 6px;
-            box-shadow: 0 0 12px rgba(239, 68, 68, 0.5);
+            /* border: 2px solid #ef4444 !important; replaced with outline to prevent layout shift and avoid box-shadow conflict with animation */
+            outline: 2px solid #ef4444 !important;
             animation: pulse-red 2s infinite;
         }
 
