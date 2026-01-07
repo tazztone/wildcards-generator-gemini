@@ -699,6 +699,155 @@
             box-shadow: 0 0 0 2px var(--bg-primary), 0 0 0 4px #ef4444;
         }
 
+        /* Mindmap Duplicate Highlighting */
+        .mindmap-node-duplicate {
+            background: linear-gradient(135deg, #7f1d1d, #991b1b) !important;
+            border: 2px solid #ef4444 !important;
+            border-radius: 6px;
+            box-shadow: 0 0 12px rgba(239, 68, 68, 0.5);
+            animation: pulse-red 2s infinite;
+        }
+
+        html.light .mindmap-node-duplicate {
+            background: linear-gradient(135deg, #fee2e2, #fecaca) !important;
+            color: #b91c1c !important;
+        }
+
+        /* Exit Filter Mode Button */
+        .exit-filter-btn {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 12px 20px;
+            background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            box-shadow: 0 4px 12px rgba(59, 130, 246, 0.4);
+            z-index: 1000;
+            transition: all 0.2s ease;
+            animation: slide-up-center 0.3s ease-out;
+        }
+
+        .exit-filter-btn:hover {
+            background: linear-gradient(135deg, #60a5fa 0%, #3b82f6 100%);
+            transform: translateX(-50%) translateY(-2px);
+            box-shadow: 0 6px 16px rgba(59, 130, 246, 0.5);
+        }
+
+        .exit-filter-btn:active {
+            transform: translateX(-50%) translateY(0);
+        }
+
+        .exit-filter-btn svg {
+            width: 16px;
+            height: 16px;
+        }
+
+        /* Dupe Finder Floating Bar */
+        .dupe-finder-bar {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 10px 16px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-primary);
+            border-radius: 12px;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+            z-index: 1000;
+            animation: slide-up-center 0.3s ease-out;
+        }
+
+        .dupe-finder-bar button {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            padding: 8px 16px;
+            border: none;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .dupe-finder-bar .btn-clean {
+            background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+            color: white;
+        }
+
+        .dupe-finder-bar .btn-clean:hover {
+            background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(245, 158, 11, 0.4);
+        }
+
+        .dupe-finder-bar .btn-exit {
+            background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+            color: white;
+        }
+
+        .dupe-finder-bar .btn-exit:hover {
+            background: linear-gradient(135deg, #60a5fa 0%, #3b82f6 100%);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(59, 130, 246, 0.4);
+        }
+
+        .dupe-finder-bar svg {
+            width: 16px;
+            height: 16px;
+        }
+
+        /* Filter Mode Indicator for Mindmap */
+        .filter-mode-indicator {
+            position: absolute;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: var(--bg-tertiary);
+            border: 1px solid var(--accent-primary);
+            padding: 10px 20px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            z-index: 100;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+            animation: slide-down 0.3s ease-out;
+        }
+
+        .filter-mode-indicator .indicator-icon {
+            font-size: 1.25rem;
+        }
+
+        .filter-mode-indicator .indicator-text {
+            color: var(--text-secondary);
+            font-size: 0.875rem;
+        }
+
+        @keyframes slide-down {
+            from {
+                transform: translateX(-50%) translateY(-20px);
+                opacity: 0;
+            }
+
+            to {
+                transform: translateX(-50%) translateY(0);
+                opacity: 1;
+            }
+        }
+
         /* API Settings Panel Transitions */
         .api-settings-panel {
             transition: all 0.3s ease-in-out;
@@ -1643,6 +1792,41 @@
             .dual-divider::before {
                 content: '⋯';
             }
+        }
+
+        /* Force single column layout in dual pane list view - container is too narrow for grid breakpoints */
+        .dual-list-pane .grid.grid-cols-1.md\:grid-cols-2.lg\:grid-cols-3 {
+            grid-template-columns: 1fr !important;
+        }
+
+        /* Prevent horizontal overflow in dual list pane */
+        .dual-list-pane {
+            overflow-x: hidden;
+            overflow-y: auto;
+        }
+
+        /* Ensure cards don't overflow in narrow dual pane */
+        .dual-list-pane .wildcard-card {
+            max-width: 100%;
+            overflow: hidden;
+        }
+
+        /* Truncate long path breadcrumb text in dual view cards */
+        .dual-list-pane .wildcard-card>.text-xs.text-gray-400 {
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            max-width: 100%;
+        }
+
+        /* Make inputs in narrow dual pane more compact */
+        .dual-list-pane .wildcard-card input[type="text"] {
+            min-width: 0;
+        }
+
+        /* Ensure chip containers don't force minimum widths */
+        .dual-list-pane .chip-container {
+            min-width: 0;
         }
 
         /* =================================================================

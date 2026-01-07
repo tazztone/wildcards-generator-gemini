@@ -35,6 +35,8 @@ const Mindmap = {
     _syncLock: false, // Prevent infinite sync loops
     _MindElixir: null, // Cached MindElixir module reference
     showWildcards: false, // Start collapsed for better overview
+    _currentDuplicates: null, // Store duplicates for reapplication on view change
+    _isFilterMode: false, // Track if filter mode is active
 
     /**
      * Load Mind Elixir library dynamically
@@ -550,13 +552,18 @@ const Mindmap = {
         });
 
         // Update collapse button state when switching views
-        const toggleBtn = document.getElementById('mindmap-toggle-wildcards');
-        if (toggleBtn) {
-            toggleBtn.classList.toggle('active', !this.showWildcards);
-            toggleBtn.innerHTML = this.showWildcards ?
-                '<svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21" /></svg> Hide Wildcards' :
-                '<svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 5.943 7.523 2 12 2c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7S3.732 13.057 2.458 9c1.274-4.057 5.065-7 9.542-7z" /></svg> Show Wildcards';
-            toggleBtn.title = this.showWildcards ? 'Hide wildcards (show categories only)' : 'Show wildcards';
+        this.updateToggleButtonState();
+
+        // Reapply duplicate highlights if they were active
+        if (this._currentDuplicates && this._currentDuplicates.length > 0) {
+            // Small delay to ensure DOM is ready after view switch
+            setTimeout(() => {
+                if (this._isFilterMode) {
+                    this.filterToDuplicates(this._currentDuplicates);
+                } else {
+                    this.highlightDuplicates(this._currentDuplicates);
+                }
+            }, 300);
         }
 
         UI.showToast(`Switched to ${mode} view`, 'success');
@@ -816,17 +823,35 @@ const Mindmap = {
     },
 
     /**
-     * Update the toggle button visual state to match internal state
+     * Update the toggle button visual state to match internal state (icon-only)
      */
     updateToggleButtonState() {
         const toggleBtn = document.getElementById('mindmap-toggle-wildcards');
         if (!toggleBtn) return;
 
-        toggleBtn.classList.toggle('active', !this.showWildcards);
-        toggleBtn.innerHTML = this.showWildcards ?
-            '<svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21" /></svg> Hide Wildcards' :
-            '<svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.522 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" /></svg> Show Wildcards';
-        toggleBtn.title = this.showWildcards ? 'Hide wildcards (show categories only)' : 'Show wildcards';
+        // Toggle active class (affects background color)
+        toggleBtn.classList.toggle('active', this.showWildcards);
+
+        // Toggle icon visibility
+        const eyeOpen = toggleBtn.querySelector('.eye-open');
+        const eyeClosed = toggleBtn.querySelector('.eye-closed');
+
+        if (eyeOpen) eyeOpen.classList.toggle('hidden', !this.showWildcards);
+        if (eyeClosed) eyeClosed.classList.toggle('hidden', this.showWildcards);
+
+        // Update tooltip
+        toggleBtn.title = this.showWildcards ?
+            'Hide wildcards (show categories only)' :
+            'Show wildcards';
+    },
+
+    /**
+     * Force wildcards to be shown (used by Dupe Finder mode)
+     */
+    forceShowWildcards() {
+        if (!this.showWildcards) {
+            this.toggleWildcards();
+        }
     },
 
     /**
@@ -1113,6 +1138,254 @@ const Mindmap = {
      */
     clearHiddenMatchesHint() {
         document.querySelectorAll('.hidden-matches-hint').forEach(el => el.remove());
+    },
+
+    /**
+     * Highlight duplicate wildcards in the mindmap
+     * @param {Array} duplicates - Array of duplicate objects with normalized names
+     */
+    highlightDuplicates(duplicates) {
+        if (!duplicates || duplicates.length === 0) return 0;
+
+        // Build a set of normalized duplicate names for quick lookup
+        const duplicateSet = new Set(duplicates.map(d => d.normalized));
+
+        let totalCount = 0;
+
+        // Get all mindmap containers (main and dual)
+        const containers = [
+            document.getElementById('mindmap-container'),
+            document.getElementById('dual-mindmap')
+        ].filter(Boolean);
+
+        if (containers.length === 0) return 0;
+
+        containers.forEach(container => {
+            // Mind Elixir uses custom <me-tpc> elements for topic nodes
+            // The text is inside <span class="text"> within me-tpc
+            const topicElements = container.querySelectorAll('me-tpc');
+
+            topicElements.forEach(tpc => {
+                // Get the text from the .text span or fall back to innerText
+                const textSpan = tpc.querySelector('.text');
+                const text = (textSpan?.textContent || tpc.textContent || '').toLowerCase().trim();
+
+                if (text && duplicateSet.has(text)) {
+                    tpc.classList.add('mindmap-node-duplicate');
+                    totalCount++;
+                }
+            });
+        });
+
+        // Store duplicates for reapplication on view change
+        this._currentDuplicates = duplicates;
+
+        return totalCount;
+    },
+
+    /**
+     * Apply filter mode to show only nodes with duplicates
+     * @param {Array} duplicates - Array of duplicate objects with locations
+     */
+    filterToDuplicates(duplicates) {
+        if (!duplicates || duplicates.length === 0) return;
+
+        // Track filter mode state
+        this._isFilterMode = true;
+        this._currentDuplicates = duplicates;
+
+        // Collect all paths that have duplicates
+        const paths = new Set();
+        duplicates.forEach(d => d.locations.forEach(loc => paths.add(loc.path)));
+
+        // For mindmap view, re-render with filtered data
+        if (this.currentView === VIEW_MODES.MINDMAP || this.currentView === VIEW_MODES.DUAL) {
+            // Build a filtered version of wildcards containing only relevant paths
+            const filteredData = this._filterDataToPaths(State._rawData.wildcards || {}, paths);
+
+            // Re-render mindmap with filtered data
+            if (this.instance) {
+                try {
+                    const data = this.transformToMindElixir(filteredData);
+                    this.instance.refresh(data);
+                    setTimeout(() => this.instance.toCenter(), 100);
+                } catch (error) {
+                    console.error('Error filtering mindmap:', error);
+                }
+            }
+
+            if (this.dualInstance) {
+                try {
+                    const data = this.transformToMindElixir(filteredData);
+                    this.dualInstance.refresh(data);
+                } catch (error) {
+                    console.error('Error filtering dual mindmap:', error);
+                }
+            }
+
+            // Highlight duplicate nodes
+            setTimeout(() => this.highlightDuplicates(duplicates), 200);
+        }
+
+        this.showFilterModeExitButton();
+
+        // Show filter mode indicator
+        const container = document.getElementById('mindmap-container');
+        if (container && !container.querySelector('.filter-mode-indicator')) {
+            const indicator = document.createElement('div');
+            indicator.className = 'filter-mode-indicator';
+            indicator.innerHTML = `
+                <span class="indicator-icon">🔍</span>
+                <span class="indicator-text">Filter Mode: Showing ${paths.size} lists with duplicates</span>
+            `;
+            container.appendChild(indicator);
+        }
+    },
+
+    /**
+     * Filter wildcards data to only include paths that contain duplicates
+     * @param {Object} wildcards - Original wildcards data
+     * @param {Set<string>} paths - Set of paths that should be included
+     * @returns {Object} Filtered wildcards data
+     */
+    _filterDataToPaths(wildcards, paths) {
+        const result = {};
+
+        /**
+         * Check if a path or any of its descendants is in the paths set
+         * @param {string} currentPath - Path to check
+         * @returns {boolean}
+         */
+        const hasMatchingDescendant = (currentPath) => {
+            for (const path of paths) {
+                if (path === currentPath || path.startsWith(currentPath + '/')) {
+                    return true;
+                }
+            }
+            return false;
+        };
+
+        /**
+         * Recursively filter the data structure
+         * @param {Object} data - Data to filter
+         * @param {string} basePath - Current base path
+         * @returns {Object|null} Filtered data or null if no matches
+         */
+        const filterRecursive = (data, basePath = '') => {
+            const filtered = {};
+            let hasContent = false;
+
+            for (const key of Object.keys(data)) {
+                if (key === 'instruction') {
+                    // Always include instructions for included categories
+                    continue;
+                }
+
+                const value = data[key];
+                const currentPath = basePath ? `${basePath}/${key}` : key;
+
+                if (value && typeof value === 'object') {
+                    // Check if this path or any descendant matches
+                    if (hasMatchingDescendant(currentPath)) {
+                        // It's a wildcard list
+                        if (Array.isArray(value.wildcards)) {
+                            // Only include if this exact path has duplicates
+                            if (paths.has(currentPath)) {
+                                filtered[key] = { ...value };
+                                if (data[key].instruction) {
+                                    filtered[key].instruction = data[key].instruction;
+                                }
+                                hasContent = true;
+                            }
+                        } else {
+                            // It's a category - recurse
+                            const childFiltered = filterRecursive(value, currentPath);
+                            if (childFiltered && Object.keys(childFiltered).length > 0) {
+                                filtered[key] = childFiltered;
+                                if (value.instruction) {
+                                    filtered[key].instruction = value.instruction;
+                                }
+                                hasContent = true;
+                            }
+                        }
+                    }
+                }
+            }
+
+            return hasContent ? filtered : null;
+        };
+
+        const filteredResult = filterRecursive(wildcards);
+        return filteredResult || {};
+    },
+
+    /**
+     * Clear duplicate highlights from the mindmap
+     */
+    clearDuplicateHighlights() {
+        // Clear state tracking
+        this._currentDuplicates = null;
+        this._isFilterMode = false;
+
+        // Remove duplicate styling from mindmap nodes
+        document.querySelectorAll('.mindmap-node-duplicate').forEach(el => {
+            el.classList.remove('mindmap-node-duplicate');
+        });
+
+        // Remove filter mode indicator
+        document.querySelectorAll('.filter-mode-indicator').forEach(el => el.remove());
+
+        // Hide the filter exit button
+        this.hideFilterModeExitButton();
+    },
+
+    /**
+     * Show floating button to exit filter mode
+     */
+    showFilterModeExitButton() {
+        // Remove existing button if any
+        this.hideFilterModeExitButton();
+
+        const btn = document.createElement('button');
+        btn.id = 'exit-filter-btn';
+        btn.className = 'exit-filter-btn';
+        btn.innerHTML = `
+            <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+            </svg>
+            Exit Filter Mode
+        `;
+        btn.title = 'Exit filter mode and show all cards';
+        btn.onclick = () => {
+            // Import UI dynamically to avoid circular dependency
+            import('../ui.js').then(({ UI }) => {
+                UI.clearDuplicateHighlights();
+            });
+        };
+
+        // Add to the appropriate container based on current view
+        let container;
+        if (this.currentView === VIEW_MODES.MINDMAP) {
+            container = document.getElementById('mindmap-container');
+        } else {
+            container = document.getElementById('wildcard-container')?.parentElement;
+        }
+
+        if (container) {
+            // Ensure the container can position the button
+            if (getComputedStyle(container).position === 'static') {
+                container.style.position = 'relative';
+            }
+            container.appendChild(btn);
+        }
+    },
+
+    /**
+     * Hide the filter mode exit button
+     */
+    hideFilterModeExitButton() {
+        const btn = document.getElementById('exit-filter-btn');
+        if (btn) btn.remove();
     },
 
     /**

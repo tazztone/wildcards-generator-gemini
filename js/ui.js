@@ -1575,68 +1575,49 @@ export const UI = {
     },
 
     /**
-     * Show the duplicates management dialog
-     * @param {Array} duplicates - List of duplicate objects
-     */
-    showCheckDuplicatesDialog(duplicates) {
+ * Show the Clean Up Duplicates dialog (accessed from Dupe Finder bar)
+ * @param {Array} duplicates - List of duplicate objects
+ */
+    showCleanDuplicatesDialog(duplicates) {
         const totalOccurrences = duplicates.reduce((sum, d) => sum + d.count, 0);
 
-        // Build the main dialog content
+        // Build the main dialog content - simplified for cleanup only
         const message = `
 <div class="text-left space-y-4">
-    <div class="flex items-center justify-between">
-        <h3 class="text-xl font-bold text-white">Duplicate Check</h3>
-        <span class="bg-red-900/50 text-red-200 text-xs px-2 py-1 rounded border border-red-800">${duplicates.length} conflicts / ${totalOccurrences} items</span>
-    </div>
-    
-    <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
-        <button id="dupe-highlight" class="flex flex-col items-start p-3 bg-yellow-900/20 hover:bg-yellow-900/40 border border-yellow-800/50 rounded-lg transition-all group">
-            <span class="flex items-center gap-2 font-bold text-yellow-500 group-hover:text-yellow-400">
-                <span>🔆</span> Highlight All
-            </span>
-            <span class="text-xs text-gray-500 mt-1">Visually mark duplicates in red</span>
+<div class="flex items-center justify-between">
+    <h3 class="text-xl font-bold text-white">🧹 Clean Up Duplicates</h3>
+    <span class="bg-red-900/50 text-red-200 text-xs px-2 py-1 rounded border border-red-800">${duplicates.length} conflicts / ${totalOccurrences} items</span>
+</div>
+
+<p class="text-gray-400 text-sm">Choose which duplicate to keep when conflicts occur:</p>
+
+<div class="p-3 bg-gray-800/50 rounded-lg border border-gray-700">
+    <div class="grid grid-cols-1 gap-2">
+        <button id="dupe-clean-shortest" class="text-left px-3 py-2 bg-gray-700 hover:bg-gray-600 rounded text-sm text-gray-200 transition-colors flex justify-between items-center group">
+            <span>Keep <span class="text-green-400 font-semibold">Shortest Path</span> (Top-level)</span>
+            <span class="opacity-0 group-hover:opacity-100 text-xs text-gray-400">Recommended</span>
         </button>
-        
-        <button id="dupe-filter" class="flex flex-col items-start p-3 bg-blue-900/20 hover:bg-blue-900/40 border border-blue-800/50 rounded-lg transition-all group">
-            <span class="flex items-center gap-2 font-bold text-blue-500 group-hover:text-blue-400">
-                <span>🔍</span> Filter View
-            </span>
-            <span class="text-xs text-gray-500 mt-1">Show only cards with duplicates</span>
+        <button id="dupe-clean-longest" class="text-left px-3 py-2 bg-gray-700 hover:bg-gray-600 rounded text-sm text-gray-200 transition-colors">
+            <span>Keep <span class="text-purple-400 font-semibold">Longest Path</span> (Most Nested)</span>
         </button>
     </div>
+</div>
 
-    <div class="p-3 bg-gray-800/50 rounded-lg border border-gray-700">
-        <h4 class="font-bold text-gray-300 text-sm mb-2">Clean Up Tools</h4>
-        <div class="grid grid-cols-1 gap-2">
-            <button id="dupe-clean-shortest" class="text-left px-3 py-2 bg-gray-700 hover:bg-gray-600 rounded text-sm text-gray-200 transition-colors flex justify-between items-center group">
-                <span>Keep <span class="text-green-400 font-semibold">Shortest Path</span> (Top-level)</span>
-                <span class="opacity-0 group-hover:opacity-100 text-xs text-gray-400">Rec.</span>
-            </button>
-            <button id="dupe-clean-longest" class="text-left px-3 py-2 bg-gray-700 hover:bg-gray-600 rounded text-sm text-gray-200 transition-colors">
-                <span>Keep <span class="text-purple-400 font-semibold">Longest Path</span> (Nested)</span>
-            </button>
-        </div>
+<details class="bg-gray-900/50 rounded-lg border border-gray-800">
+    <summary class="p-2 cursor-pointer text-gray-400 hover:text-gray-300 text-sm font-medium select-none">
+        View Duplicate List
+    </summary>
+    <div class="p-2 pt-0 max-h-40 overflow-y-auto custom-scrollbar">
+        <ul class="space-y-1 text-sm">
+            ${duplicates.map(d => `
+                <li class="flex justify-between items-start py-1 border-b border-gray-800 last:border-0">
+                    <span class="text-gray-300 font-mono text-xs bg-gray-800 px-1 rounded">"${d.normalized}"</span>
+                    <span class="text-gray-500 text-xs text-right whitespace-nowrap ml-2">${d.count} locs</span>
+                </li>
+            `).join('')}
+        </ul>
     </div>
-
-    <details class="bg-gray-900/50 rounded-lg border border-gray-800">
-        <summary class="p-2 cursor-pointer text-gray-400 hover:text-gray-300 text-sm font-medium select-none">
-            View Duplicate List
-        </summary>
-        <div class="p-2 pt-0 max-h-40 overflow-y-auto custom-scrollbar">
-            <ul class="space-y-1 text-sm">
-                ${duplicates.map(d => `
-                    <li class="flex justify-between items-start py-1 border-b border-gray-800 last:border-0">
-                        <span class="text-gray-300 font-mono text-xs bg-gray-800 px-1 rounded">"${d.normalized}"</span>
-                        <span class="text-gray-500 text-xs text-right whitespace-nowrap ml-2">${d.count} locs</span>
-                    </li>
-                `).join('')}
-            </ul>
-        </div>
-    </details>
-
-    <div class="flex justify-end pt-2 border-t border-gray-700">
-        <button id="dupe-clear" class="text-gray-400 hover:text-white text-sm underline px-2">Clear Highlights</button>
-    </div>
+</details>
 </div>
 `;
 
@@ -1644,19 +1625,6 @@ export const UI = {
 
         // Bind actions
         setTimeout(() => {
-            document.getElementById('dupe-highlight')?.addEventListener('click', () => {
-                this.highlightDuplicates(duplicates);
-                this.elements.dialog.close();
-            });
-            document.getElementById('dupe-filter')?.addEventListener('click', () => {
-                this.filterToDuplicates(duplicates);
-                this.elements.dialog.close();
-            });
-            document.getElementById('dupe-clear')?.addEventListener('click', () => {
-                this.clearDuplicateHighlights();
-                this.elements.dialog.close();
-            });
-
             // Cleaning actions
             document.getElementById('dupe-clean-shortest')?.addEventListener('click', () => {
                 this.handleCleanDuplicates(duplicates, 'shortest-path');
@@ -1665,6 +1633,11 @@ export const UI = {
                 this.handleCleanDuplicates(duplicates, 'longest-path');
             });
         }, 100);
+    },
+
+    // Keep legacy name for backwards compatibility
+    showCheckDuplicatesDialog(duplicates) {
+        this.showCleanDuplicatesDialog(duplicates);
     },
 
     handleCleanDuplicates(duplicates, strategy) {
@@ -1702,6 +1675,18 @@ export const UI = {
             }
         });
 
+        // Also highlight in mindmap view if active
+        import('./modules/mindmap.js').then(({ Mindmap }) => {
+            if (Mindmap.currentView === 'mindmap' || Mindmap.currentView === 'dual') {
+                const mindmapCount = Mindmap.highlightDuplicates(duplicates);
+                if (mindmapCount) {
+                    count += mindmapCount;
+                }
+            }
+        }).catch(() => {
+            // Mindmap module not available, ignore
+        });
+
         UI.showToast(`Highlighted ${count} occurrences`, 'success');
     },
 
@@ -1711,6 +1696,27 @@ export const UI = {
         const paths = new Set();
         duplicates.forEach(d => d.locations.forEach(loc => paths.add(loc.path)));
 
+        // Check if we're in mindmap view
+        import('./modules/mindmap.js').then(({ Mindmap }) => {
+            if (Mindmap.currentView === 'mindmap') {
+                // In mindmap view, use mindmap's filter functionality
+                Mindmap.filterToDuplicates(duplicates);
+            } else {
+                // In list view, filter the cards as before
+                this._filterListToDuplicates(paths, duplicates);
+            }
+        }).catch(() => {
+            // Fallback if mindmap module not available
+            this._filterListToDuplicates(paths, duplicates);
+        });
+    },
+
+    /**
+     * Internal method to filter list view to duplicates
+     * @param {Set<string>} paths - Set of paths with duplicates
+     * @param {Array} duplicates - The duplicates array
+     */
+    _filterListToDuplicates(paths, duplicates) {
         // Hide all cards first
         document.querySelectorAll('.wildcard-card').forEach(card => {
             const path = /** @type {HTMLElement} */ (card).dataset.path;
@@ -1732,12 +1738,109 @@ export const UI = {
         });
 
         this.highlightDuplicates(duplicates);
+        this._showFilterExitButton();
         UI.showToast(`Filtered to ${paths.size} lists with duplicates`, 'success');
+    },
+
+    /**
+     * Enter Duplicate Finder Mode
+     * - Forces Show Wildcards ON
+     * - Highlights duplicates
+     * - Filters to show only categories with duplicates
+     * - Shows floating bar with Clean Up + Exit buttons
+     */
+    enterDupeFinderMode() {
+        const { duplicates } = State.findDuplicates();
+
+        if (duplicates.length === 0) {
+            UI.showToast('No duplicates found! Your data is clean.', 'success');
+            return;
+        }
+
+        // Force Show Wildcards ON (required to see duplicates)
+        import('./modules/mindmap.js').then(({ Mindmap }) => {
+            Mindmap.forceShowWildcards();
+
+            // Apply filter (which also applies highlighting)
+            this.filterToDuplicates(duplicates);
+        }).catch(() => {
+            // Fallback if mindmap module not available - just filter list view
+            const paths = new Set();
+            duplicates.forEach(d => d.locations.forEach(loc => paths.add(loc.path)));
+            this._filterListToDuplicates(paths, duplicates);
+        });
+
+        UI.showToast(`Dupe Finder: ${duplicates.length} duplicate values found`, 'info');
+    },
+
+    _showFilterExitButton() {
+        // Remove existing bar if any
+        this._hideFilterExitButton();
+
+        // Create floating bar with Clean Up + Exit buttons
+        const bar = document.createElement('div');
+        bar.id = 'dupe-finder-bar';
+        bar.className = 'dupe-finder-bar';
+        bar.innerHTML = `
+            <button id="clean-duplicates-btn" class="btn-clean">
+                <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                </svg>
+                🧹 Clean Up
+            </button>
+            <button id="exit-dupe-finder-btn" class="btn-exit">
+                <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+                Exit Dupe Finder
+            </button>
+        `;
+
+        // Wire up buttons
+        bar.querySelector('#clean-duplicates-btn')?.addEventListener('click', () => {
+            const { duplicates } = State.findDuplicates();
+            this.showCleanDuplicatesDialog(duplicates);
+        });
+
+        bar.querySelector('#exit-dupe-finder-btn')?.addEventListener('click', () => {
+            this.clearDuplicateHighlights();
+        });
+
+        // Add to the container
+        const container = document.getElementById('wildcard-container')?.parentElement;
+        if (container) {
+            // Ensure the container can position the bar
+            if (getComputedStyle(container).position === 'static') {
+                container.style.position = 'relative';
+            }
+            container.appendChild(bar);
+        }
+    },
+
+    /**
+     * Hide the Dupe Finder bar
+     */
+    _hideFilterExitButton() {
+        const bar = document.getElementById('dupe-finder-bar');
+        if (bar) bar.remove();
+        // Also remove legacy button if present
+        const btn = document.getElementById('exit-filter-btn');
+        if (btn) btn.remove();
     },
 
     clearDuplicateHighlights() {
         document.querySelectorAll('.chip-duplicate').forEach(el => el.classList.remove('chip-duplicate'));
         document.querySelectorAll('.duplicate-focus').forEach(el => el.classList.remove('duplicate-focus'));
+
+        // Hide the filter exit button
+        this._hideFilterExitButton();
+
+        // Clear mindmap highlights too
+        import('./modules/mindmap.js').then(({ Mindmap }) => {
+            Mindmap.clearDuplicateHighlights();
+        }).catch(() => {
+            // Mindmap module not available, ignore
+        });
 
         // Restore visibility (simple reset search like behavior)
         const searchInput = /** @type {HTMLInputElement} */ (document.getElementById('search-wildcards'));

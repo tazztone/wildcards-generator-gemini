@@ -314,16 +314,16 @@ export const App = {
     <h3 class="text-lg font-bold text-indigo-300 mt-2">💡 Tips</h3>
     <ul class="text-sm text-gray-300 list-disc list-inside space-y-0.5">
         <li>Click any title to rename it inline</li>
-        <li>Use "Check Duplicates" to find and manage repeated entries</li>
+        <li>Use "Dupe Finder" to find and manage repeated entries</li>
         <li>Pin frequently used categories to keep them at the top</li>
         <li>Use the overflow menu (⋮) for reset options and config export</li>
     </ul>
 </div>
 `);
             }
-            // Check Duplicates
-            if (target.matches('#check-duplicates')) {
-                this.handleCheckDuplicates();
+            // Dupe Finder Mode
+            if (target.matches('#dupe-finder-btn')) {
+                UI.enterDupeFinderMode();
             }
             // Reset Options
             if (target.matches('#reset-localstorage')) {
