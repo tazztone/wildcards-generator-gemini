@@ -235,7 +235,7 @@ const Mindmap = {
 
         // Generate action - only for categories with wildcards (not root, not wildcards themselves)
         contextMenuExtend.push({
-            name: '✨ Generate More',
+            name: '✨ Generate Wildcards',
             onclick: (data) => {
                 // Validate: skip for root node or wildcard items
                 if (data.root || data.data?.isWildcard) {
@@ -248,7 +248,7 @@ const Mindmap = {
 
         // Suggest action - only for categories (not root, not wildcards)
         contextMenuExtend.push({
-            name: '💡 Suggest Children',
+            name: '💡 Suggest Subcategories',
             onclick: (data) => {
                 // Validate: skip for root node or wildcard items
                 if (data.root || data.data?.isWildcard) {
@@ -835,24 +835,39 @@ const Mindmap = {
         }
 
         const node = this.instance.currentNode;
-        // Robust check for Wildcard type (leaf)
+        // Robust check for Wildcard type (leaf item)
         const isWildcard = node.data?.isWildcard || node.nodeObj?.data?.isWildcard || (node.nodeObj && !node.nodeObj.children && !node.root);
         // Robust check for Root
         const isRoot = node.root || node.nodeObj?.root;
+        // Check if category has wildcards (wildcard list - should not suggest subcategories)
+        const wildcardCount = node.data?.wildcardCount || node.nodeObj?.data?.wildcardCount || 0;
+        const isWildcardList = wildcardCount > 0;
+        // Check if it's a category (not root, not wildcard item)
+        const isCategory = !isRoot && !isWildcard;
+        // A category that can have subcategories suggested (not a wildcard list)
+        const canSuggestSubcategories = isCategory && !isWildcardList;
 
-        console.log('[SmartMenu] Type:', { isWildcard, isRoot });
+        console.log('[SmartMenu] Type:', { isWildcard, isRoot, isCategory, isWildcardList, wildcardCount });
 
         const items = menuEl.querySelectorAll('li');
         items.forEach(item => {
-            const text = item.textContent.toLowerCase().trim();
+            const text = item.textContent?.toLowerCase().trim() || '';
             // Reset visibility first to ensure we don't permanently hide items
             item.style.display = 'block';
 
+            // === Hide built-in Mind Elixir actions based on node type ===
             if (isWildcard) {
-                // Hide actions irrelevant for wildcards
-                // 'Add child' is typically first. 
+                // Hide actions irrelevant for wildcard items (leaf nodes)
                 if (text.includes('child') || text.includes('summary')) {
                     console.log('[SmartMenu] Hiding for wildcard:', text);
+                    item.style.display = 'none';
+                }
+            }
+            if (isWildcardList) {
+                // Wildcard list categories shouldn't add children via Mind Elixir
+                // (children are wildcards managed differently)
+                if (text.includes('add child')) {
+                    console.log('[SmartMenu] Hiding "Add child" for wildcard list');
                     item.style.display = 'none';
                 }
             }
@@ -860,6 +875,23 @@ const Mindmap = {
                 // Hide actions irrelevant for root
                 if (text.includes('parent') || text.includes('sibling') || text.includes('remove') || text.includes('up') || text.includes('down') || text.includes('cut') || text.includes('copy')) {
                     console.log('[SmartMenu] Hiding for root:', text);
+                    item.style.display = 'none';
+                }
+            }
+
+            // === Hide custom AI actions based on node type ===
+            // "Generate Wildcards" - only for wildcard lists (categories that have wildcards)
+            if (text.includes('generate wildcards')) {
+                if (!isWildcardList) {
+                    console.log('[SmartMenu] Hiding "Generate Wildcards" (not a wildcard list)');
+                    item.style.display = 'none';
+                }
+            }
+            // "Suggest Subcategories" - only for folder categories (no wildcards)
+            // (categories with wildcards are leaf-level, can't have subcategories)
+            if (text.includes('suggest subcategories')) {
+                if (!canSuggestSubcategories) {
+                    console.log('[SmartMenu] Hiding "Suggest Subcategories" (is root, wildcard, or wildcard list)');
                     item.style.display = 'none';
                 }
             }
