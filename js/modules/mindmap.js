@@ -340,9 +340,19 @@ const Mindmap = {
      * @param {string} containerSelector - Container selector for context
      */
     setupEventListeners(instance, containerSelector) {
-        // Mind Elixir → State sync
+        // Mind Elixir → State sync AND focus mode detection
         instance.bus.addListener('operation', (operation) => {
             if (this._syncLock) return;
+
+            // Detect focus mode operations
+            if (operation.name === 'focusNode' || operation.name === 'focus') {
+                console.log('[Mindmap] Focus mode activated');
+                this.showFocusModeExitButton(instance);
+            } else if (operation.name === 'cancelFocus' || operation.name === 'unfocus') {
+                console.log('[Mindmap] Focus mode cancelled');
+                this.hideFocusModeExitButton();
+            }
+
             this.handleMindmapOperation(operation, instance);
         });
 
@@ -363,6 +373,45 @@ const Mindmap = {
             });
             this._stateListenersSetup = true;
         }
+    },
+
+    /**
+     * Show floating button to exit focus mode
+     * @param {MindElixirInstance} instance - The Mind Elixir instance
+     */
+    showFocusModeExitButton(instance) {
+        // Remove existing button if any
+        this.hideFocusModeExitButton();
+
+        const btn = document.createElement('button');
+        btn.id = 'mindmap-exit-focus-btn';
+        btn.className = 'mindmap-exit-focus-btn';
+        btn.innerHTML = `
+            <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+            </svg>
+            Exit Focus Mode
+        `;
+        btn.title = 'Exit focus mode and show all nodes';
+        btn.onclick = () => {
+            // @ts-ignore - cancelFocus exists at runtime but not in type definitions
+            instance.cancelFocus?.();
+            this.hideFocusModeExitButton();
+        };
+
+        // Add to mindmap container
+        const container = document.getElementById('mindmap-container') || document.getElementById('dual-mindmap');
+        if (container) {
+            container.appendChild(btn);
+        }
+    },
+
+    /**
+     * Hide the focus mode exit button
+     */
+    hideFocusModeExitButton() {
+        const btn = document.getElementById('mindmap-exit-focus-btn');
+        if (btn) btn.remove();
     },
 
     /**
@@ -894,6 +943,26 @@ const Mindmap = {
                     console.log('[SmartMenu] Hiding "Suggest Subcategories" (is root, wildcard, or wildcard list)');
                     item.style.display = 'none';
                 }
+            }
+
+            // === Focus Mode actions ===
+            // "Focus Mode" - only for categories (not wildcards), and add click handler
+            if (text.includes('focus mode') && !text.includes('cancel')) {
+                if (isWildcard) {
+                    console.log('[SmartMenu] Hiding "Focus Mode" (is a wildcard)');
+                    item.style.display = 'none';
+                } else {
+                    // Add click handler to show exit button when Focus Mode is activated
+                    item.addEventListener('click', () => {
+                        console.log('[Mindmap] Focus Mode clicked - showing exit button');
+                        setTimeout(() => this.showFocusModeExitButton(this.instance), 100);
+                    }, { once: true });
+                }
+            }
+            // "Cancel Focus Mode" - always hide (replaced with floating button)
+            if (text.includes('cancel focus mode')) {
+                console.log('[SmartMenu] Hiding "Cancel Focus Mode" (using floating button instead)');
+                item.style.display = 'none';
             }
         });
     },
