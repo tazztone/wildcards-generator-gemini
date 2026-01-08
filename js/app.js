@@ -28,6 +28,10 @@ export const App = {
 
         // Restore view mode preference
         const preferredView = Config.PREFERRED_VIEW || 'list';
+
+        // Ensure toggle button visual state matches default logic
+        Mindmap.updateToggleButtonState();
+
         if (preferredView !== 'list') {
             // Defer to allow DOM to fully load
             setTimeout(() => Mindmap.setView(preferredView), 100);

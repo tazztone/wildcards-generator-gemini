@@ -34,7 +34,7 @@ const Mindmap = {
     isInitialized: false,
     _syncLock: false, // Prevent infinite sync loops
     _MindElixir: null, // Cached MindElixir module reference
-    showWildcards: false, // Start collapsed for better overview
+    showWildcards: true, // Start expanded by default
     _currentDuplicates: null, // Store duplicates for reapplication on view change
     _isFilterMode: false, // Track if filter mode is active
 
