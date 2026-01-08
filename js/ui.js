@@ -1332,7 +1332,7 @@ export const UI = {
     },
     createSubcategoryPlaceholder(parentPath) {
         const div = document.createElement('div');
-        div.className = 'bg-gray-800/50 p-4 rounded-lg flex items-center justify-between border-2 border-dashed border-gray-600 hover:border-indigo-500 transition-colors mt-2 mb-4';
+        div.className = 'placeholder-subcategory p-2 rounded-lg flex items-center justify-between border border-dashed border-gray-600 hover:border-indigo-500 transition-colors mt-2 mb-2 bg-gray-800/30';
         div.dataset.parentPath = parentPath;
         div.innerHTML = `
             <span class="text-gray-400 font-medium">Add new subcategory</span>
@@ -1345,14 +1345,14 @@ export const UI = {
     },
     createWildcardPlaceholder(parentPath) {
         const div = document.createElement('div');
-        div.className = 'bg-gray-700/30 p-3 rounded-lg flex items-center justify-center min-h-[60px] border-2 border-dashed border-gray-600 hover:border-indigo-500 transition-colors';
+        div.className = 'placeholder-wildcard p-2 rounded-lg flex items-center justify-between min-h-[50px] border border-dashed border-gray-600 hover:border-indigo-500 transition-colors bg-gray-700/20';
         div.dataset.parentPath = parentPath;
         div.innerHTML = `
-             <div class="flex items-center gap-3">
-                 <span class="text-gray-400 text-sm">Add list</span>
+            <span class="text-gray-400 text-sm font-medium">Add list</span>
+            <div class="flex gap-2">
                  <button class="add-wildcard-list-btn bg-green-600 hover:bg-green-700 text-white font-bold py-1 px-3 rounded-md" aria-label="Add new wildcard list">+</button>
                  <button class="suggest-wildcard-list-btn bg-purple-600 hover:bg-purple-700 text-white text-sm font-medium py-1 px-3 rounded-md">Suggest</button>
-             </div>`;
+            </div>`;
         return div;
     },
 
