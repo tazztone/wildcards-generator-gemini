@@ -1385,10 +1385,9 @@ export const UI = {
         };
         countData(State.state.wildcards || {});
         // Update DOM
-        if (this.elements.statsBar) {
-            this.elements.statsBar.querySelector('#stat-categories').textContent = categoryCount;
-            this.elements.statsBar.querySelector('#stat-wildcards').textContent = wildcardCount.toLocaleString();
-            this.elements.statsBar.querySelector('#stat-pinned').textContent = (State.state.pinnedCategories || []).length;
+        if (document.getElementById('stat-categories')) {
+            document.getElementById('stat-categories').textContent = categoryCount;
+            document.getElementById('stat-wildcards').textContent = wildcardCount.toLocaleString();
         }
     },
 
