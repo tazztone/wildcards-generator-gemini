@@ -663,8 +663,9 @@ export const App = {
             return;
         }
 
-        // Chip click for selection toggle (click anywhere on chip except the editable text)
-        if (target.closest('.chip') && !target.classList.contains('editable-name')) {
+        // Chip click for selection toggle (anywhere on chip, including text)
+        // Double-click-to-edit is handled by a separate dblclick handler
+        if (target.closest('.chip') && target.closest('.chip-container')) {
             const chip = target.closest('.chip');
             chip.classList.toggle('selected');
             chip.setAttribute('aria-checked', chip.classList.contains('selected') ? 'true' : 'false');
