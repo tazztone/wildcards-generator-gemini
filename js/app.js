@@ -663,6 +663,14 @@ export const App = {
             return;
         }
 
+        // Chip click for selection toggle (click anywhere on chip except the editable text)
+        if (target.closest('.chip') && !target.classList.contains('editable-name')) {
+            const chip = target.closest('.chip');
+            chip.classList.toggle('selected');
+            chip.setAttribute('aria-checked', chip.classList.contains('selected') ? 'true' : 'false');
+            return;
+        }
+
         if (!pathElement) return;
         const path = pathElement.dataset.path;
 
@@ -755,7 +763,7 @@ export const App = {
         if (target.closest('.batch-delete-btn')) {
             const card = target.closest('.wildcard-card');
             if (!card) return;
-            const checked = card.querySelectorAll('.batch-select:checked');
+            const checked = card.querySelectorAll('.chip.selected');
             if (checked.length === 0) {
                 UI.showToast('No items selected', 'info');
                 return;
@@ -764,7 +772,7 @@ export const App = {
             // Delete selected items
             // Must delete in descending order of index to preserve indices of earlier items during splice
             const indices = Array.from(checked)
-                .map(cb => parseInt(cb.closest('.chip').dataset.index))
+                .map(chip => parseInt(chip.dataset.index))
                 .sort((a, b) => b - a);
 
             if (indices.length > 0) {
@@ -781,13 +789,21 @@ export const App = {
         if (target.closest('.select-all-btn')) {
             const card = target.closest('.wildcard-card');
             if (!card) return;
-            const checkboxes = card.querySelectorAll('.batch-select');
+            const chips = card.querySelectorAll('.chip');
             const btn = target.closest('.select-all-btn');
-            // If any is unchecked, select all. If all checked, deselect all.
-            const allChecked = Array.from(checkboxes).every(cb => cb.checked);
-            checkboxes.forEach(cb => cb.checked = !allChecked);
+            // If any is not selected, select all. If all selected, deselect all.
+            const allSelected = Array.from(chips).every(chip => chip.classList.contains('selected'));
+            chips.forEach(chip => {
+                if (allSelected) {
+                    chip.classList.remove('selected');
+                    chip.setAttribute('aria-checked', 'false');
+                } else {
+                    chip.classList.add('selected');
+                    chip.setAttribute('aria-checked', 'true');
+                }
+            });
             // Update button text
-            btn.textContent = allChecked ? 'Select All' : 'Deselect All';
+            btn.textContent = allSelected ? 'Select All' : 'Deselect All';
         }
     },
 

@@ -603,41 +603,34 @@
         </div>
     </dialog>
 
-    <div class="mt-6 text-left max-w-4xl mx-auto">
-        <div class="flex justify-between items-center">
-            <label for="search-wildcards" class="block text-lg font-semibold text-indigo-300 mb-2">Search
-                Wildcards</label>
-            <span id="search-results-count" class="text-sm text-gray-400 mb-2"></span>
-        </div>
-        <div class="relative">
-            <input type="text" id="search-wildcards" class="input-primary bg-gray-800 pr-10"
-                placeholder="Search for wildcards...">
+    <!-- Compact Toolbar Row: Search + Stats + View Mode + Actions -->
+    <div class="mt-4 flex flex-wrap items-center justify-center gap-3 max-w-6xl mx-auto px-2">
+        <!-- Search Input -->
+        <div class="relative flex-grow max-w-md">
+            <input type="text" id="search-wildcards" class="input-primary bg-gray-800 pr-10 py-2 text-sm"
+                placeholder="Search wildcards...">
             <button id="search-clear-btn"
                 class="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-white hidden transition-colors"
                 aria-label="Clear search">
-                <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
                 </svg>
             </button>
         </div>
-    </div>
-    <!-- Statistics Dashboard -->
-    <div id="stats-bar" class="mt-4 flex flex-wrap justify-center gap-6 text-sm">
-        <div class="bg-gray-800 px-4 py-2 rounded-lg">
-            <span class="text-gray-400">Categories:</span>
-            <span id="stat-categories" class="text-indigo-400 font-bold ml-1">0</span>
+        <span id="search-results-count" class="text-xs text-gray-400 hidden"></span>
+
+        <!-- Stats Badges (Inline) -->
+        <div id="stats-bar" class="flex items-center gap-2 text-xs">
+            <span class="text-gray-400">Categories: <span id="stat-categories"
+                    class="text-indigo-400 font-bold">0</span></span>
+            <span class="text-gray-600">|</span>
+            <span class="text-gray-400">Wildcards: <span id="stat-wildcards"
+                    class="text-green-400 font-bold">0</span></span>
+            <span class="text-gray-600">|</span>
+            <span class="text-gray-400">Pinned: <span id="stat-pinned" class="text-yellow-400 font-bold">0</span></span>
         </div>
-        <div class="bg-gray-800 px-4 py-2 rounded-lg">
-            <span class="text-gray-400">Total Wildcards:</span>
-            <span id="stat-wildcards" class="text-green-400 font-bold ml-1">0</span>
-        </div>
-        <div class="bg-gray-800 px-4 py-2 rounded-lg">
-            <span class="text-gray-400">Pinned:</span>
-            <span id="stat-pinned" class="text-yellow-400 font-bold ml-1">0</span>
-        </div>
-    </div>
-    <!-- View Mode Selector -->
-    <div class="mt-4 flex justify-center">
+
+        <!-- View Mode Selector -->
         <div class="view-mode-selector">
             <button id="view-list" class="active" title="List View">
                 <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -653,16 +646,14 @@
                 </svg>
                 Mindmap
             </button>
-            <button id="view-dual" title="Dual Pane View (synchronized)">
+            <button id="view-dual" title="Dual Pane View">
                 <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                         d="M9 17V7m0 10a2 2 0 01-2 2H5a2 2 0 01-2-2V7a2 2 0 012-2h2a2 2 0 012 2m0 10a2 2 0 002 2h2a2 2 0 002-2M9 7a2 2 0 012-2h2a2 2 0 012 2m0 10V7m0 10a2 2 0 002 2h2a2 2 0 002-2V7a2 2 0 00-2-2h-2a2 2 0 00-2 2" />
                 </svg>
                 Dual
             </button>
-            <!-- Divider -->
-            <span class="mindmap-only-control border-l border-gray-600 h-6 mx-2"></span>
-            <!-- Show/Hide Wildcards Toggle (icon-only) -->
+            <span class="mindmap-only-control border-l border-gray-600 h-5 mx-1"></span>
             <button id="mindmap-toggle-wildcards" class="mindmap-only-control" title="Toggle wildcard visibility">
                 <svg class="w-4 h-4 eye-open" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -676,32 +667,12 @@
                 </svg>
             </button>
         </div>
-    </div>
-    <!-- Primary Toolbar -->
-    <div class="mt-6 flex flex-wrap justify-center items-center gap-3">
-        <!-- Primary Actions -->
-        <button id="export-yaml" class="btn-toolbar btn-primary" title="Export all wildcards to a YAML file">
-            <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                    d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
-            </svg>
-            Export YAML
-        </button>
-        <button id="import-yaml" class="btn-toolbar btn-success" title="Import wildcards from a YAML file">
-            <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                    d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
-            </svg>
-            Import YAML
-        </button>
-        <button id="download-all-zip" class="btn-toolbar btn-primary" title="Download all wildcards as a ZIP archive">
-            📦 Download ZIP
-        </button>
-        <button id="dupe-finder-btn" class="btn-toolbar btn-warning"
-            title="Enter Duplicate Finder Mode - highlights and filters to show only duplicates">
+
+        <!-- Primary Actions (only Dupe Finder + Help visible) -->
+        <button id="dupe-finder-btn" class="btn-toolbar btn-warning" title="Enter Duplicate Finder Mode">
             🔍 Dupe Finder
         </button>
-        <button id="help-btn" class="btn-toolbar btn-accent" title="View keyboard shortcuts and usage help">
+        <button id="help-btn" class="btn-toolbar btn-accent" title="View keyboard shortcuts">
             ❓ Help
         </button>
 
@@ -714,7 +685,20 @@
                 </svg>
             </button>
             <div id="overflow-menu-dropdown"
-                class="hidden absolute right-0 mt-2 w-48 bg-gray-800 border border-gray-700 rounded-lg shadow-xl z-50">
+                class="hidden absolute right-0 mt-2 w-56 bg-gray-800 border border-gray-700 rounded-lg shadow-xl z-50">
+                <div class="dropdown-label text-xs text-gray-500 px-3 py-1 uppercase tracking-wider">Import & Export
+                </div>
+                <button id="export-yaml" class="dropdown-item" title="Export all wildcards to YAML">
+                    ⬇️ Export YAML
+                </button>
+                <button id="import-yaml" class="dropdown-item" title="Import wildcards from YAML">
+                    ⬆️ Import YAML
+                </button>
+                <button id="download-all-zip" class="dropdown-item" title="Download as ZIP archive">
+                    📦 Download ZIP
+                </button>
+                <div class="border-t border-gray-700 my-1"></div>
+                <div class="dropdown-label text-xs text-gray-500 px-3 py-1 uppercase tracking-wider">History</div>
                 <button id="undo-btn" class="dropdown-item" title="Undo last action (Ctrl+Z)">
                     ↩️ Undo <span class="text-gray-500 text-xs ml-auto">Ctrl+Z</span>
                 </button>
@@ -724,12 +708,11 @@
                 <div class="border-t border-gray-700 my-1"></div>
                 <div class="dropdown-label text-xs text-gray-500 px-3 py-1 uppercase tracking-wider">Data Management
                 </div>
-                <button id="reload-default-data" class="dropdown-item"
-                    title="Reload the default wildcard data without clearing settings">
+                <button id="reload-default-data" class="dropdown-item" title="Reload the default wildcard data">
                     🔄 Restore Default Wildcards
                 </button>
                 <button id="factory-reset" class="dropdown-item text-orange-400 hover:text-orange-300"
-                    title="Reset app to initial state (clears all wildcards and settings)">
+                    title="Reset app to initial state">
                     ⚠️ Factory Reset
                 </button>
             </div>

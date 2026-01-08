@@ -68,8 +68,11 @@ test.describe('UX Improvements', () => {
     await expect(chipContainer).not.toContainText('No items yet');
     await expect(chipContainer).toContainText('Test Item');
 
-    // Select the item and delete
-    await card.locator('.batch-select').check();
+    // Select the item by clicking the chip (not on the text span)
+    const chip = card.locator('.chip').first();
+    await expect(chip).toBeVisible();
+    // Click the chip div (triggers selection)
+    await chip.click({ position: { x: 5, y: 5 } });
     await card.locator('.batch-delete-btn').click();
 
     // Should show empty state again

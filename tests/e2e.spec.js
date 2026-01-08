@@ -38,7 +38,9 @@ test.describe('Wildcard Generator E2E Tests', () => {
             await expect(page.locator('#redo-btn')).toBeVisible();
         });
 
-        test('primary export/import buttons are visible', async ({ page }) => {
+        test('primary export/import buttons are in overflow menu', async ({ page }) => {
+            // Open overflow menu first
+            await page.locator('#overflow-menu-btn').click();
             await expect(page.locator('#export-yaml')).toBeVisible();
             await expect(page.locator('#import-yaml')).toBeVisible();
             await expect(page.locator('#download-all-zip')).toBeVisible();
@@ -431,6 +433,8 @@ test.describe('Wildcard Generator E2E Tests', () => {
     test.describe('Import/Export', () => {
 
         test('export YAML button triggers download', async ({ page }) => {
+            // Open overflow menu first
+            await page.locator('#overflow-menu-btn').click();
             const downloadPromise = page.waitForEvent('download');
             await page.locator('#export-yaml').click();
 
@@ -439,6 +443,8 @@ test.describe('Wildcard Generator E2E Tests', () => {
         });
 
         test('export ZIP button triggers download', async ({ page }) => {
+            // Open overflow menu first
+            await page.locator('#overflow-menu-btn').click();
             const downloadPromise = page.waitForEvent('download');
             await page.locator('#download-all-zip').click();
 
@@ -458,6 +464,8 @@ test.describe('Wildcard Generator E2E Tests', () => {
         });
 
         test('import YAML button is functional', async ({ page }) => {
+            // Open overflow menu first
+            await page.locator('#overflow-menu-btn').click();
             const importBtn = page.locator('#import-yaml');
             await expect(importBtn).toBeVisible();
             await expect(importBtn).toBeEnabled();
