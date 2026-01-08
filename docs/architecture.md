@@ -47,6 +47,7 @@ The application uses a **Deep Proxy** pattern to manage state. This allows for d
 
 - **Granular Updates**: The UI responds to specific property changes (e.g., updating a single wildcard chip) rather than re-rendering entire categories whenever possible.
 - **DOM Replacement**: For complex changes or top-level category updates, `ui.js` may replace the corresponding DOM element. Full re-renders (`renderAll`) are reserved for structural changes like pinning.
+- **Animations**: Uses a specific DOM structure (`.accordion-wrapper` > `.accordion-inner`) to enable smooth CSS Grid-based transitions (`grid-template-rows`) for category expansion and collapse.
 - **State Preservation**: To prevent the UI from resetting, `ui.js` preserves the `open` state of `<details>` elements.
 - **Lazy Loading**: Categories are rendered with their content initially hidden or empty until expanded, improving performance for large datasets.
 - **View Modes**: Supports **List**, **Mindmap**, and **Dual Pane** views. The Mindmap view renders the state using the Mind Elixir library and synchronizes structural changes (drag-and-drop, renaming) back to the core State via the `operation` event bus.

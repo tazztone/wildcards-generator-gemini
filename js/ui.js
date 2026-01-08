@@ -842,8 +842,6 @@ export const UI = {
         // Clear previous highlights before scanning
         this.clearSearchHighlights();
 
-        console.error(`[Search Debug] Query: "${normalizedQuery}"`);
-
         const scan = (el) => {
             let hasMatch = false;
 
@@ -881,7 +879,8 @@ export const UI = {
             //     3. Contains matching children
 
             if (el.tagName === 'DETAILS') {
-                const children = el.querySelectorAll(':scope > .content-wrapper > .category-item, :scope > .content-wrapper > .grid > .wildcard-card');
+                // Updated selectors to account for .accordion-wrapper
+                const children = el.querySelectorAll(':scope > .accordion-wrapper > .content-wrapper > .category-item, :scope > .accordion-wrapper > .content-wrapper > .grid > .wildcard-card');
                 let childMatched = false;
                 children.forEach(child => {
                     if (scan(child)) childMatched = true;
@@ -1170,24 +1169,41 @@ export const UI = {
 
     createCategoryElement(name, data, level, path, index = 0) {
         const element = document.createElement('details');
-        element.className = `card-folder rounded-lg shadow-md group level-${level} category-item`; // added category-item
+        element.className = `glass-panel glass-panel-hover rounded-lg mb-2 group level-${level} category-item accordion-details`; // Added glass classes and accordion-details
+
+        // Remove old level tints if using glassmorphism, or keep them as subtle borders/accents
         if (level === 0) {
             element.classList.add(`category-tint-${(index % 10) + 1}`);
         }
+
         element.dataset.path = path;
         element.draggable = true;
 
         element.innerHTML = this.getCategoryFolderHtml(name, data, path);
-        const contentWrapper = element.querySelector('.content-wrapper');
 
-        // Render children
+        // Render children into the new inner wrapper
         this.renderCategoryContent(element, data, path, level);
 
         return element;
     },
 
     renderCategoryContent(element, data, path, level) {
-        const contentWrapper = element.querySelector('.content-wrapper');
+        // Wrapper check - create if missing (for initial structure)
+        let contentWrapper = element.querySelector('.content-wrapper');
+
+        // IMPORTANT: Check if we already have the accordion structure
+        let accordionInner = element.querySelector('.accordion-inner');
+
+        if (!accordionInner) {
+            // Re-structure existing summary + content into accordion
+            // But here we are likely building from fresh HTML in createCategoryElement
+            // The getCategoryFolderHtml needs to provide the structure
+        } else {
+            contentWrapper = accordionInner; // Render into the inner div
+        }
+
+        if (!contentWrapper) return; // Should not happen if HTML is correct
+
         contentWrapper.innerHTML = '';
 
         let keys = Object.keys(data).filter(k => k !== 'instruction');
@@ -1283,7 +1299,10 @@ export const UI = {
                     <span class="arrow-down transition-transform duration-300 text-accent text-sm">▼</span>
                 </div>
             </summary>
-            <div class="content-wrapper p-1 border-t border-gray-700/50 flex flex-col gap-1"></div>
+            <!-- Accordion Wrapper for Animation -->
+            <div class="accordion-wrapper">
+                <div class="accordion-inner content-wrapper p-1 border-t border-gray-700/50 flex flex-col gap-1"></div>
+            </div>
         `;
     },
 

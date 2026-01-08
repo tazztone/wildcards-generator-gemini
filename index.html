@@ -88,6 +88,33 @@
                     Wildcards Generator</h1>
                 <p class="text-sm text-gray-400 font-medium">AI-Powered Prompt Expansion</p>
             </div>
+
+            <!-- Search Bar -->
+            <div class="relative w-full max-w-md mx-4 group">
+                <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                    <svg class="h-5 w-5 text-gray-500 group-focus-within:text-indigo-400 transition-colors" fill="none"
+                        viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                    </svg>
+                </div>
+                <input type="text" id="search-wildcards"
+                    class="block w-full pl-10 pr-10 py-2 border border-gray-700 rounded-full leading-5 bg-gray-900/50 text-gray-300 placeholder-gray-500 focus:outline-none focus:placeholder-gray-400 focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm transition-all shadow-sm focus:shadow-indigo-500/20 glass-panel"
+                    placeholder="Search wildcards..." aria-label="Search">
+                <div class="absolute inset-y-0 right-0 pr-3 flex items-center">
+                    <button id="search-clear-btn"
+                        class="hidden text-gray-500 hover:text-white focus:outline-none transition-colors"
+                        title="Clear search">
+                        <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                    </button>
+                    <span class="text-xs text-gray-600 ml-2 border-l border-gray-700 pl-2"
+                        id="search-results-count"></span>
+                </div>
+            </div>
+
             <div
                 class="flex items-center gap-3 bg-gray-800/40 backdrop-blur-md p-1.5 rounded-full border border-gray-700/50 shadow-lg">
                 <button id="theme-toggle" class="p-2 rounded-full hover:bg-white/10 text-gray-300 transition-colors"
@@ -608,26 +635,7 @@
 
         <!-- Row 1: Search & Stats -->
         <div class="flex flex-wrap items-center justify-center gap-3 w-full">
-            <!-- Search Bar -->
-            <div class="relative group flex-grow max-w-xs">
-                <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                    <svg class="h-4 w-4 text-gray-500 group-focus-within:text-indigo-400 transition-colors" fill="none"
-                        viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                            d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                    </svg>
-                </div>
-                <input type="text" id="search-bar"
-                    class="block w-full pl-10 pr-10 py-1.5 border border-gray-700 rounded-lg leading-5 bg-gray-800 text-gray-300 placeholder-gray-500 focus:outline-none focus:bg-gray-700 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 sm:text-sm transition-all shadow-sm"
-                    placeholder="Search wildcards..." autocomplete="off">
-                <button id="search-clear-btn"
-                    class="absolute inset-y-0 right-0 pr-3 flex items-center cursor-pointer text-gray-500 hover:text-gray-300 hidden">
-                    <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                            d="M6 18L18 6M6 6l12 12" />
-                    </svg>
-                </button>
-            </div>
+
 
             <!-- Stats -->
             <div
@@ -784,7 +792,7 @@
     <script src="js/main.js" type="module"></script>
 
     <template id="category-template">
-        <details class="bg-gray-800 rounded-lg shadow-md group">
+        <details class="glass-panel glass-panel-hover rounded-lg mb-2 group accordion-details">
             <summary class="flex justify-between items-center p-4 cursor-pointer gap-4">
                 <div class="flex items-center gap-3 flex-wrap flex-grow">
                     <h2 class="text-xl font-semibold text-indigo-400"><span contenteditable="true"

@@ -20,7 +20,17 @@ This document details the features of the Wildcard Generator application.
 
 ## Advanced Features
 
-### v2.19 Features (Latest)
+### v2.20 Features (Current)
+
+- **UI/UX Polish**:
+  - **Glassmorphism Aesthetic**: Modern, semi-transparent frosted-glass design for cards, inputs, and panels.
+  - **Smooth Animations**: Categories now expand and collapse with smooth sliding animations.
+  - **Interactive Hover Effects**: Enhanced hover states for better interactivity feedback.
+- **Search Restoration**:
+  - **Fixed Search Bar**: Restored missing search input to the toolbar.
+  - **Deep Search**: Improved search logic to correctly index content within the new animated DOM structure.
+
+### v2.19 Features
 
 - **Aggressive UI Compaction**:
   - **Compact Header**: Dual-row layout optimizes screen real estate with a dedicated row for Search/Stats and another for Controls.
