@@ -1127,7 +1127,7 @@ export const App = {
         UI.showToast('Generating suggestions...', 'info');
 
         try {
-            const { suggestions } = await Api.suggestItems(
+            const { suggestions, request } = await Api.suggestItems(
                 parentPath,
                 existingStructure,
                 State.state.suggestItemPrompt || Config.DEFAULT_SUGGEST_ITEM_PROMPT
@@ -1149,7 +1149,7 @@ export const App = {
                         </div>
                     </div>
 					
-					<div class="grid grid-cols-1 gap-1 max-h-[60vh] overflow-y-auto custom-scrollbar p-0.5">
+					<div class="grid grid-cols-1 gap-1 max-h-[50vh] overflow-y-auto custom-scrollbar p-0.5">
 						${suggestions.map((item, i) => {
                 const name = (typeof item === 'object' && item.name) ? item.name : String(item);
                 return `
@@ -1163,6 +1163,11 @@ export const App = {
 					<div class="flex justify-between items-center pt-2 border-t border-gray-700/50 mt-1">
 						<span class="text-xs text-gray-500">${suggestions.length} suggestions found</span>
 					</div>
+
+                    <details class="text-xs text-gray-500 mt-2 border-t border-gray-700/50 pt-2">
+                        <summary class="cursor-pointer hover:text-gray-300 select-none font-semibold">Raw Request Data</summary>
+                        <pre class="mt-2 p-2 bg-gray-900 rounded overflow-x-auto text-gray-400 font-mono text-[10px] w-full max-h-40 custom-scrollbar">${JSON.stringify(request, null, 2)}</pre>
+                    </details>
 				</div>
 			`;
 
@@ -1284,13 +1289,13 @@ export const App = {
                 const existingStructure = Object.keys(parent).filter(k => k !== 'instruction' && k !== 'wildcards');
 
                 try {
-                    const { suggestions } = await Api.suggestItems(
+                    const { suggestions, request } = await Api.suggestItems(
                         path,
                         existingStructure,
                         State.state.suggestItemPrompt || Config.DEFAULT_SUGGEST_ITEM_PROMPT
                     );
                     if (suggestions && suggestions.length > 0) {
-                        allResults.push({ path, name: cleanName, suggestions, parent });
+                        allResults.push({ path, name: cleanName, suggestions, parent, request });
                     }
                 } catch (e) {
                     console.error(`Failed to suggest for ${path}`, e);
@@ -1340,6 +1345,11 @@ export const App = {
 					<div class="flex justify-between items-center pt-2 border-t border-gray-700/50 mt-1">
 						<span class="text-xs text-gray-500">Total ${allResults.reduce((acc, r) => acc + r.suggestions.length, 0)} suggestions</span>
 					</div>
+
+                    <details class="text-xs text-gray-500 mt-2 border-t border-gray-700/50 pt-2">
+                        <summary class="cursor-pointer hover:text-gray-300 select-none font-semibold">Raw Request Data (Batch)</summary>
+                        <pre class="mt-2 p-2 bg-gray-900 rounded overflow-x-auto text-gray-400 font-mono text-[10px] w-full max-h-40 custom-scrollbar">${JSON.stringify(allResults.map(r => r.request), null, 2)}</pre>
+                    </details>
 				</div>
 			`;
 

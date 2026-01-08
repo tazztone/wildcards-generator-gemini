@@ -1229,7 +1229,7 @@ export const UI = {
 
     createWildcardCardElement(name, data, level, path) {
         const element = document.createElement('div');
-        element.className = `card-wildcard p-2 rounded-lg flex flex-col level-${level} wildcard-card`;
+        element.className = `card-wildcard p-2 rounded-lg flex flex-col level-${level} wildcard-card group`;
         element.dataset.path = path;
         element.draggable = true;
         element.innerHTML = this.getWildcardCardHtml(name, data, path);
@@ -1267,11 +1267,18 @@ export const UI = {
             <summary class="flex justify-between items-center p-2 cursor-pointer gap-2 group" title="${sanitize(tooltipText)}">
                 <div class="flex items-center gap-2 flex-grow min-w-0">
                     <input type="checkbox" aria-label="Select category" class="category-batch-checkbox w-3.5 h-3.5 text-indigo-600 bg-gray-700 border-gray-500 rounded focus:ring-indigo-500 flex-shrink-0" onclick="event.stopPropagation();">
-                    <h2 class="text-lg font-semibold text-accent select-none editable-wrapper truncate"><span class="editable-name category-name outline-none rounded px-0.5" tabindex="0">${name.replace(/_/g, ' ')}</span><span class="edit-icon">✏️</span></h2>
+                    <h2 class="text-lg font-semibold text-accent select-none editable-wrapper flex-shrink-0"><span class="editable-name category-name outline-none rounded px-0.5" tabindex="0">${name.replace(/_/g, ' ')}</span><span class="edit-icon">✏️</span></h2>
+                    <input type="text" 
+                        class="custom-instructions-input editable-input text-sm text-gray-500 bg-transparent border-0 outline-none ml-2 w-full min-w-[100px] focus:text-gray-300 focus:bg-gray-800/50 rounded px-1 transition-colors truncate hidden sm:block cursor-pointer read-only:cursor-pointer" 
+                        value="${sanitize(instruction)}" 
+                        placeholder="Add description..."
+                        readonly>
                 </div>
                 <div class="flex items-center gap-1 ml-auto flex-shrink-0">
-                    <button class="pin-btn header-icon-btn text-yellow-400" title="${isPinned ? 'Unpin' : 'Pin'}">${isPinned ? '📌' : '📍'}</button>
-                    <button class="delete-btn header-icon-btn text-red-400" title="Delete">🗑</button>
+                    <div class="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+                        <button class="pin-btn header-icon-btn text-yellow-400" title="${isPinned ? 'Unpin' : 'Pin'}">${isPinned ? '📌' : '📍'}</button>
+                        <button class="delete-btn header-icon-btn text-red-400" title="Delete">🗑</button>
+                    </div>
                     <span class="arrow-down transition-transform duration-300 text-accent text-sm">▼</span>
                 </div>
             </summary>
@@ -1288,10 +1295,15 @@ export const UI = {
             <!-- Compact Header: Title + Action Icons -->
             <div class="flex items-center gap-2 mb-1" title="${sanitize(tooltipText)}">
                 <input type="checkbox" aria-label="Select list" class="card-batch-checkbox w-3.5 h-3.5 text-indigo-600 bg-gray-700 border-gray-500 rounded focus:ring-indigo-500 flex-shrink-0" onclick="event.stopPropagation();">
-                <h3 class="font-bold text-sm text-gray-100 flex-grow editable-wrapper truncate"><span class="editable-name wildcard-name outline-none rounded px-0.5" tabindex="0">${name.replace(/_/g, ' ')}</span><span class="edit-icon">✏️</span></h3>
-                <span class="wildcard-count text-gray-500 text-xs">(${(data.wildcards || []).length})</span>
+                <h3 class="font-bold text-sm text-gray-100 editable-wrapper flex-shrink-0"><span class="editable-name wildcard-name outline-none rounded px-0.5" tabindex="0">${name.replace(/_/g, ' ')}</span><span class="edit-icon">✏️</span></h3>
+                <input type="text" 
+                    class="custom-instructions-input editable-input text-xs text-gray-500 bg-transparent border-0 outline-none w-full min-w-[50px] focus:text-gray-300 focus:bg-gray-800/50 rounded px-1 transition-colors truncate hidden sm:block cursor-pointer read-only:cursor-pointer" 
+                    value="${sanitize(instruction)}" 
+                    placeholder="Add desc..." 
+                    readonly>
+                <span class="wildcard-count text-gray-500 text-xs flex-shrink-0">(${(data.wildcards || []).length})</span>
                 <!-- Header Action Icons -->
-                <div class="flex items-center gap-0.5 ml-auto header-actions">
+                <div class="flex items-center gap-0.5 ml-auto header-actions opacity-0 group-hover:opacity-100 transition-opacity duration-200">
                     <button class="generate-btn header-icon-btn" title="${isTemplateCard ? 'Generate Templates' : 'Generate More'}">🎲<div class="loader hidden"></div></button>
                     <button class="copy-btn header-icon-btn hidden" title="Copy selected" data-original-title="Copy selected">📋</button>
                     <button class="batch-delete-btn header-icon-btn text-red-400 hidden" title="Delete Selected">🗑</button>
