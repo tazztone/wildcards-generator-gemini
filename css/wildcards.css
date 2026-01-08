@@ -1800,6 +1800,19 @@
             --bgcolor: #f3f4f6;
         }
 
+        /* Force 3x larger font sizes for mindmap nodes */
+        #mindmap-container me-tpc,
+        #dual-mindmap me-tpc,
+        .mindmap-view me-tpc {
+            font-size: 24px !important;
+        }
+
+        /* Even larger font for main category branches */
+        #mindmap-container me-main>me-wrapper>me-parent>me-tpc,
+        #dual-mindmap me-main>me-wrapper>me-parent>me-tpc {
+            font-size: 32px !important;
+        }
+
         /* Mind Elixir toolbar adjustments */
         .mindmap-view .mind-elixir-toolbar,
         #mindmap-container .mind-elixir-toolbar,

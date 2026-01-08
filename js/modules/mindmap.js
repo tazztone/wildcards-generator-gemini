@@ -89,19 +89,22 @@ const Mindmap = {
             const node = {
                 id: generateId(path),
                 topic: displayName,
-                tags: [],
                 children: [],
                 // Store original path for sync back
                 data: {
                     path: path.split('/'),
                     originalName: name,
                     wildcardCount: wildcardCount
+                },
+                // Set larger font size for category nodes (3x default)
+                style: {
+                    fontSize: '36'
                 }
             };
 
-            // Add instruction as a tag if present
+            // Add instruction as a tooltip (note) on hover instead of visible tag
             if (data.instruction && typeof data.instruction === 'string') {
-                node.tags.push(data.instruction.substring(0, 50) + (data.instruction.length > 50 ? '...' : ''));
+                node.note = data.instruction;
             }
 
             // Process wildcards array (leaf items) - only if showWildcards is true
@@ -118,7 +121,7 @@ const Mindmap = {
                         style: {
                             background: 'var(--chip-bg, #374151)',
                             color: 'var(--chip-text, #e5e7eb)',
-                            fontSize: '12'
+                            fontSize: '24'
                         }
                     });
                 });
@@ -176,9 +179,9 @@ const Mindmap = {
                         // Empty category
                         subcategories[child.topic] = {};
                     }
-                    // Check for instruction in tags
-                    if (child.tags && child.tags.length > 0) {
-                        subcategories[child.topic].instruction = child.tags[0];
+                    // Check for instruction in note (tooltip)
+                    if (child.note) {
+                        subcategories[child.topic].instruction = child.note;
                     }
                 }
             });
@@ -199,9 +202,9 @@ const Mindmap = {
         if (mindData.nodeData && mindData.nodeData.children) {
             mindData.nodeData.children.forEach(categoryNode => {
                 wildcards[categoryNode.topic] = buildWildcards(categoryNode);
-                // Add instruction if present
-                if (categoryNode.tags && categoryNode.tags.length > 0) {
-                    wildcards[categoryNode.topic].instruction = categoryNode.tags[0];
+                // Add instruction if present (stored in note)
+                if (categoryNode.note) {
+                    wildcards[categoryNode.topic].instruction = categoryNode.note;
                 }
             });
         }
@@ -271,6 +274,8 @@ const Mindmap = {
             locale: 'en',
             allowUndo: true,
             overflowHidden: false,
+            scaleMin: 0.2,
+            scaleMax: 2,
             mainLinkStyle: 2,
             contextMenu: {
                 focus: true,
@@ -308,10 +313,10 @@ const Mindmap = {
         // Add tooltips to toolbar icons
         this.addToolbarTooltips(container);
 
-        // Auto-center and zoom to fit (start slightly zoomed out for better overview)
+        // Auto-center and zoom to fit at minimum zoom for maximum overview
         setTimeout(() => {
             instance.toCenter();
-            instance.scale(0.4); // Zoom out more for better overview
+            instance.scale(0.2); // Start at minimum zoom for maximum overview
         }, 300);
 
         // Smart Context Menu Observer
