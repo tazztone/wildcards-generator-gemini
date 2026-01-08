@@ -100,7 +100,7 @@
         .level-4,
         .level-5 {
             margin-top: 0.5rem;
-            margin-left: 1rem;
+            margin-left: 0.25rem;
             border-left: 3px solid var(--border-primary);
             background-color: rgba(31, 41, 55, 0.95);
         }

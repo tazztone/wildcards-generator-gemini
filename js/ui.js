@@ -1283,7 +1283,7 @@ export const UI = {
                     <span class="arrow-down transition-transform duration-300 text-accent text-sm">▼</span>
                 </div>
             </summary>
-            <div class="content-wrapper p-2 border-t border-gray-700/50 flex flex-col gap-1"></div>
+            <div class="content-wrapper p-1 border-t border-gray-700/50 flex flex-col gap-1"></div>
         `;
     },
 
