@@ -51,7 +51,7 @@ export const UI = {
                 clearTimeout(searchTimeout);
                 searchTimeout = setTimeout(() => {
                     this.handleSearch(val);
-                }, 300);
+                }, 700);
             });
         }
         if (this.elements.searchClearBtn) {
