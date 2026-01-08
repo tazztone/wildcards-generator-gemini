@@ -38,8 +38,9 @@ test.describe('Template Architect', () => {
         await expect(templateCard).toBeVisible();
 
         // Check button text
-        const generateBtn = templateCard.locator('.generate-btn .btn-text');
-        await expect(generateBtn).toHaveText('Generate Templates');
+        // Check button title as text is now an emoji
+        const generateBtn = templateCard.locator('.generate-btn');
+        await expect(generateBtn).toHaveAttribute('title', 'Generate Templates');
     });
 
     test('Regular categories show "Generate More" button', async ({ page }) => {
@@ -59,8 +60,8 @@ test.describe('Template Architect', () => {
         const wildcardCard = firstCategory.locator('.wildcard-card').first();
 
         if (await wildcardCard.count() > 0) {
-            const generateBtn = wildcardCard.locator('.generate-btn .btn-text');
-            await expect(generateBtn).toHaveText('Generate More');
+            const generateBtn = wildcardCard.locator('.generate-btn');
+            await expect(generateBtn).toHaveAttribute('title', 'Generate More');
         }
     });
 

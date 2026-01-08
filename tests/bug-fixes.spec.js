@@ -184,6 +184,8 @@ test.describe('Bug Fix Tests', () => {
 
     test.describe('Import YAML', () => {
         test('import button is visible and clickable', async ({ page }) => {
+            const overflowBtn = page.locator('#overflow-menu-btn');
+            await overflowBtn.click();
             const importBtn = page.locator('#import-yaml');
             await expect(importBtn).toBeVisible();
             // Can't test file picker in automation, just verify button exists

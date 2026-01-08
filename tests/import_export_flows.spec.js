@@ -17,6 +17,7 @@ test.describe('Import/Export Flows', () => {
             await expect(page.locator('details[data-path="ExistingCategory"]')).toBeVisible();
 
             // Import would require file input - verify button exists
+            await page.locator('#overflow-menu-btn').click();
             const importBtn = page.locator('#import-yaml');
             await expect(importBtn).toBeVisible();
 
@@ -102,6 +103,7 @@ test.describe('Import/Export Flows', () => {
 
             // Export and verify
             const downloadPromise = page.waitForEvent('download');
+            await page.locator('#overflow-menu-btn').click();
             await page.locator('#export-yaml').click();
             const download = await downloadPromise;
 
@@ -116,6 +118,7 @@ test.describe('Import/Export Flows', () => {
         test('exported YAML uses comment-based instructions, not property-based', async ({ page }) => {
             // Export the default data which has instructions
             const downloadPromise = page.waitForEvent('download');
+            await page.locator('#overflow-menu-btn').click();
             await page.locator('#export-yaml').click();
             const download = await downloadPromise;
 
@@ -135,6 +138,7 @@ test.describe('Import/Export Flows', () => {
 
         test('exported YAML has flat structure without wildcards wrapper', async ({ page }) => {
             const downloadPromise = page.waitForEvent('download');
+            await page.locator('#overflow-menu-btn').click();
             await page.locator('#export-yaml').click();
             const download = await downloadPromise;
 
@@ -152,6 +156,7 @@ test.describe('Import/Export Flows', () => {
 
         test('exported YAML wildcards are direct array items, not nested under wildcards key', async ({ page }) => {
             const downloadPromise = page.waitForEvent('download');
+            await page.locator('#overflow-menu-btn').click();
             await page.locator('#export-yaml').click();
             const download = await downloadPromise;
 
@@ -186,6 +191,7 @@ test.describe('Import/Export Flows', () => {
 
             // Export ZIP
             const downloadPromise = page.waitForEvent('download');
+            await page.locator('#overflow-menu-btn').click();
             await page.locator('#download-all-zip').click();
             const download = await downloadPromise;
 

@@ -74,7 +74,12 @@ test.describe('UX Improvements', () => {
     await expect(chip).toBeVisible();
     // Click the chip div (triggers selection)
     await chip.click({ position: { x: 5, y: 5 } });
-    await card.locator('.batch-delete-btn').click();
+    await expect(chip).toHaveClass(/selected/);
+
+    // Wait for the button to become enabled/visible after selection
+    const deleteBtn = card.locator('.batch-delete-btn');
+    await expect(deleteBtn).not.toHaveClass(/hidden/);
+    await deleteBtn.click();
 
     // Should show empty state again
     await expect(chipContainer).toContainText('No items yet');
@@ -92,8 +97,18 @@ test.describe('UX Improvements', () => {
     await input.fill('Item 1');
     await card.locator('.add-wildcard-btn').click();
 
+    // Select the item first to reveal the copy button
+    const chip = card.locator('.chip').first();
+    await chip.click({ position: { x: 5, y: 5 } });
+
+    // Verify selection with .selected class
+    await expect(chip).toHaveClass(/selected/);
+
+    await expect(copyBtn).not.toHaveClass(/hidden/);
+
     // Click copy
-    await copyBtn.click();
+    // Force click because glassmorphism hover might be flaky in headless
+    await copyBtn.click({ force: true });
 
     // Check for success state
     // We expect the button to change style or title

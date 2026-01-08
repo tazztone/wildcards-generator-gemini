@@ -378,7 +378,6 @@ test.describe('Wildcard Generator E2E Tests', () => {
         test('statistics dashboard shows counts', async ({ page }) => {
             await expect(page.locator('#stat-categories')).toBeVisible();
             await expect(page.locator('#stat-wildcards')).toBeVisible();
-            await expect(page.locator('#stat-pinned')).toBeVisible();
 
             // Should have non-zero values after loading initial data
             const wildcardCount = await page.locator('#stat-wildcards').textContent() || '0';

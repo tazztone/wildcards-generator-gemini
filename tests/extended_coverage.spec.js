@@ -83,11 +83,19 @@ test.describe('Extended Coverage Tests', () => {
             // Playwright dragTo targetPosition option can help?
             // Default is center.
 
-            await child.dragTo(dest, {
-                sourcePosition: { x: 10, y: 10 },
-                targetPosition: { x: 50, y: 30 } // Relative pixels? No, it's relative to element.
-                // We assume element has some height.
-            });
+            // Perform Drag and Drop using mouse events for better reliability
+            const sourceBox = await child.boundingBox();
+            const destBox = await dest.boundingBox(); // Drag to dest folder
+
+            if (sourceBox && destBox) {
+                await page.mouse.move(sourceBox.x + 10, sourceBox.y + 10);
+                await page.mouse.down();
+                // Drag to center of destination
+                await page.mouse.move(destBox.x + destBox.width / 2, destBox.y + destBox.height / 2, { steps: 5 });
+                await page.mouse.up();
+            } else {
+                throw new Error("Could not find bounding box for drag source or dest");
+            }
 
             // Wait for logic
             await page.waitForTimeout(1000);
@@ -121,6 +129,7 @@ test.describe('Extended Coverage Tests', () => {
             await page.locator('#confirm-btn').click();
 
             const downloadPromise = page.waitForEvent('download');
+            await page.locator('#overflow-menu-btn').click();
             await page.locator('#export-yaml').click();
             const download = await downloadPromise;
 

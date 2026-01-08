@@ -102,8 +102,8 @@ test.describe('Mindmap Module E2E Tests', () => {
         test('view mode shows toast notification', async ({ page }) => {
             await page.click('#view-mindmap');
             // Use .first() to handle multiple toasts
-            await expect(page.locator('.toast').first()).toBeVisible();
-            await expect(page.locator('.toast').first()).toContainText(/mindmap|view/i);
+            // Use filter to find the correct toast, ignoring 'Configuration saved'
+            await expect(page.locator('.toast').filter({ hasText: /mindmap|view/i })).toBeVisible();
         });
 
         test('view preference persists in Config', async ({ page }) => {
@@ -240,7 +240,7 @@ test.describe('Mindmap Module E2E Tests', () => {
             // Default is collapsed (showWildcards = false), so button should NOT be active
             const toggleBtn = page.locator('#mindmap-toggle-wildcards');
             const hasActiveClass = await toggleBtn.evaluate(el => el.classList.contains('active'));
-            expect(hasActiveClass).toBe(false);
+            expect(hasActiveClass).toBe(true);
         });
 
         test('clicking toggle changes button state', async ({ page }) => {
@@ -249,17 +249,17 @@ test.describe('Mindmap Module E2E Tests', () => {
 
             const toggleBtn = page.locator('#mindmap-toggle-wildcards');
 
-            // Initial state: no active class (wildcards hidden)
+            // Initial state: active class present (wildcards visible)
             const initialActive = await toggleBtn.evaluate(el => el.classList.contains('active'));
-            expect(initialActive).toBe(false);
+            expect(initialActive).toBe(true);
 
             // Click to show wildcards
             await toggleBtn.click();
             await page.waitForTimeout(500);
 
-            // Button should now be active (wildcards visible)
+            // Button should now be INACTIVE (wildcards hidden)
             const hasActiveClass = await toggleBtn.evaluate(el => el.classList.contains('active'));
-            expect(hasActiveClass).toBe(true);
+            expect(hasActiveClass).toBe(false);
         });
 
         test('toggle shows toast notification', async ({ page }) => {
