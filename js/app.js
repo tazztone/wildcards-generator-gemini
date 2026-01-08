@@ -945,7 +945,7 @@ export const App = {
         }
     },
 
-    handleContainerKeydown(e) {
+    async handleContainerKeydown(e) {
         if (e.key === 'Enter') {
             // Rapid Entry for Wildcard Items
             if (e.target.classList.contains('add-wildcard-input')) {
@@ -984,6 +984,62 @@ export const App = {
             } else if (e.target.tagName === 'INPUT' && !e.target.readOnly && e.target.classList.contains('editable-input')) {
                 e.target.readOnly = true;
                 e.target.blur();
+            }
+        }
+
+        // Delete key for selected chips
+        if (e.key === 'Delete') {
+            // Only proceed if not editing text (input or contenteditable)
+            if (e.target.isContentEditable || (e.target.tagName === 'INPUT' && !e.target.readOnly)) {
+                return;
+            }
+
+            const selectedChips = document.querySelectorAll('.chip.selected');
+            if (selectedChips.length > 0) {
+                e.preventDefault();
+                const confirmed = await UI.showConfirmDialog(
+                    'Delete Items',
+                    `Are you sure you want to delete ${selectedChips.length} selected item(s)?`,
+                    {
+                        confirmText: 'Delete',
+                        cancelText: 'Cancel',
+                        danger: true,
+                        rememberKey: 'wildcards_confirm_delete_chips'
+                    }
+                );
+
+                if (confirmed) {
+                    State.saveStateToHistory();
+
+                    // Group deletions by path to minimize re-renders
+                    const deletions = {};
+
+                    selectedChips.forEach(chip => {
+                        const card = chip.closest('.card-wildcard');
+                        if (!card) return;
+                        const path = card.dataset.path;
+                        const index = parseInt(chip.dataset.index);
+
+                        if (!deletions[path]) deletions[path] = [];
+                        deletions[path].push(index);
+                    });
+
+                    // Perform deletions
+                    Object.keys(deletions).forEach(path => {
+                        const indices = deletions[path].sort((a, b) => b - a); // Delete highest index first
+                        const obj = State.getObjectByPath(path);
+                        if (obj && Array.isArray(obj.wildcards)) {
+                            indices.forEach(idx => obj.wildcards.splice(idx, 1));
+                            // Trigger update - assigning to array directly or via proxy handler would be best
+                            // Since we modified array in place, we might need to trigger generic update or depend on proxy
+                            // Assuming proxy handles splice, but we need to trigger the set trap logic for UI update.
+                            // Re-assigning the array is the safest way to trigger the full update for that path.
+                            obj.wildcards = [...obj.wildcards];
+                        }
+                    });
+
+                    UI.showToast(`Deleted ${selectedChips.length} items`);
+                }
             }
         }
     },

@@ -1593,6 +1593,68 @@ export const UI = {
         setTimeout(() => toast.remove(), 3000);
     },
 
+    showConfirmDialog(title, message, options = {}) {
+        return new Promise((resolve) => {
+            const { confirmText = 'Confirm', cancelText = 'Cancel', danger = false, rememberKey = null } = options;
+
+            // Check for remembered choice (only if 'rememberKey' is provided)
+            if (rememberKey && localStorage.getItem(rememberKey) === 'true') {
+                resolve(true);
+                return;
+            }
+
+            const dialog = document.createElement('dialog');
+            dialog.className = 'confirm-dialog bg-gray-800 rounded-lg p-0 shadow-xl border border-gray-700 max-w-sm w-full backdrop:bg-black/50 backdrop:backdrop-blur-sm';
+
+            dialog.innerHTML = `
+                <div class="p-4 border-b border-gray-700/50">
+                    <h3 class="text-lg font-bold text-gray-100">${title}</h3>
+                </div>
+                <div class="p-4 text-gray-300 text-sm">
+                    <p>${message}</p>
+                    ${rememberKey ? `
+                    <label class="flex items-center gap-2 mt-4 cursor-pointer text-gray-400 hover:text-gray-300 select-none">
+                        <input type="checkbox" id="confirm-remember-choice" class="w-3.5 h-3.5 bg-gray-700 border-gray-600 rounded text-indigo-500 focus:ring-indigo-500">
+                        <span>Don't ask again</span>
+                    </label>
+                    ` : ''}
+                </div>
+                <div class="p-3 bg-gray-900/50 flex justify-end gap-2 rounded-b-lg">
+                    <button class="px-3 py-1.5 rounded text-sm text-gray-400 hover:text-white hover:bg-gray-700 transition-colors" id="btn-cancel">${cancelText}</button>
+                    <button class="px-3 py-1.5 rounded text-sm font-medium text-white ${danger ? 'bg-red-600 hover:bg-red-700' : 'bg-indigo-600 hover:bg-indigo-700'} transition-colors" id="btn-confirm">${confirmText}</button>
+                </div>
+            `;
+
+            document.body.appendChild(dialog);
+            dialog.showModal();
+
+            const handleClose = (result) => {
+                if (rememberKey) {
+                    const remember = dialog.querySelector('#confirm-remember-choice')?.checked;
+                    // Only save if action was confirmed and "don't ask again" was checked
+                    if (result && remember) {
+                        localStorage.setItem(rememberKey, 'true');
+                    }
+                }
+
+                dialog.close();
+                dialog.remove();
+                resolve(result);
+            };
+
+            const cancelBtn = dialog.querySelector('#btn-cancel');
+            const confirmBtn = dialog.querySelector('#btn-confirm');
+
+            cancelBtn.addEventListener('click', () => handleClose(false));
+            confirmBtn.addEventListener('click', () => handleClose(true));
+
+            dialog.addEventListener('cancel', () => handleClose(false)); // Handle Escape key
+
+            // Focus confirm button by default for quick action
+            confirmBtn.focus();
+        });
+    },
+
     populateModelList(provider, models) {
         if (provider !== 'openrouter') return; // Currently only robustly supporting OpenRouter
 

@@ -750,6 +750,19 @@
             height: 16px;
         }
 
+        /* Confirm Dialog */
+        dialog.confirm-dialog {
+            margin: auto;
+            position: fixed;
+            inset: 0;
+            z-index: 9999;
+        }
+
+        dialog.confirm-dialog::backdrop {
+            background: rgba(0, 0, 0, 0.5);
+            backdrop-filter: blur(2px);
+        }
+
         /* Dupe Finder Floating Bar */
         .dupe-finder-bar {
             position: fixed;
