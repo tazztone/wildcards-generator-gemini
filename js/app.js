@@ -500,6 +500,9 @@ export const App = {
             return;
         }
         // Arrow key navigation
+        // Arrow key navigation - Ignore if inside input/textarea unless it's Escape
+        if (target.matches('input, textarea') && e.key !== 'Escape') return;
+
         if (['ArrowUp', 'ArrowDown', 'Enter', 'Escape'].includes(e.key)) {
             const container = document.getElementById('wildcard-container');
             const categories = Array.from(container.querySelectorAll(':scope > details'));
