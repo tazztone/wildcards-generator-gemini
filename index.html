@@ -166,6 +166,21 @@
                         </div>
                         <textarea id="suggestion-prompt" class="input-primary custom-scrollbar" rows="4"></textarea>
                     </div>
+
+                    <div class="prompt-field-wrapper">
+                        <div class="flex justify-between items-center mb-2">
+                            <label for="template-prompt" class="text-lg font-semibold text-indigo-300">Template
+                                System Prompt</label>
+                            <div class="flex items-center gap-2">
+                                <span
+                                    class="prompt-status-badge badge-default text-xs px-2 py-0.5 rounded-full">Default</span>
+                                <button type="button"
+                                    class="reset-prompt-btn hidden text-xs text-gray-400 hover:text-white underline"
+                                    onclick="UI.handleResetPrompt('template')">Reset</button>
+                            </div>
+                        </div>
+                        <textarea id="template-prompt" class="input-primary custom-scrollbar" rows="4"></textarea>
+                    </div>
                     <!-- API Provider Selection -->
                     <div class="bg-gray-800 p-4 rounded-lg border border-gray-700">
                         <label for="api-endpoint" class="block text-lg font-semibold text-indigo-300 mb-2">Active API

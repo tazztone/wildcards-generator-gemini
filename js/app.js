@@ -985,7 +985,9 @@ export const App = {
 
         try {
             const pathMap = State.buildPathMap(selectedPaths);
-            const templatePrompt = State.state.templatePrompt || Config.DEFAULT_TEMPLATE_PROMPT;
+            // Dynamic import to avoid circular dependency issues if Config imports App
+            const { getEffectivePrompt } = await import('./config.js');
+            const templatePrompt = getEffectivePrompt('template');
             const instructions = obj.instruction || 'Generate creative scene templates combining the selected categories';
 
             const templates = await Api.generateTemplates(pathMap, instructions, templatePrompt);

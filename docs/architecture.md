@@ -16,8 +16,8 @@ The application logic is modularized in the `js/` directory:
 | **Logic** | `app.js` | The "controller" of the MVC pattern. Handles initialization, event delegation, and coordinates interactions between State, UI, and API. |
 | **State** | `state.js` | Manages the application data using a deep Proxy pattern. It automatically persists state to localStorage, tracks history, and triggers granular UI updates via `deepDiff`. |
 | **UI** | `ui.js` | Handles DOM manipulation and rendering. It receives data from the State module and renders the hierarchical category/wildcard structure. |
-| **API** | `api.js` | Manages communication with LLM providers (OpenRouter, Gemini, Custom). Handles streaming responses and error parsing. |
-| **Config** | `config.js` | Manages configuration settings (history limit, debounce delays, etc.) and provides default values. |
+| **API** | `api.js` | Manages communication with LLM providers (OpenRouter, Gemini, Custom). Handles streaming responses, error parsing, and manages prompts for Wildcard, Suggestion, and Template generation. |
+| **Config** | `config.js` | Manages configuration settings. Loads static defaults from `config/config.json` and handles user overrides (persisted to localStorage) for System, Suggestion, and Template prompts. |
 | **Utils** | `utils.js` | Contains helper functions for debouncing, sanitizing strings, and other utility tasks. |
 
 ### Feature Modules (`js/modules/`)

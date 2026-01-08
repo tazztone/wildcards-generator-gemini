@@ -164,6 +164,10 @@ export const UI = {
             setCustomPrompt('suggest', /** @type {HTMLTextAreaElement} */(e.target).value);
             this.updatePromptStatusBadge('suggestion-prompt', 'CUSTOM_SUGGEST_PROMPT');
         });
+        document.getElementById('template-prompt')?.addEventListener('input', (e) => {
+            setCustomPrompt('template', /** @type {HTMLTextAreaElement} */(e.target).value);
+            this.updatePromptStatusBadge('template-prompt', 'CUSTOM_TEMPLATE_PROMPT');
+        });
 
         // API endpoint change handler - persist selection
         document.getElementById('api-endpoint')?.addEventListener('change', (e) => {
@@ -197,7 +201,10 @@ export const UI = {
         const globalPrompt = document.getElementById('global-prompt');
         /** @type {HTMLTextAreaElement|null} */
         // @ts-ignore
-        const suggestionPrompt = document.getElementById('suggestion-prompt');
+        const suggestionPrompt = /** @type {HTMLTextAreaElement} */ (document.getElementById('suggestion-prompt'));
+        /** @type {HTMLTextAreaElement|null} */
+        // @ts-ignore
+        const templatePrompt = document.getElementById('template-prompt');
         /** @type {HTMLSelectElement|null} */
         // @ts-ignore
         const apiEndpoint = document.getElementById('api-endpoint');
@@ -209,6 +216,10 @@ export const UI = {
         if (suggestionPrompt) {
             suggestionPrompt.value = getEffectivePrompt('suggest');
             this.updatePromptStatusBadge('suggestion-prompt', 'CUSTOM_SUGGEST_PROMPT');
+        }
+        if (templatePrompt) {
+            templatePrompt.value = getEffectivePrompt('template');
+            this.updatePromptStatusBadge('template-prompt', 'CUSTOM_TEMPLATE_PROMPT');
         }
         if (apiEndpoint) {
             apiEndpoint.value = Config.API_ENDPOINT || 'openrouter';
@@ -416,6 +427,13 @@ export const UI = {
                 const suggestionPrompt = document.getElementById('suggestion-prompt');
                 // @ts-ignore
                 if (suggestionPrompt) suggestionPrompt.value = value || '';
+                continue;
+            }
+
+            if (path[0] === 'templatePrompt') {
+                const templatePrompt = document.getElementById('template-prompt');
+                // @ts-ignore
+                if (templatePrompt) templatePrompt.value = value || '';
                 continue;
             }
 

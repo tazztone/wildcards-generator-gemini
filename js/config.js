@@ -19,6 +19,7 @@ export async function loadConfig() {
             API_ENDPOINT: "openrouter",
             CUSTOM_SYSTEM_PROMPT: null,  // null = use default from config.json
             CUSTOM_SUGGEST_PROMPT: null,  // null = use default from config.json
+            CUSTOM_TEMPLATE_PROMPT: null, // null = use default from config.json
             // View Mode Preference
             PREFERRED_VIEW: 'list',  // 'list', 'mindmap', or 'dual'
             // Advanced Model Defaults
@@ -78,6 +79,7 @@ export async function saveConfig() {
             API_ENDPOINT: "openrouter",
             CUSTOM_SYSTEM_PROMPT: null,
             CUSTOM_SUGGEST_PROMPT: null,
+            CUSTOM_TEMPLATE_PROMPT: null,
             PREFERRED_VIEW: 'list',
             MODEL_TEMPERATURE: 0.7,
             MODEL_MAX_TOKENS: 1000,
@@ -108,7 +110,7 @@ export async function saveConfig() {
                     }
                 }
                 // If it's a user setting loaded from storage (not in static defaults but valid config)
-                else if (['API_URL_CUSTOM', 'MODEL_NAME_GEMINI', 'MODEL_NAME_OPENROUTER', 'MODEL_NAME_CUSTOM', 'API_ENDPOINT', 'CUSTOM_SYSTEM_PROMPT', 'CUSTOM_SUGGEST_PROMPT', 'PREFERRED_VIEW',
+                else if (['API_URL_CUSTOM', 'MODEL_NAME_GEMINI', 'MODEL_NAME_OPENROUTER', 'MODEL_NAME_CUSTOM', 'API_ENDPOINT', 'CUSTOM_SYSTEM_PROMPT', 'CUSTOM_SUGGEST_PROMPT', 'CUSTOM_TEMPLATE_PROMPT', 'PREFERRED_VIEW',
                     'MODEL_TEMPERATURE', 'MODEL_MAX_TOKENS', 'MODEL_TOP_P', 'MODEL_TOP_K', 'MODEL_FREQUENCY_PENALTY', 'MODEL_PRESENCE_PENALTY', 'MODEL_REPETITION_PENALTY', 'MODEL_MIN_P', 'MODEL_TOP_A', 'MODEL_SEED',
                     'MODEL_REASONING_EFFORT', 'MODEL_REASONING_MAX_TOKENS'
                 ].includes(key)) {
@@ -163,6 +165,9 @@ export function isUsingDefault(key) {
     if (key === 'CUSTOM_SUGGEST_PROMPT') {
         return Config.CUSTOM_SUGGEST_PROMPT === null;
     }
+    if (key === 'CUSTOM_TEMPLATE_PROMPT') {
+        return Config.CUSTOM_TEMPLATE_PROMPT === null;
+    }
     if (key === 'API_ENDPOINT') {
         return Config.API_ENDPOINT === 'openrouter';
     }
@@ -179,6 +184,9 @@ export function resetToDefault(key) {
         saveConfig();
     } else if (key === 'CUSTOM_SUGGEST_PROMPT') {
         Config.CUSTOM_SUGGEST_PROMPT = null;
+        saveConfig();
+    } else if (key === 'CUSTOM_TEMPLATE_PROMPT') {
+        Config.CUSTOM_TEMPLATE_PROMPT = null;
         saveConfig();
     } else if (key === 'API_ENDPOINT') {
         Config.API_ENDPOINT = 'openrouter';
@@ -202,6 +210,11 @@ export function getEffectivePrompt(key) {
             ? Config.CUSTOM_SUGGEST_PROMPT
             : Config.DEFAULT_SUGGEST_ITEM_PROMPT;
     }
+    if (key === 'template') {
+        return Config.CUSTOM_TEMPLATE_PROMPT !== null
+            ? Config.CUSTOM_TEMPLATE_PROMPT
+            : Config.DEFAULT_TEMPLATE_PROMPT;
+    }
     return '';
 }
 
@@ -223,6 +236,12 @@ export function setCustomPrompt(key, value) {
             Config.CUSTOM_SUGGEST_PROMPT = null;
         } else {
             Config.CUSTOM_SUGGEST_PROMPT = value;
+        }
+    } else if (key === 'template') {
+        if (value === Config.DEFAULT_TEMPLATE_PROMPT) {
+            Config.CUSTOM_TEMPLATE_PROMPT = null;
+        } else {
+            Config.CUSTOM_TEMPLATE_PROMPT = value;
         }
     }
     saveConfig();
