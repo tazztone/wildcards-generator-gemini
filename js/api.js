@@ -160,10 +160,11 @@ export const Api = {
 
     async generateWildcards(globalPrompt, categoryPath, existingWords, customInstructions, systemPrompt) {
         const readablePath = categoryPath.replace(/\//g, ' > ').replace(/_/g, ' ');
+        const sysPrompt = globalPrompt.replace('{category}', readablePath);
         const userPrompt = `Category Path: '${readablePath}'\nExisting Wildcards: ${existingWords.slice(0, 50).join(', ')}\nCustom Instructions: "${customInstructions.trim()}"`;
         const generationConfig = { responseMimeType: "application/json", responseSchema: { type: "ARRAY", items: { type: "STRING" } } };
 
-        const { result } = await this._makeRequest(globalPrompt, userPrompt, generationConfig);
+        const { result } = await this._makeRequest(sysPrompt, userPrompt, generationConfig);
         return this._parseResponse(result);
     },
 
@@ -585,9 +586,8 @@ export const Api = {
         }
 
         // Use the actual system prompt from the app's config
-        const systemPrompt = Config.DEFAULT_SYSTEM_PROMPT;
-        // Format the test exactly like the app does for wildcard generation
         const readablePath = testCategoryPath.replace(/\//g, ' > ').replace(/_/g, ' ');
+        const systemPrompt = Config.DEFAULT_SYSTEM_PROMPT.replace('{category}', readablePath);
         const userPrompt = `Category Path: '${readablePath}'\nExisting Wildcards: ${testExistingItems.slice(0, 20).join(', ')}\nCustom Instructions: "${testInstruction}"`;
 
         try {
