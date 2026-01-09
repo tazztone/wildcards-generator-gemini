@@ -1300,7 +1300,12 @@ export const UI = {
                     window.Api?.testConnection(p.id, null, Config[`API_KEY_${p.id.toUpperCase()}`]).then(models => {
                         this.populateModelList(p.id, models);
                         btn.classList.remove('animate-spin');
-                    }).catch(() => btn.classList.remove('animate-spin'));
+                        this.showToast(`Fetched ${models?.length || 0} models`, 'success');
+                    }).catch((err) => {
+                        btn.classList.remove('animate-spin');
+                        this.showToast(`Failed to fetch models: ${err.message}`, 'error');
+                        console.error('Refresh models error:', err);
+                    });
                 });
             }
 
@@ -1312,6 +1317,9 @@ export const UI = {
 
             const testModelBtn = clone.querySelector('.test-model-btn');
             if (testModelBtn) testModelBtn.dataset.provider = p.id;
+
+            const benchmarkBtn = clone.querySelector('.benchmark-btn');
+            if (benchmarkBtn) benchmarkBtn.dataset.provider = p.id;
 
             const loadingInd = clone.querySelector('.loading-indicator');
             loadingInd.id = p.loadingId || `loading-${p.id}`;

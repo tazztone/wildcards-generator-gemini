@@ -273,11 +273,8 @@ export const Api = {
             batches.push(duplicates.slice(i, i + batchSize));
         }
 
-        const systemPrompt = `You are an expert at organizing data. For each duplicate wildcard, determine which category path is the BEST semantic fit based on the category names. Choose the category that most naturally represents the wildcard's meaning.
-
-Return a JSON array with your decisions. For each item, include:
-- "wildcard": the normalized wildcard text
-- "keep_path": the full path to the category that should keep this wildcard`;
+        // Use configurable prompt (allows user customization in future)
+        const systemPrompt = Config.DEFAULT_DEDUPLICATE_PROMPT;
 
         const generationConfig = {
             responseMimeType: "application/json",
@@ -893,5 +890,382 @@ Return a JSON array with your decisions. For each item, include:
             strict: true, // LMStudio requires strict: true (as string "true" or boolean? Docs say "true", OpenAI says boolean true. Let's try boolean.)
             schema: finalSchema
         };
+    },
+
+    // ========== BENCHMARK TEST METHODS ==========
+
+    /**
+     * Test the Suggestions feature (suggestItems).
+     * Uses real data and the configured suggestion prompt.
+     */
+    async testSuggestions(provider, apiKey, modelName) {
+        const startTime = performance.now();
+
+        // Use the configured suggestion prompt
+        const basePrompt = Config.DEFAULT_SUGGEST_ITEM_PROMPT ||
+            "You are an expert creative assistant. Your task is to suggest new sub-category names.";
+        const parentPath = 'CREATURES_and_BEINGS';
+        const globalPrompt = basePrompt.replace('{parentPath}', parentPath);
+
+        // Mock sibling structure for context
+        const siblingStructure = {
+            'Mythical_Fantasy': { instruction: 'Dragons, unicorns, and fantasy creatures' },
+            'Animals': { instruction: 'Real-world animals' }
+        };
+
+        const userPrompt = `For context, here are the existing sibling items at the same level:\n${JSON.stringify(siblingStructure, null, 2)}\n\nPlease provide new suggestions for the '${parentPath}' category.`;
+
+        const generationConfig = {
+            responseMimeType: "application/json",
+            responseSchema: {
+                type: "ARRAY",
+                items: {
+                    type: "OBJECT",
+                    properties: {
+                        name: { type: "STRING" },
+                        instruction: { type: "STRING" }
+                    },
+                    required: ["name", "instruction"]
+                }
+            }
+        };
+
+        try {
+            const { result, request } = await this._makeTestRequest(provider, apiKey, modelName, globalPrompt, userPrompt, generationConfig);
+            const duration = Math.round(performance.now() - startTime);
+
+            const parsed = this._parseTestResponse(provider, result);
+            const isValidArray = Array.isArray(parsed) && parsed.length > 0;
+            const hasCorrectShape = isValidArray && parsed[0]?.name && parsed[0]?.instruction;
+
+            return {
+                success: true,
+                stats: {
+                    responseTime: duration,
+                    supportsJson: isValidArray,
+                    validSchema: hasCorrectShape,
+                    parsedCount: isValidArray ? parsed.length : 0,
+                    parsedContent: parsed,
+                    rawResponse: this._extractRawContent(result, provider),
+                    request
+                }
+            };
+        } catch (error) {
+            return {
+                success: false,
+                error: error.message,
+                stats: { responseTime: Math.round(performance.now() - startTime) }
+            };
+        }
+    },
+
+    /**
+     * Test the Template generation feature.
+     * Uses real data and the configured template prompt.
+     */
+    async testTemplates(provider, apiKey, modelName) {
+        const startTime = performance.now();
+
+        const templatePrompt = Config.DEFAULT_TEMPLATE_PROMPT ||
+            "You are a Template Architect. Create prompt templates using __CODE__ syntax.";
+
+        // Mock path map like the real feature uses
+        const pathMap = {
+            'A': 'CREATURES_and_BEINGS/Mythical_Fantasy',
+            'B': 'ACTIONS/Movement',
+            'C': 'PLACES/Natural_Environments'
+        };
+
+        const pathContext = Object.entries(pathMap)
+            .map(([code, path]) => `${code} = "${path.replace(/\//g, ' > ').replace(/_/g, ' ')}"`)
+            .join('\n');
+
+        const userPrompt = `PATH MAP:\n${pathContext}\n\nINSTRUCTIONS: Create creative scene compositions`;
+
+        const generationConfig = {
+            responseMimeType: "application/json",
+            responseSchema: { type: "ARRAY", items: { type: "STRING" } }
+        };
+
+        try {
+            const { result, request } = await this._makeTestRequest(provider, apiKey, modelName, templatePrompt, userPrompt, generationConfig);
+            const duration = Math.round(performance.now() - startTime);
+
+            const parsed = this._parseTestResponse(provider, result);
+            const isValidArray = Array.isArray(parsed) && parsed.length > 0;
+            // Check if templates contain __X__ format codes
+            const hasValidTemplates = isValidArray && parsed.some(t => /__[A-Z]+__/.test(String(t)));
+
+            return {
+                success: true,
+                stats: {
+                    responseTime: duration,
+                    supportsJson: isValidArray,
+                    validSchema: hasValidTemplates,
+                    parsedCount: isValidArray ? parsed.length : 0,
+                    parsedContent: parsed,
+                    rawResponse: this._extractRawContent(result, provider),
+                    request
+                }
+            };
+        } catch (error) {
+            return {
+                success: false,
+                error: error.message,
+                stats: { responseTime: Math.round(performance.now() - startTime) }
+            };
+        }
+    },
+
+    /**
+     * Test the Duplicate Finder AI feature.
+     * Uses mock duplicate data and the configured deduplicate prompt.
+     */
+    async testDupeFinder(provider, apiKey, modelName) {
+        const startTime = performance.now();
+
+        const systemPrompt = Config.DEFAULT_DEDUPLICATE_PROMPT ||
+            "You are an expert at organizing data. Pick the best category for duplicates.";
+
+        // Mock duplicate data
+        const mockDuplicates = [
+            {
+                normalized: 'dragon',
+                locations: [
+                    { path: 'CREATURES_and_BEINGS/Mythical_Fantasy' },
+                    { path: 'CREATURES_and_BEINGS/Animals/Reptiles' }
+                ]
+            },
+            {
+                normalized: 'sunset',
+                locations: [
+                    { path: 'LIGHTING/Natural' },
+                    { path: 'PLACES/Natural_Environments' }
+                ]
+            }
+        ];
+
+        const batchPrompt = mockDuplicates.map(d => {
+            const pathOptions = d.locations.map(l =>
+                `  - ${l.path.replace(/\//g, ' > ').replace(/_/g, ' ')}`
+            ).join('\n');
+            return `Wildcard: "${d.normalized}"\nFound in:\n${pathOptions}`;
+        }).join('\n\n');
+
+        const userPrompt = `Please analyze these ${mockDuplicates.length} duplicate wildcards and pick the best category for each:\n\n${batchPrompt}`;
+
+        const generationConfig = {
+            responseMimeType: "application/json",
+            responseSchema: {
+                type: "ARRAY",
+                items: {
+                    type: "OBJECT",
+                    properties: {
+                        wildcard: { type: "STRING" },
+                        keep_path: { type: "STRING" }
+                    },
+                    required: ["wildcard", "keep_path"]
+                }
+            }
+        };
+
+        try {
+            const { result, request } = await this._makeTestRequest(provider, apiKey, modelName, systemPrompt, userPrompt, generationConfig);
+            const duration = Math.round(performance.now() - startTime);
+
+            const parsed = this._parseTestResponse(provider, result);
+            const isValidArray = Array.isArray(parsed) && parsed.length > 0;
+            const hasCorrectShape = isValidArray && parsed[0]?.wildcard && parsed[0]?.keep_path;
+
+            return {
+                success: true,
+                stats: {
+                    responseTime: duration,
+                    supportsJson: isValidArray,
+                    validSchema: hasCorrectShape,
+                    parsedCount: isValidArray ? parsed.length : 0,
+                    parsedContent: parsed,
+                    rawResponse: this._extractRawContent(result, provider),
+                    request
+                }
+            };
+        } catch (error) {
+            return {
+                success: false,
+                error: error.message,
+                stats: { responseTime: Math.round(performance.now() - startTime) }
+            };
+        }
+    },
+
+    /**
+     * Run a comprehensive benchmark testing all 4 AI features.
+     * @param {string} provider - API provider (gemini, openrouter, custom)
+     * @param {string} apiKey - API key
+     * @param {string} modelName - Model name
+     * @param {function} onProgress - Callback for progress updates
+     * @returns {Promise<Object>} Aggregated benchmark results
+     */
+    async runBenchmark(provider, apiKey, modelName, onProgress = () => { }) {
+        const results = {
+            generate: null,
+            suggestions: null,
+            templates: null,
+            dupeFinder: null,
+            totalTime: 0,
+            passCount: 0,
+            failCount: 0
+        };
+
+        const startTotal = performance.now();
+
+        // Test 1: Generate Wildcards (existing testModel)
+        onProgress({ phase: 'generate', status: 'running' });
+        try {
+            results.generate = await new Promise((resolve) => {
+                this.testModel(provider, apiKey, modelName, resolve);
+            });
+            results.generate.success = results.generate.success !== false;
+        } catch (e) {
+            results.generate = { success: false, error: e.message };
+        }
+        onProgress({ phase: 'generate', status: 'complete', result: results.generate });
+
+        // Test 2: Suggestions
+        onProgress({ phase: 'suggestions', status: 'running' });
+        results.suggestions = await this.testSuggestions(provider, apiKey, modelName);
+        onProgress({ phase: 'suggestions', status: 'complete', result: results.suggestions });
+
+        // Test 3: Templates
+        onProgress({ phase: 'templates', status: 'running' });
+        results.templates = await this.testTemplates(provider, apiKey, modelName);
+        onProgress({ phase: 'templates', status: 'complete', result: results.templates });
+
+        // Test 4: Dupe Finder
+        onProgress({ phase: 'dupeFinder', status: 'running' });
+        results.dupeFinder = await this.testDupeFinder(provider, apiKey, modelName);
+        onProgress({ phase: 'dupeFinder', status: 'complete', result: results.dupeFinder });
+
+        // Calculate totals
+        results.totalTime = Math.round(performance.now() - startTotal);
+        results.passCount = [results.generate, results.suggestions, results.templates, results.dupeFinder]
+            .filter(r => r?.success).length;
+        results.failCount = 4 - results.passCount;
+
+        return results;
+    },
+
+    /**
+     * Helper to make a test request with proper provider handling.
+     * Similar to _prepareRequest but for testing with explicit credentials.
+     */
+    async _makeTestRequest(provider, apiKey, modelName, systemPrompt, userPrompt, generationConfig) {
+        let url, headers, payload;
+
+        const temp = Config.MODEL_TEMPERATURE;
+        const maxTokens = Config.MODEL_MAX_TOKENS;
+        const topP = Config.MODEL_TOP_P;
+
+        if (provider === 'gemini') {
+            url = `https://generativelanguage.googleapis.com/v1beta/models/${modelName}:generateContent?key=${apiKey}`;
+            headers = { 'Content-Type': 'application/json' };
+
+            const geminiGenConfig = { ...generationConfig };
+            if (temp !== undefined && temp !== 0.7) geminiGenConfig.temperature = temp;
+            if (maxTokens && maxTokens !== 1000) geminiGenConfig.maxOutputTokens = maxTokens;
+            if (topP !== undefined && topP !== 1.0) geminiGenConfig.topP = topP;
+
+            payload = {
+                contents: [
+                    { role: "user", parts: [{ text: systemPrompt }] },
+                    { role: "model", parts: [{ text: "Understood." }] },
+                    { role: "user", parts: [{ text: userPrompt }] }
+                ],
+                generationConfig: geminiGenConfig
+            };
+        } else {
+            const isCustom = provider === 'custom';
+            if (isCustom) {
+                const baseUrl = document.getElementById('custom-api-url')?.value || Config?.API_URL_CUSTOM || '';
+                url = baseUrl.replace(/\/$/, '') + '/chat/completions';
+            } else {
+                url = 'https://openrouter.ai/api/v1/chat/completions';
+            }
+
+            headers = {
+                'Content-Type': 'application/json',
+                ...(apiKey && { 'Authorization': `Bearer ${apiKey}` }),
+                ...(provider === 'openrouter' && { 'HTTP-Referer': window.location.origin })
+            };
+
+            payload = {
+                model: modelName,
+                messages: [{ role: 'user', content: `${systemPrompt}\n\n${userPrompt}` }]
+            };
+
+            // Use proper response format for each provider
+            if (isCustom) {
+                // LMStudio and similar require json_schema format
+                payload.response_format = {
+                    type: 'json_schema',
+                    json_schema: this._constructJsonSchema(generationConfig)
+                };
+            } else {
+                // OpenRouter supports json_object
+                payload.response_format = { type: 'json_object' };
+            }
+
+            if (temp !== undefined && temp !== 0.7) payload.temperature = temp;
+            if (maxTokens && maxTokens !== 1000) payload.max_tokens = maxTokens;
+            if (topP !== undefined && topP !== 1.0) payload.top_p = topP;
+        }
+
+        const response = await fetch(url, {
+            method: 'POST',
+            headers,
+            body: JSON.stringify(payload)
+        });
+
+        if (!response.ok) {
+            const text = await response.text();
+            throw new Error(`HTTP ${response.status}: ${text}`);
+        }
+
+        return { result: await response.json(), request: { url, payload } };
+    },
+
+    /**
+     * Helper to parse test response based on provider format.
+     */
+    _parseTestResponse(provider, result) {
+        try {
+            let contentStr;
+            if (provider === 'gemini') {
+                contentStr = result.candidates?.[0]?.content?.parts?.[0]?.text || '';
+            } else {
+                contentStr = result.choices?.[0]?.message?.content || '';
+            }
+
+            contentStr = contentStr.trim();
+            const match = /```(?:json)?\s*([\s\S]*?)\s*```/.exec(contentStr);
+            if (match) contentStr = match[1];
+
+            const parsed = JSON.parse(contentStr);
+            // Handle wrapped responses
+            if (parsed.items && Array.isArray(parsed.items)) return parsed.items;
+            return Array.isArray(parsed) ? parsed : [];
+        } catch (e) {
+            return [];
+        }
+    },
+
+    /**
+     * Helper to extract raw content from response.
+     */
+    _extractRawContent(result, provider) {
+        if (provider === 'gemini') {
+            return result.candidates?.[0]?.content?.parts?.[0]?.text || '';
+        }
+        return result.choices?.[0]?.message?.content || '';
     }
 };

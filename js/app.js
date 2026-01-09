@@ -282,6 +282,181 @@ export const App = {
                     btn.disabled = false;
                 });
             }
+            // Benchmark Button
+            if (target.matches('.benchmark-btn') || target.closest('.benchmark-btn')) {
+                const btn = /** @type {HTMLButtonElement} */ (target.closest('.benchmark-btn') || target);
+                const provider = btn.dataset.provider;
+                const panel = document.querySelector(`#settings-${provider}`);
+                const apiKey = /** @type {HTMLInputElement|null} */ (panel?.querySelector('.api-key-input'))?.value?.trim();
+                const modelName = /** @type {HTMLInputElement|null} */ (panel?.querySelector('.model-name-input'))?.value;
+
+                if (!modelName?.trim()) {
+                    UI.showToast('Please enter a model name first', 'warning');
+                    return;
+                }
+
+                // Open benchmark dialog
+                const dialog = /** @type {HTMLDialogElement} */ (document.getElementById('benchmark-dialog'));
+                const closeBtn = document.getElementById('benchmark-close-btn');
+
+                // Reset all cards to pending state
+                const phases = ['generate', 'suggestions', 'templates', 'dupeFinder'];
+                phases.forEach(phase => {
+                    const card = document.getElementById(`benchmark-card-${phase}`);
+                    if (card) {
+                        card.querySelector('.benchmark-status').textContent = '⏳';
+                        card.querySelector('.benchmark-time').textContent = '-- ms';
+                        card.querySelector('.check-json').textContent = '⬜';
+                        card.querySelector('.check-schema').textContent = '⬜';
+                        card.querySelector('.benchmark-preview').textContent = 'Waiting...';
+                        card.classList.remove('border-green-500', 'border-red-500');
+                        card.classList.add('border-gray-700');
+                    }
+                });
+
+                document.getElementById('benchmark-total-time').textContent = 'Total: -- ms';
+                document.getElementById('benchmark-summary').textContent = '--/4 passed';
+
+                dialog.showModal();
+
+                // Run benchmark with progress updates
+                Api.runBenchmark(provider, apiKey, modelName, ({ phase, status, result }) => {
+                    const card = document.getElementById(`benchmark-card-${phase}`);
+                    if (!card) return;
+
+                    if (status === 'running') {
+                        card.querySelector('.benchmark-status').textContent = '🔄';
+                        card.querySelector('.benchmark-preview').textContent = 'Testing...';
+                    } else if (status === 'complete') {
+                        const success = result?.success;
+                        card.querySelector('.benchmark-status').textContent = success ? '✅' : '❌';
+                        card.classList.remove('border-gray-700');
+                        card.classList.add(success ? 'border-green-500' : 'border-red-500');
+
+                        // Update time
+                        const time = result?.stats?.responseTime ?? result?.responseTime ?? '??';
+                        card.querySelector('.benchmark-time').textContent = `${time} ms`;
+
+                        // Update checks
+                        const supportsJson = result?.stats?.supportsJson ?? false;
+                        const validSchema = result?.stats?.validSchema ?? result?.stats?.supportsJson ?? false;
+                        card.querySelector('.check-json').textContent = supportsJson ? '✅' : '❌';
+                        card.querySelector('.check-schema').textContent = validSchema ? '✅' : '❌';
+
+                        // Update preview
+                        const preview = card.querySelector('.benchmark-preview');
+                        if (success && result?.stats?.parsedContent) {
+                            const content = result.stats.parsedContent;
+                            if (Array.isArray(content)) {
+                                const items = content.slice(0, 3).map(item =>
+                                    typeof item === 'string' ? item : (item?.name || JSON.stringify(item))
+                                );
+                                preview.textContent = items.join(', ') + (content.length > 3 ? ` (+${content.length - 3} more)` : '');
+                            } else {
+                                preview.textContent = JSON.stringify(content).slice(0, 100);
+                            }
+                        } else if (!success) {
+                            preview.textContent = result?.error || 'Failed';
+                            preview.classList.add('text-red-400');
+                        }
+                    }
+                }).then((results) => {
+                    // Store results for copy button
+                    dialog._benchmarkResults = {
+                        provider,
+                        model: modelName,
+                        timestamp: new Date().toISOString(),
+                        ...results
+                    };
+
+                    // Update summary
+                    document.getElementById('benchmark-total-time').textContent = `Total: ${results.totalTime} ms`;
+                    const summaryEl = document.getElementById('benchmark-summary');
+                    summaryEl.textContent = `${results.passCount}/4 passed`;
+                    summaryEl.classList.remove('text-green-400', 'text-red-400', 'text-yellow-400');
+                    if (results.passCount === 4) {
+                        summaryEl.classList.add('text-green-400');
+                    } else if (results.passCount === 0) {
+                        summaryEl.classList.add('text-red-400');
+                    } else {
+                        summaryEl.classList.add('text-yellow-400');
+                    }
+                });
+
+                // Copy button handler
+                const copyBtn = document.getElementById('benchmark-copy-btn');
+                const copyHandler = async () => {
+                    const results = dialog._benchmarkResults;
+                    if (!results) {
+                        UI.showToast('No results to copy yet', 'warning');
+                        return;
+                    }
+                    try {
+                        // Format results for export (exclude request payloads for brevity)
+                        const exportData = {
+                            provider: results.provider,
+                            model: results.model,
+                            timestamp: results.timestamp,
+                            totalTime: results.totalTime,
+                            passed: results.passCount,
+                            failed: results.failCount,
+                            tests: {
+                                generate: {
+                                    success: results.generate?.success,
+                                    responseTime: results.generate?.stats?.responseTime ?? results.generate?.responseTime,
+                                    supportsJson: results.generate?.stats?.supportsJson ?? results.generate?.supportsJson,
+                                    parsedCount: results.generate?.stats?.parsedCount ?? results.generate?.wildcards?.length,
+                                    rawResponse: results.generate?.stats?.rawResponse ?? results.generate?.rawResponse
+                                },
+                                suggestions: {
+                                    success: results.suggestions?.success,
+                                    responseTime: results.suggestions?.stats?.responseTime,
+                                    supportsJson: results.suggestions?.stats?.supportsJson,
+                                    validSchema: results.suggestions?.stats?.validSchema,
+                                    parsedCount: results.suggestions?.stats?.parsedCount,
+                                    rawResponse: results.suggestions?.stats?.rawResponse
+                                },
+                                templates: {
+                                    success: results.templates?.success,
+                                    responseTime: results.templates?.stats?.responseTime,
+                                    supportsJson: results.templates?.stats?.supportsJson,
+                                    validSchema: results.templates?.stats?.validSchema,
+                                    parsedCount: results.templates?.stats?.parsedCount,
+                                    rawResponse: results.templates?.stats?.rawResponse
+                                },
+                                dupeFinder: {
+                                    success: results.dupeFinder?.success,
+                                    responseTime: results.dupeFinder?.stats?.responseTime,
+                                    supportsJson: results.dupeFinder?.stats?.supportsJson,
+                                    validSchema: results.dupeFinder?.stats?.validSchema,
+                                    parsedCount: results.dupeFinder?.stats?.parsedCount,
+                                    rawResponse: results.dupeFinder?.stats?.rawResponse
+                                }
+                            }
+                        };
+                        await navigator.clipboard.writeText(JSON.stringify(exportData, null, 2));
+                        UI.showToast('Benchmark results copied to clipboard', 'success');
+                        copyBtn.textContent = '✓ Copied';
+                        setTimeout(() => { copyBtn.textContent = '📋 Copy'; }, 2000);
+                    } catch (err) {
+                        UI.showToast('Failed to copy results', 'error');
+                    }
+                };
+                copyBtn.addEventListener('click', copyHandler);
+
+                // Close handler
+                const closeHandler = () => {
+                    dialog.close();
+                    closeBtn.removeEventListener('click', closeHandler);
+                    copyBtn.removeEventListener('click', copyHandler);
+                    dialog.removeEventListener('click', backdropHandler);
+                };
+                const backdropHandler = (e) => {
+                    if (e.target === dialog) closeHandler();
+                };
+                closeBtn.addEventListener('click', closeHandler);
+                dialog.addEventListener('click', backdropHandler);
+            }
             // Help Button
             if (target.matches('#help-btn')) {
                 UI.showNotification(`
