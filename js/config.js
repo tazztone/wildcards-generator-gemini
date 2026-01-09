@@ -5,8 +5,8 @@ const CONFIG_CONSTANTS = {
     CONFIG_STORAGE_KEY: "wildcardGeneratorConfig_v1",
     STORAGE_KEY: "wildcardGeneratorState_v12",
     HISTORY_KEY: "wildcardGeneratorHistory_v12",
-    HISTORY_LIMIT: 20,
-    SEARCH_DEBOUNCE_DELAY: 300,
+    HISTORY_LIMIT: 50,
+    SEARCH_DEBOUNCE_DELAY: 700,
     DEFAULT_SYSTEM_PROMPT: "Generate a JSON array of exactly 20 creative wildcards for the category path '{category}'. Keep each wildcard concise (max 3-5 words). Ensure they are diverse.",
     DEFAULT_SUGGEST_ITEM_PROMPT: "Generate a JSON array of exactly 20 sub-categories for '{parentPath}'. Use this schema: [{\"name\": \"snake_case_name\", \"instruction\": \"Short description (max 5 words)\"}]. Ensure distinct meanings.",
     DEFAULT_TEMPLATE_PROMPT: "Generate a JSON array of exactly 20 short prompt templates (max 10 words) using placeholders like __A__ and __B__. Example: [\"__A__ near a __B__\", \"A large __A__ made of __B__\"].",
@@ -17,12 +17,8 @@ export const Config = {};
 
 export async function loadConfig() {
     try {
-        const response = await fetch('config/config.json');
-        if (!response.ok) throw new Error('Could not fetch default configuration.');
-        const fileConfig = await response.json();
-
-        // Merge file config over constants (allowing file to override, but constants provide safety)
-        const defaultConfig = { ...CONFIG_CONSTANTS, ...fileConfig };
+        // Use CONFIG_CONSTANTS as the single source of truth for defaults
+        const defaultConfig = { ...CONFIG_CONSTANTS };
 
         const savedConfig = localStorage.getItem(defaultConfig.CONFIG_STORAGE_KEY);
 
@@ -99,12 +95,8 @@ export async function loadConfig() {
 
     } catch (error) {
         console.error("Failed to load configuration:", error);
-        // Fallback to constants + minimal essentials
-        Object.assign(Config, CONFIG_CONSTANTS, {
-            STORAGE_KEY: 'wildcardGeneratorState_fallback',
-            HISTORY_KEY: 'wildcardGeneratorHistory_fallback',
-            HISTORY_LIMIT: 10
-        });
+        // Fallback to constants
+        Object.assign(Config, CONFIG_CONSTANTS);
     }
 }
 
@@ -113,11 +105,7 @@ let lastSaveToastTime = 0;
 
 export async function saveConfig() {
     try {
-        const response = await fetch('config/config.json');
-        if (!response.ok) throw new Error('Could not fetch default configuration for saving.');
-        const defaultConfig = await response.json();
-
-        // Include user defaults for comparison
+        // Build complete defaults from CONFIG_CONSTANTS + user defaults
         const userDefaults = {
             API_URL_CUSTOM: "http://127.0.0.1:1234/v1",
             MODEL_NAME_GEMINI: "",
@@ -149,7 +137,7 @@ export async function saveConfig() {
             AUTO_SAVE_INTERVAL: 0,
             STORAGE_PROFILE: 'default'
         };
-        const allDefaults = { ...defaultConfig, ...userDefaults };
+        const allDefaults = { ...CONFIG_CONSTANTS, ...userDefaults };
 
         const changedConfig = {};
         for (const key in Config) {
