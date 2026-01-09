@@ -291,6 +291,51 @@ export const UI = {
                 this.updateMindmapStyles();
             }
         });
+
+        // Layout settings (compact mode, animations, default wildcards visible)
+        const layoutInputs = {
+            'config-compact-mode': 'COMPACT_CARD_MODE',
+            'config-default-wildcards-visible': 'DEFAULT_WILDCARDS_VISIBLE',
+            'config-enable-animations': 'ENABLE_ANIMATIONS'
+        };
+
+        Object.entries(layoutInputs).forEach(([id, configKey]) => {
+            const el = document.getElementById(id);
+            if (el) {
+                el.addEventListener('change', (e) => {
+                    Config[configKey] = /** @type {HTMLInputElement} */ (e.target).checked;
+                    saveConfig();
+                    if (configKey === 'COMPACT_CARD_MODE') document.body.classList.toggle('compact-cards', Config.COMPACT_CARD_MODE);
+                    if (configKey === 'ENABLE_ANIMATIONS') document.body.classList.toggle('reduce-motion', !Config.ENABLE_ANIMATIONS);
+                });
+            }
+        });
+
+        // Mindmap Font Size Inputs
+        const mindmapInputs = [
+            { id: 'config-mindmap-category-size', key: 'MINDMAP_FONT_SIZE_CATEGORY', var: '--mindmap-font-size-category' },
+            { id: 'config-mindmap-list-size', key: 'MINDMAP_FONT_SIZE_LIST', var: '--mindmap-font-size-list' },
+            { id: 'config-mindmap-wildcard-size', key: 'MINDMAP_FONT_SIZE_WILDCARD', var: '--mindmap-font-size-wildcard' }
+        ];
+
+        mindmapInputs.forEach(item => {
+            const el = document.getElementById(item.id);
+            if (el) {
+                el.addEventListener('change', (e) => {
+                    const val = parseInt(/** @type {HTMLInputElement} */(e.target).value, 10);
+                    if (!isNaN(val)) {
+                        Config[item.key] = val;
+                        document.documentElement.style.setProperty(item.var, `${val}px`);
+                        saveConfig();
+
+                        // Refresh mindmap if active to update layout calculations
+                        if (document.body.classList.contains('view-mindmap') && window.Mindmap) {
+                            window.Mindmap.refresh();
+                        }
+                    }
+                });
+            }
+        });
     },
 
     sortKeys(keys, parentPath) {
@@ -534,6 +579,15 @@ export const UI = {
             catSizeInput.value = String(Config.MINDMAP_CATEGORY_FONT_SIZE || 32);
         }
 
+        // Mindmap settings
+        const mindmapCatSizeInput = document.getElementById('config-mindmap-category-size');
+        const mindmapListSizeInput = document.getElementById('config-mindmap-list-size');
+        const mindmapWildcardSizeInput = document.getElementById('config-mindmap-wildcard-size');
+
+        if (mindmapCatSizeInput) mindmapCatSizeInput.value = String(Config.MINDMAP_FONT_SIZE_CATEGORY || 96);
+        if (mindmapListSizeInput) mindmapListSizeInput.value = String(Config.MINDMAP_FONT_SIZE_LIST || 64);
+        if (mindmapWildcardSizeInput) mindmapWildcardSizeInput.value = String(Config.MINDMAP_FONT_SIZE_WILDCARD || 20);
+
         // Display & UI Settings
         /** @type {HTMLSelectElement|null} */
         // @ts-ignore
@@ -603,8 +657,12 @@ export const UI = {
 
     updateMindmapStyles() {
         const root = document.documentElement;
-        root.style.setProperty('--mindmap-node-size', `${Config.MINDMAP_NODE_FONT_SIZE || 24}px`);
-        root.style.setProperty('--mindmap-category-size', `${Config.MINDMAP_CATEGORY_FONT_SIZE || 32}px`);
+        if (animateToggle) animateToggle.checked = Config.ENABLE_ANIMATIONS;
+
+        // Apply Mindmap Font Sizes
+        root.style.setProperty('--mindmap-font-size-category', `${Config.MINDMAP_FONT_SIZE_CATEGORY || 96}px`);
+        root.style.setProperty('--mindmap-font-size-list', `${Config.MINDMAP_FONT_SIZE_LIST || 64}px`);
+        root.style.setProperty('--mindmap-font-size-wildcard', `${Config.MINDMAP_FONT_SIZE_WILDCARD || 20}px`);
     },
 
     /**

@@ -1943,7 +1943,7 @@
             border: 2px solid var(--accent-primary, #6366f1) !important;
             background: transparent !important;
             color: var(--text-primary, #e5e7eb) !important;
-            font-size: 56px !important;
+            font-size: var(--mindmap-font-size-category, 96px) !important;
             /* Make 2x larger */
             font-weight: 700 !important;
             padding: 8px 16px !important;
@@ -1966,6 +1966,7 @@
         #dual-mindmap me-tpc[style*="background"],
         .mindmap-view me-tpc[style*="background"] {
             border: 1px solid var(--border-primary, #374151) !important;
+            font-size: var(--mindmap-font-size-list, 64px) !important;
         }
 
         /* Wildcard leaf nodes: Most basic style (transparent background) */
@@ -1975,6 +1976,7 @@
             border: none !important;
             padding: 2px 6px !important;
             opacity: 0.85 !important;
+            font-size: var(--mindmap-font-size-wildcard, 20px) !important;
         }
 
         /* Hover states */

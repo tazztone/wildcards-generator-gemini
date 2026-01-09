@@ -562,22 +562,35 @@
                                 </label>
                                 <p class="text-xs text-gray-400 mt-1">Denser card layout with less padding.</p>
                             </div>
-                            <!-- Mindmap Node Size -->
+                            <!-- Mindmap Font Sizes -->
                             <div class="setting-group bg-gray-800/50 p-4 rounded-lg border border-gray-700/50">
-                                <label for="config-mindmap-node-size"
-                                    class="block text-sm font-medium text-gray-300 mb-2">Mindmap Node Size (px)</label>
-                                <input type="number" id="config-mindmap-node-size"
-                                    class="w-full bg-gray-800 border border-gray-600 rounded-md p-2 text-sm focus:ring-indigo-500 focus:border-indigo-500"
-                                    placeholder="e.g., 24">
-                            </div>
-                            <!-- Mindmap Category Size -->
-                            <div class="setting-group bg-gray-800/50 p-4 rounded-lg border border-gray-700/50">
-                                <label for="config-mindmap-category-size"
-                                    class="block text-sm font-medium text-gray-300 mb-2">Mindmap Category Size
-                                    (px)</label>
-                                <input type="number" id="config-mindmap-category-size"
-                                    class="w-full bg-gray-800 border border-gray-600 rounded-md p-2 text-sm focus:ring-indigo-500 focus:border-indigo-500"
-                                    placeholder="e.g., 32">
+                                <div class="col-span-1 md:col-span-2">
+                                    <label class="block text-sm font-medium text-gray-300 mb-2">Mindmap Font Sizes
+                                        (px)</label>
+                                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                        <div>
+                                            <label for="config-mindmap-category-size"
+                                                class="block text-xs text-gray-400 mb-1">Category (Structure)</label>
+                                            <input type="number" id="config-mindmap-category-size"
+                                                class="w-full bg-gray-700 border border-gray-600 rounded-md px-3 py-2 text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                                                min="12" max="120" value="56">
+                                        </div>
+                                        <div>
+                                            <label for="config-mindmap-list-size"
+                                                class="block text-xs text-gray-400 mb-1">List (Container)</label>
+                                            <input type="number" id="config-mindmap-list-size"
+                                                class="w-full bg-gray-700 border border-gray-600 rounded-md px-3 py-2 text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                                                min="12" max="120" value="28">
+                                        </div>
+                                        <div>
+                                            <label for="config-mindmap-wildcard-size"
+                                                class="block text-xs text-gray-400 mb-1">Wildcard (Leaf)</label>
+                                            <input type="number" id="config-mindmap-wildcard-size"
+                                                class="w-full bg-gray-700 border border-gray-600 rounded-md px-3 py-2 text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                                                min="10" max="60" value="20">
+                                        </div>
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     </div>

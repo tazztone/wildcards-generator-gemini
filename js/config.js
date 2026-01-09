@@ -36,8 +36,9 @@ export async function loadConfig() {
             MODEL_REASONING_EFFORT: 'default', // default, high, medium, low, none
             MODEL_REASONING_MAX_TOKENS: 0, // 0 = disabled
             // Mindmap Configuration
-            MINDMAP_NODE_FONT_SIZE: 24,
-            MINDMAP_CATEGORY_FONT_SIZE: 32,
+            MINDMAP_FONT_SIZE_CATEGORY: 96, // Bold, Outlined
+            MINDMAP_FONT_SIZE_LIST: 64,     // Filled background
+            MINDMAP_FONT_SIZE_WILDCARD: 20, // Basic
             // Display & UI Settings
             DEFAULT_WILDCARDS_VISIBLE: true,
             ENABLE_ANIMATIONS: true,
@@ -48,6 +49,19 @@ export async function loadConfig() {
         };
 
         Object.assign(Config, defaultConfig, userDefaults, savedConfig ? JSON.parse(savedConfig) : {});
+
+        // Migration: Port old keys to new keys if they exist in Config (merged from saved) but new keys are default
+        // Old: MINDMAP_CATEGORY_FONT_SIZE -> New: MINDMAP_FONT_SIZE_CATEGORY
+        // Old: MINDMAP_NODE_FONT_SIZE     -> New: MINDMAP_FONT_SIZE_LIST
+        // Note: Check Config directly as it contains the merged result
+        if (Config.MINDMAP_CATEGORY_FONT_SIZE && !savedConfig?.includes('MINDMAP_FONT_SIZE_CATEGORY')) {
+            Config.MINDMAP_FONT_SIZE_CATEGORY = Config.MINDMAP_CATEGORY_FONT_SIZE;
+            delete Config.MINDMAP_CATEGORY_FONT_SIZE;
+        }
+        if (Config.MINDMAP_NODE_FONT_SIZE && !savedConfig?.includes('MINDMAP_FONT_SIZE_LIST')) {
+            Config.MINDMAP_FONT_SIZE_LIST = Config.MINDMAP_NODE_FONT_SIZE;
+            delete Config.MINDMAP_NODE_FONT_SIZE;
+        }
 
         // Initialize empty API keys - users enter keys via Settings panel
         // Check for persisted keys
@@ -103,8 +117,9 @@ export async function saveConfig() {
             MODEL_SEED: 0,
             MODEL_REASONING_EFFORT: 'default',
             MODEL_REASONING_MAX_TOKENS: 0,
-            MINDMAP_NODE_FONT_SIZE: 24,
-            MINDMAP_CATEGORY_FONT_SIZE: 32,
+            MINDMAP_FONT_SIZE_CATEGORY: 96,
+            MINDMAP_FONT_SIZE_LIST: 64,
+            MINDMAP_FONT_SIZE_WILDCARD: 20,
             DEFAULT_WILDCARDS_VISIBLE: true,
             ENABLE_ANIMATIONS: true,
             COMPACT_CARD_MODE: false,
@@ -130,9 +145,8 @@ export async function saveConfig() {
                 else if (['API_URL_CUSTOM', 'MODEL_NAME_GEMINI', 'MODEL_NAME_OPENROUTER', 'MODEL_NAME_CUSTOM', 'API_ENDPOINT', 'CUSTOM_SYSTEM_PROMPT', 'CUSTOM_SUGGEST_PROMPT', 'CUSTOM_TEMPLATE_PROMPT', 'PREFERRED_VIEW',
                     'MODEL_TEMPERATURE', 'MODEL_MAX_TOKENS', 'MODEL_TOP_P', 'MODEL_TOP_K', 'MODEL_FREQUENCY_PENALTY', 'MODEL_PRESENCE_PENALTY', 'MODEL_REPETITION_PENALTY', 'MODEL_MIN_P', 'MODEL_TOP_A', 'MODEL_SEED',
                     'MODEL_REASONING_EFFORT', 'MODEL_REASONING_MAX_TOKENS',
-                    'MINDMAP_NODE_FONT_SIZE', 'MINDMAP_CATEGORY_FONT_SIZE',
-                    'DEFAULT_WILDCARDS_VISIBLE', 'ENABLE_ANIMATIONS',
-                    'COMPACT_CARD_MODE', 'AUTO_SAVE_INTERVAL', 'STORAGE_PROFILE'
+                    'MINDMAP_FONT_SIZE_CATEGORY', 'MINDMAP_FONT_SIZE_LIST', 'MINDMAP_FONT_SIZE_WILDCARD',
+                    'DEFAULT_WILDCARDS_VISIBLE', 'ENABLE_ANIMATIONS', 'COMPACT_CARD_MODE', 'AUTO_SAVE_INTERVAL', 'STORAGE_PROFILE'
                 ].includes(key)) {
                     changedConfig[key] = Config[key];
                 }

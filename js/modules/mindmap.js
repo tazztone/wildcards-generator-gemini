@@ -98,13 +98,13 @@ const Mindmap = {
             const nodeStyle = isWildcardList
                 ? {
                     // WildcardList style: subtle filled background
-                    fontSize: '28',
+                    fontSize: String(Config.MINDMAP_FONT_SIZE_LIST || 64),
                     background: 'var(--bg-tertiary, #374151)',
                     color: 'var(--text-secondary, #9ca3af)'
                 }
                 : {
                     // Category/Subcategory style: outlined (handled via CSS class)
-                    fontSize: '60' // Updated to be 2x larger (matches CSS override)
+                    fontSize: String(Config.MINDMAP_FONT_SIZE_CATEGORY || 96) // Values must be string for Mind Elixir
                 };
 
             const node = {
@@ -139,7 +139,7 @@ const Mindmap = {
                         },
                         // Wildcard style: most basic/simple - minimal styling
                         style: {
-                            fontSize: '20',
+                            fontSize: String(Config.MINDMAP_FONT_SIZE_WILDCARD || 20),
                             background: 'transparent',
                             color: 'var(--text-muted, #6b7280)'
                         }
