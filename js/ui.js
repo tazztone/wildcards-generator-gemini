@@ -194,25 +194,7 @@ export const UI = {
             this.updateThemeToggleUI();
         });
 
-        // Default Wildcards Visible
-        document.getElementById('config-default-wildcards-visible')?.addEventListener('change', (e) => {
-            Config.DEFAULT_WILDCARDS_VISIBLE = /** @type {HTMLInputElement} */ (e.target).checked;
-            saveConfig();
-        });
 
-        // Enable Animations
-        document.getElementById('config-enable-animations')?.addEventListener('change', (e) => {
-            Config.ENABLE_ANIMATIONS = /** @type {HTMLInputElement} */ (e.target).checked;
-            saveConfig();
-            document.body.classList.toggle('reduce-motion', !Config.ENABLE_ANIMATIONS);
-        });
-
-        // Compact Card Mode
-        document.getElementById('config-compact-mode')?.addEventListener('change', (e) => {
-            Config.COMPACT_CARD_MODE = /** @type {HTMLInputElement} */ (e.target).checked;
-            saveConfig();
-            document.body.classList.toggle('compact-cards', Config.COMPACT_CARD_MODE);
-        });
 
         // Auto-Save Interval
         document.getElementById('config-auto-save')?.addEventListener('change', (e) => {
@@ -275,22 +257,7 @@ export const UI = {
             this.updateSettingsVisibility(provider);
         });
         // Advanced Configuration Handlers - Mindmap Font Sizes
-        document.getElementById('config-mindmap-node-size')?.addEventListener('change', (e) => {
-            const val = parseInt(/** @type {HTMLInputElement} */(e.target).value);
-            if (!isNaN(val)) {
-                Config.MINDMAP_NODE_FONT_SIZE = val;
-                saveConfig();
-                this.updateMindmapStyles();
-            }
-        });
-        document.getElementById('config-mindmap-category-size')?.addEventListener('change', (e) => {
-            const val = parseInt(/** @type {HTMLInputElement} */(e.target).value);
-            if (!isNaN(val)) {
-                Config.MINDMAP_CATEGORY_FONT_SIZE = val;
-                saveConfig();
-                this.updateMindmapStyles();
-            }
-        });
+
 
         // Layout settings (compact mode, animations, default wildcards visible)
         const layoutInputs = {

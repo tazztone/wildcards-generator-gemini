@@ -88,6 +88,9 @@ export async function loadConfig() {
     }
 }
 
+
+let lastSaveToastTime = 0;
+
 export async function saveConfig() {
     try {
         const response = await fetch('config/config.json');
@@ -154,7 +157,14 @@ export async function saveConfig() {
         }
 
         localStorage.setItem(Config.CONFIG_STORAGE_KEY, JSON.stringify(changedConfig));
-        if (UI && UI.showToast) UI.showToast('Configuration saved.', 'success');
+
+        if (UI && UI.showToast) {
+            const now = Date.now();
+            if (now - lastSaveToastTime > 1000) {
+                UI.showToast('Configuration saved.', 'success');
+                lastSaveToastTime = now;
+            }
+        }
     } catch (error) {
         console.error("Failed to save config:", error);
         if (UI && UI.showNotification) UI.showNotification(`Error saving configuration: ${error.message}`);
