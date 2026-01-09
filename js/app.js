@@ -358,18 +358,18 @@ export const App = {
                     UI.showToast('Reset to defaults complete', 'success');
                 });
             }
-            if (target.matches('#reload-default-data')) {
+            if (target.matches('#restore-defaults-btn')) {
                 UI.showNotification('Reload default wildcard data?\nYour settings will be preserved.', true, async () => {
-                    UI.toggleOverflowMenu(false);
+                    // UI.toggleOverflowMenu(false); // No longer needed as button is in settings
                     await State.resetState(); // Uses the fixed fetch('data/initial-data.yaml') in State.js
                     UI.renderAll(); // Force UI refresh to ensure new data is shown
                     UI.showToast('Default data reloaded', 'success');
                 });
             }
             // Factory Reset
-            if (target.matches('#factory-reset')) {
+            if (target.matches('#factory-reset-btn')) {
                 UI.showNotification('⚠️ Factory Reset? This will delete ALL wildcards and settings. Cannot be undone.', true, () => {
-                    UI.toggleOverflowMenu(false);
+                    // UI.toggleOverflowMenu(false); // No longer needed
                     localStorage.clear();
                     sessionStorage.clear();
                     window.location.reload();

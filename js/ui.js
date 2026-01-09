@@ -657,6 +657,7 @@ export const UI = {
 
     updateMindmapStyles() {
         const root = document.documentElement;
+        const animateToggle = document.getElementById('config-enable-animations');
         if (animateToggle) animateToggle.checked = Config.ENABLE_ANIMATIONS;
 
         // Apply Mindmap Font Sizes
