@@ -374,6 +374,103 @@
             display: block;
         }
 
+        /* Settings Modal Tabs */
+        .settings-tabs {
+            gap: 0;
+            scrollbar-width: none;
+            -ms-overflow-style: none;
+        }
+
+        .settings-tabs::-webkit-scrollbar {
+            display: none;
+        }
+
+        .settings-tab {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            padding: 10px 16px;
+            background: transparent;
+            border: none;
+            border-bottom: 2px solid transparent;
+            color: var(--text-secondary);
+            font-size: 13px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            white-space: nowrap;
+        }
+
+        .settings-tab:hover {
+            background: rgba(255, 255, 255, 0.05);
+            color: var(--text-primary);
+        }
+
+        .settings-tab.active {
+            color: var(--accent-primary);
+            border-bottom-color: var(--accent-primary);
+            background: rgba(99, 102, 241, 0.08);
+        }
+
+        .settings-tab svg {
+            flex-shrink: 0;
+        }
+
+        html.light .settings-tab:hover {
+            background: rgba(0, 0, 0, 0.05);
+        }
+
+        html.light .settings-tab.active {
+            background: rgba(99, 102, 241, 0.1);
+        }
+
+        .settings-tab-content {
+            display: block;
+        }
+
+        .settings-tab-content.hidden {
+            display: none;
+        }
+
+        /* Settings Search Highlight */
+        .settings-search-highlight {
+            background: rgba(251, 191, 36, 0.3);
+            border-radius: 4px;
+            padding: 1px 3px;
+        }
+
+        /* Compact Card Mode */
+        body.compact-cards .glass-panel {
+            padding: 0.5rem !important;
+        }
+
+        body.compact-cards .wildcard-card {
+            padding: 0.5rem 0.75rem !important;
+        }
+
+        body.compact-cards .wildcard-chips {
+            gap: 0.25rem !important;
+        }
+
+        body.compact-cards .chip {
+            padding: 0.25rem 0.5rem !important;
+            font-size: 0.75rem !important;
+        }
+
+        body.compact-cards details > summary {
+            padding: 0.5rem 0.75rem !important;
+        }
+
+        /* Reduce Motion - Disable all animations and transitions */
+        body.reduce-motion *,
+        body.reduce-motion *::before,
+        body.reduce-motion *::after {
+            animation-duration: 0.01ms !important;
+            animation-iteration-count: 1 !important;
+            transition-duration: 0.01ms !important;
+            scroll-behavior: auto !important;
+        }
+
         /* Suggestions Popup Styling */
         dialog.suggest {
             width: 100%;

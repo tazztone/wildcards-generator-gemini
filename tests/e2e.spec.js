@@ -459,6 +459,10 @@ test.describe('Wildcard Generator E2E Tests', () => {
             await page.click('#settings-btn');
             await expect(page.locator('#settings-dialog')).toBeVisible();
 
+            // Switch to Data tab
+            await page.click('.settings-tab[data-tab="data"]');
+            await page.waitForTimeout(200);
+
             const downloadPromise = page.waitForEvent('download');
             await page.click('#export-settings-btn');
             const download = await downloadPromise;
@@ -477,6 +481,10 @@ test.describe('Wildcard Generator E2E Tests', () => {
             // Open Settings Modal first
             await page.click('#settings-btn');
             await expect(page.locator('#settings-dialog')).toBeVisible();
+
+            // Switch to Data tab
+            await page.click('.settings-tab[data-tab="data"]');
+            await page.waitForTimeout(200);
 
             // Check if file input exists and is hidden
             const fileInput = page.locator('#settings-file-input');

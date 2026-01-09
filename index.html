@@ -150,10 +150,10 @@
             <div
                 class="bg-gray-800/95 backdrop-blur-xl rounded-xl shadow-2xl w-full max-w-4xl max-h-[85vh] flex flex-col border border-gray-700/50">
                 <!-- Modal Header -->
-                <div class="flex justify-between items-center p-5 border-b border-gray-700/50 flex-shrink-0">
+                <div class="flex justify-between items-center p-4 border-b border-gray-700/50 flex-shrink-0">
                     <h2
                         class="text-xl font-semibold text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 to-purple-400">
-                        Global Settings</h2>
+                        Settings</h2>
                     <button id="settings-close-btn"
                         class="p-2 rounded-full hover:bg-white/10 text-gray-400 hover:text-white transition-colors"
                         title="Close Settings">
@@ -163,415 +163,560 @@
                         </svg>
                     </button>
                 </div>
-                <!-- Modal Body - Scrollable -->
+                <!-- Search Filter -->
+                <div class="px-4 py-2 border-b border-gray-700/50 flex-shrink-0">
+                    <div class="relative">
+                        <svg class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500" fill="none"
+                            viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                        </svg>
+                        <input type="text" id="settings-search-input"
+                            class="w-full bg-gray-900/50 border border-gray-700 rounded-lg pl-10 pr-4 py-2 text-sm text-gray-200 placeholder-gray-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500"
+                            placeholder="Search settings...">
+                    </div>
+                </div>
+                <!-- Tab Navigation -->
+                <div class="settings-tabs flex border-b border-gray-700/50 flex-shrink-0 px-2 overflow-x-auto">
+                    <button class="settings-tab active" data-tab="api">
+                        <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4" />
+                        </svg>
+                        <span>API</span>
+                    </button>
+                    <button class="settings-tab" data-tab="prompts">
+                        <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" />
+                        </svg>
+                        <span>Prompts</span>
+                    </button>
+                    <button class="settings-tab" data-tab="model">
+                        <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4" />
+                        </svg>
+                        <span>Model</span>
+                    </button>
+                    <button class="settings-tab" data-tab="display">
+                        <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                        </svg>
+                        <span>Display</span>
+                    </button>
+                    <button class="settings-tab" data-tab="advanced">
+                        <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                        </svg>
+                        <span>Advanced</span>
+                    </button>
+                    <button class="settings-tab" data-tab="data">
+                        <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4m0 5c0 2.21-3.582 4-8 4s-8-1.79-8-4" />
+                        </svg>
+                        <span>Data</span>
+                    </button>
+                </div>
+                <!-- Modal Body - Tab Content -->
                 <div class="p-5 space-y-6 overflow-y-auto custom-scrollbar text-left">
-                    <div class="prompt-field-wrapper">
-                        <div class="flex justify-between items-center mb-2">
-                            <label for="global-prompt" class="text-lg font-semibold text-indigo-300">Global
-                                System Prompt (for Wildcard Generation)</label>
-                            <div class="flex items-center gap-2">
-                                <span
-                                    class="prompt-status-badge badge-default text-xs px-2 py-0.5 rounded-full">Default</span>
-                                <button type="button"
-                                    class="reset-prompt-btn hidden text-xs text-gray-400 hover:text-white underline"
-                                    onclick="UI.handleResetPrompt('system')">Reset</button>
-                            </div>
+                    <!-- Tab: API Configuration -->
+                    <div id="settings-tab-api" class="settings-tab-content">
+                        <!-- API Provider Selection -->
+                        <div class="bg-gray-800 p-4 rounded-lg border border-gray-700 mb-4">
+                            <label for="api-endpoint" class="block text-lg font-semibold text-indigo-300 mb-2">Active
+                                API Provider</label>
+                            <select id="api-endpoint"
+                                class="w-full bg-gray-900 border border-gray-600 rounded-md p-3 text-base focus:ring-indigo-500 focus:border-indigo-500 transition-colors">
+                                <option value="openrouter" selected>OpenRouter (Recommended)</option>
+                                <option value="gemini">Google Gemini</option>
+                                <option value="custom">Custom (OpenAI-Compatible)</option>
+                            </select>
+                            <p class="text-sm text-gray-400 mt-2">Select the AI service you want to use for generating
+                                wildcards.</p>
                         </div>
-                        <textarea id="global-prompt" class="input-primary custom-scrollbar" rows="4"></textarea>
-                    </div>
-                    <div class="prompt-field-wrapper">
-                        <div class="flex justify-between items-center mb-2">
-                            <label for="suggestion-prompt" class="text-lg font-semibold text-indigo-300">Item
-                                Suggestion Prompt</label>
-                            <div class="flex items-center gap-2">
-                                <span
-                                    class="prompt-status-badge badge-default text-xs px-2 py-0.5 rounded-full">Default</span>
-                                <button type="button"
-                                    class="reset-prompt-btn hidden text-xs text-gray-400 hover:text-white underline"
-                                    onclick="UI.handleResetPrompt('suggest')">Reset</button>
-                            </div>
-                        </div>
-                        <textarea id="suggestion-prompt" class="input-primary custom-scrollbar" rows="4"></textarea>
-                    </div>
 
-                    <div class="prompt-field-wrapper">
-                        <div class="flex justify-between items-center mb-2">
-                            <label for="template-prompt" class="text-lg font-semibold text-indigo-300">Template
-                                System Prompt</label>
-                            <div class="flex items-center gap-2">
-                                <span
-                                    class="prompt-status-badge badge-default text-xs px-2 py-0.5 rounded-full">Default</span>
-                                <button type="button"
-                                    class="reset-prompt-btn hidden text-xs text-gray-400 hover:text-white underline"
-                                    onclick="UI.handleResetPrompt('template')">Reset</button>
-                            </div>
-                        </div>
-                        <textarea id="template-prompt" class="input-primary custom-scrollbar" rows="4"></textarea>
-                    </div>
-                    <!-- API Provider Selection -->
-                    <div class="bg-gray-800 p-4 rounded-lg border border-gray-700">
-                        <label for="api-endpoint" class="block text-lg font-semibold text-indigo-300 mb-2">Active API
-                            Provider</label>
-                        <select id="api-endpoint"
-                            class="w-full bg-gray-900 border border-gray-600 rounded-md p-3 text-base focus:ring-indigo-500 focus:border-indigo-500 transition-colors">
-                            <option value="openrouter" selected>OpenRouter (Recommended)</option>
-                            <option value="gemini">Google Gemini</option>
-                            <option value="custom">Custom (OpenAI-Compatible)</option>
-                        </select>
-                        <p class="text-sm text-gray-400 mt-2">Select the AI service you want to use for generating
-                            wildcards.</p>
-                    </div>
+                        <!-- API Settings Container (Populated via JS) -->
+                        <div id="api-settings-container"></div>
 
-                    <!-- API Settings Container (Populated via JS) -->
-                    <div id="api-settings-container"></div>
+                        <!-- Templates -->
+                        <template id="api-settings-template">
+                            <div
+                                class="api-settings-panel hidden space-y-4 p-5 bg-gray-800 rounded-lg border border-gray-700 transition-all duration-300">
+                                <div class="flex justify-between items-center mb-2 header-section">
+                                    <h3 class="text-xl font-semibold text-white flex items-center gap-2 provider-title">
+                                        <!-- Icon and Title injected here -->
+                                    </h3>
+                                    <a href="#" target="_blank" rel="noopener noreferrer"
+                                        class="text-indigo-400 hover:text-indigo-300 text-sm font-medium flex items-center gap-1 api-link">
+                                        Get API Key <span class="text-xs">↗</span>
+                                    </a>
+                                    <span
+                                        class="custom-badge hidden text-xs text-gray-400 uppercase tracking-wider font-semibold border border-gray-600 rounded px-2 py-0.5">OpenAI
+                                        Compatible</span>
+                                </div>
 
-                    <!-- Templates -->
-                    <template id="api-settings-template">
-                        <div
-                            class="api-settings-panel hidden space-y-4 p-5 bg-gray-800 rounded-lg border border-gray-700 transition-all duration-300">
-                            <div class="flex justify-between items-center mb-2 header-section">
-                                <h3 class="text-xl font-semibold text-white flex items-center gap-2 provider-title">
-                                    <!-- Icon and Title injected here -->
-                                </h3>
-                                <a href="#" target="_blank" rel="noopener noreferrer"
-                                    class="text-indigo-400 hover:text-indigo-300 text-sm font-medium flex items-center gap-1 api-link">
-                                    Get API Key <span class="text-xs">↗</span>
-                                </a>
-                                <span
-                                    class="custom-badge hidden text-xs text-gray-400 uppercase tracking-wider font-semibold border border-gray-600 rounded px-2 py-0.5">OpenAI
-                                    Compatible</span>
-                            </div>
+                                <div class="custom-url-section hidden">
+                                    <label class="block text-sm font-medium text-gray-300 mb-1">API Base URL</label>
+                                    <input type="text" class="api-url-input input-primary font-mono"
+                                        placeholder="http://localhost:11434/v1">
+                                    <p class="text-xs text-gray-500 mt-1">The base URL for the API (e.g. for Ollama, LM
+                                        Studio, etc.)</p>
+                                </div>
 
-                            <div class="custom-url-section hidden">
-                                <label class="block text-sm font-medium text-gray-300 mb-1">API Base URL</label>
-                                <input type="text" class="api-url-input input-primary font-mono"
-                                    placeholder="http://localhost:11434/v1">
-                                <p class="text-xs text-gray-500 mt-1">The base URL for the API (e.g. for Ollama, LM
-                                    Studio, etc.)</p>
-                            </div>
-
-                            <div>
-                                <label class="block text-sm font-medium text-gray-300 mb-1">API Key <span
-                                        class="optional-text text-gray-500 text-xs hidden">(Optional)</span></label>
-                                <div class="flex gap-2">
-                                    <div class="relative flex-grow">
-                                        <input type="password" class="api-key-input input-primary pr-10"
-                                            autocomplete="off">
-                                        <button class="toggle-visibility-btn input-icon-btn" title="Show/Hide API Key">
-                                            <svg class="eye-icon h-5 w-5" fill="none" viewBox="0 0 24 24"
-                                                stroke="currentColor">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                                    d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                                    d="M2.458 12C3.732 5.943 7.523 2 12 2c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7S3.732 13.057 2.458 9c1.274-4.057 5.065-7 9.542-7z" />
-                                                <path class="eye-slash hidden" stroke-linecap="round"
-                                                    stroke-linejoin="round" stroke-width="2" d="M17 17L7 7" />
-                                            </svg>
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-300 mb-1">API Key <span
+                                            class="optional-text text-gray-500 text-xs hidden">(Optional)</span></label>
+                                    <div class="flex gap-2">
+                                        <div class="relative flex-grow">
+                                            <input type="password" class="api-key-input input-primary pr-10"
+                                                autocomplete="off">
+                                            <button class="toggle-visibility-btn input-icon-btn"
+                                                title="Show/Hide API Key">
+                                                <svg class="eye-icon h-5 w-5" fill="none" viewBox="0 0 24 24"
+                                                    stroke="currentColor">
+                                                    <path stroke-linecap="round" stroke-linejoin="round"
+                                                        stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                                                    <path stroke-linecap="round" stroke-linejoin="round"
+                                                        stroke-width="2"
+                                                        d="M2.458 12C3.732 5.943 7.523 2 12 2c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7S3.732 13.057 2.458 9c1.274-4.057 5.065-7 9.542-7z" />
+                                                    <path class="eye-slash hidden" stroke-linecap="round"
+                                                        stroke-linejoin="round" stroke-width="2" d="M17 17L7 7" />
+                                                </svg>
+                                            </button>
+                                        </div>
+                                        <button
+                                            class="test-conn-btn bg-indigo-600 hover:bg-indigo-700 text-white font-medium py-2 px-4 rounded-md transition-colors shadow-sm whitespace-nowrap"
+                                            title="Test API connection and fetch available models">
+                                            🔌 Test
                                         </button>
                                     </div>
-                                    <button
-                                        class="test-conn-btn bg-indigo-600 hover:bg-indigo-700 text-white font-medium py-2 px-4 rounded-md transition-colors shadow-sm whitespace-nowrap"
-                                        title="Test API connection and fetch available models">
-                                        🔌 Test
-                                    </button>
+                                    <label class="checkbox-label">
+                                        <input type="checkbox" class="api-key-remember checkbox-input">
+                                        <span>Remember API Key (Encrypted in LocalStorage)</span>
+                                    </label>
+                                    <p class="key-help-text text-xs text-gray-500 mt-1 hidden">Key is stored in session
+                                        memory only.</p>
                                 </div>
-                                <label class="checkbox-label">
-                                    <input type="checkbox" class="api-key-remember checkbox-input">
-                                    <span>Remember API Key (Encrypted in LocalStorage)</span>
-                                </label>
-                                <p class="key-help-text text-xs text-gray-500 mt-1 hidden">Key is stored in session
-                                    memory only.</p>
+
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-300 mb-1">Model Name</label>
+                                    <div class="flex gap-2">
+                                        <div class="relative flex-grow">
+                                            <input type="text" class="model-name-input input-primary" placeholder="">
+                                            <datalist class="model-list"></datalist>
+                                        </div>
+                                        <button
+                                            class="test-model-btn bg-purple-600 hover:bg-purple-700 text-white font-medium py-2 px-4 rounded-md transition-colors shadow-sm whitespace-nowrap"
+                                            title="Send a quick test request to verify the model responds correctly">
+                                            🧪 Test Model
+                                        </button>
+                                    </div>
+                                    <div class="flex justify-between items-start mt-1">
+                                        <p class="loading-indicator text-xs text-indigo-400 hidden animate-pulse">
+                                            Loading models...</p>
+                                        <p class="error-indicator text-xs text-red-400 hidden"></p>
+                                        <p class="model-stats text-xs text-green-400 hidden"></p>
+                                    </div>
+                                </div>
+
+                                <div
+                                    class="tip-box hidden bg-blue-900/20 border border-blue-800/50 rounded p-3 text-sm text-blue-200">
+                                    <strong>Tip:</strong> <span class="tip-text"></span>
+                                </div>
                             </div>
+                        </template>
+                    </div>
 
-                            <div>
-                                <label class="block text-sm font-medium text-gray-300 mb-1">Model Name</label>
-                                <div class="flex gap-2">
-                                    <div class="relative flex-grow">
-                                        <input type="text" class="model-name-input input-primary" placeholder="">
-                                        <datalist class="model-list"></datalist>
-                                    </div>
-                                    <button
-                                        class="test-model-btn bg-purple-600 hover:bg-purple-700 text-white font-medium py-2 px-4 rounded-md transition-colors shadow-sm whitespace-nowrap"
-                                        title="Send a quick test request to verify the model responds correctly">
-                                        🧪 Test Model
-                                    </button>
-                                </div>
-                                <div class="flex justify-between items-start mt-1">
-                                    <p class="loading-indicator text-xs text-indigo-400 hidden animate-pulse">Loading
-                                        models...</p>
-                                    <p class="error-indicator text-xs text-red-400 hidden"></p>
-                                    <p class="model-stats text-xs text-green-400 hidden"></p>
+                    <!-- Tab: Prompts -->
+                    <div id="settings-tab-prompts" class="settings-tab-content hidden">
+                        <div class="prompt-field-wrapper">
+                            <div class="flex justify-between items-center mb-2">
+                                <label for="global-prompt" class="text-lg font-semibold text-indigo-300">Global System
+                                    Prompt (for Wildcard Generation)</label>
+                                <div class="flex items-center gap-2">
+                                    <span
+                                        class="prompt-status-badge badge-default text-xs px-2 py-0.5 rounded-full">Default</span>
+                                    <button type="button"
+                                        class="reset-prompt-btn hidden text-xs text-gray-400 hover:text-white underline"
+                                        onclick="UI.handleResetPrompt('system')">Reset</button>
                                 </div>
                             </div>
-
-                            <details class="advanced-model-settings bg-gray-900/30 rounded border border-gray-700/50">
-                                <summary
-                                    class="p-3 cursor-pointer text-sm font-medium text-gray-300 hover:text-white flex justify-between items-center select-none">
-                                    <span>Advanced Model Parameters</span>
-                                    <span class="arrow-down transition-transform duration-300 text-xs">▼</span>
-                                </summary>
-                                <div class="p-4 border-t border-gray-700/50 grid grid-cols-1 sm:grid-cols-2 gap-4">
-                                    <!-- Temperature -->
-                                    <div class="setting-group">
-                                        <div class="flex justify-between mb-1">
-                                            <label class="text-xs text-gray-400 cursor-help"
-                                                title="Controls randomness: Higher values (e.g., 1.0+) make output more random and creative. Lower values (e.g., 0.2) make it more focused and deterministic.">Temperature</label>
-                                            <span class="text-xs text-indigo-400 font-mono setting-value-display"
-                                                data-for="setting-temperature">0.7</span>
-                                        </div>
-                                        <input type="range"
-                                            class="setting-input w-full h-1 bg-gray-700 rounded-lg appearance-none cursor-pointer"
-                                            data-setting="MODEL_TEMPERATURE" min="0" max="2" step="0.1" value="0.7">
-                                    </div>
-
-                                    <!-- Max Tokens -->
-                                    <div class="setting-group">
-                                        <div class="flex justify-between mb-1">
-                                            <label class="text-xs text-gray-400 cursor-help"
-                                                title="The maximum number of tokens to generate. Shared between prompt and completion.">Max
-                                                Tokens</label>
-                                            <span class="text-xs text-indigo-400 font-mono setting-value-display"
-                                                data-for="setting-max-tokens">1000</span>
-                                        </div>
-                                        <input type="number"
-                                            class="setting-input w-full bg-gray-800 border border-gray-600 rounded px-2 py-1 text-xs focus:ring-1 focus:ring-indigo-500"
-                                            data-setting="MODEL_MAX_TOKENS" min="1" step="1" value="1000">
-                                    </div>
-
-                                    <!-- Top P -->
-                                    <div class="setting-group">
-                                        <div class="flex justify-between mb-1">
-                                            <label class="text-xs text-gray-400 cursor-help"
-                                                title="Nucleus Sampling: Limits the model to the top P percentage of probability mass. 1.0 = consider all. 0.1 = consider only top 10%.">Top
-                                                P</label>
-                                            <span class="text-xs text-indigo-400 font-mono setting-value-display"
-                                                data-for="setting-top-p">1.0</span>
-                                        </div>
-                                        <input type="range"
-                                            class="setting-input w-full h-1 bg-gray-700 rounded-lg appearance-none cursor-pointer"
-                                            data-setting="MODEL_TOP_P" min="0" max="1" step="0.01" value="1.0">
-                                    </div>
-
-                                    <!-- Top K -->
-                                    <div class="setting-group">
-                                        <div class="flex justify-between mb-1">
-                                            <label class="text-xs text-gray-400 cursor-help"
-                                                title="Limits the model to the top K most likely tokens. 0 = disabled.">Top
-                                                K</label>
-                                            <span class="text-xs text-indigo-400 font-mono setting-value-display"
-                                                data-for="setting-top-k">0</span>
-                                        </div>
-                                        <input type="number"
-                                            class="setting-input w-full bg-gray-800 border border-gray-600 rounded px-2 py-1 text-xs focus:ring-1 focus:ring-indigo-500"
-                                            data-setting="MODEL_TOP_K" min="0" step="1" value="0">
-                                    </div>
-
-                                    <!-- Frequency Penalty -->
-                                    <div class="setting-group">
-                                        <div class="flex justify-between mb-1">
-                                            <label class="text-xs text-gray-400 cursor-help"
-                                                title="Penalizes tokens based on their frequency in the text so far. Positive values decrease likelihood of repetition.">Freq.
-                                                Penalty</label>
-                                            <span class="text-xs text-indigo-400 font-mono setting-value-display"
-                                                data-for="setting-freq-penalty">0.0</span>
-                                        </div>
-                                        <input type="range"
-                                            class="setting-input w-full h-1 bg-gray-700 rounded-lg appearance-none cursor-pointer"
-                                            data-setting="MODEL_FREQUENCY_PENALTY" min="-2" max="2" step="0.1"
-                                            value="0.0">
-                                    </div>
-
-                                    <!-- Presence Penalty -->
-                                    <div class="setting-group">
-                                        <div class="flex justify-between mb-1">
-                                            <label class="text-xs text-gray-400 cursor-help"
-                                                title="Penalizes tokens based on whether they have appeared in the text so far. Encourages new topics.">Pres.
-                                                Penalty</label>
-                                            <span class="text-xs text-indigo-400 font-mono setting-value-display"
-                                                data-for="setting-pres-penalty">0.0</span>
-                                        </div>
-                                        <input type="range"
-                                            class="setting-input w-full h-1 bg-gray-700 rounded-lg appearance-none cursor-pointer"
-                                            data-setting="MODEL_PRESENCE_PENALTY" min="-2" max="2" step="0.1"
-                                            value="0.0">
-                                    </div>
-
-                                    <!-- Repetition Penalty -->
-                                    <div class="setting-group">
-                                        <div class="flex justify-between mb-1">
-                                            <label class="text-xs text-gray-400 cursor-help"
-                                                title="Penalty for exact repetition of tokens. 1.0 = no penalty. > 1.0 = penalty.">Rep.
-                                                Penalty</label>
-                                            <span class="text-xs text-indigo-400 font-mono setting-value-display"
-                                                data-for="setting-rep-penalty">1.0</span>
-                                        </div>
-                                        <input type="range"
-                                            class="setting-input w-full h-1 bg-gray-700 rounded-lg appearance-none cursor-pointer"
-                                            data-setting="MODEL_REPETITION_PENALTY" min="0" max="2" step="0.01"
-                                            value="1.0">
-                                    </div>
-
-                                    <!-- Min P -->
-                                    <div class="setting-group">
-                                        <div class="flex justify-between mb-1">
-                                            <label class="text-xs text-gray-400 cursor-help"
-                                                title="Minimum probability relative to the most likely token. Tokens with probability < Min P * Top Prob are discarded.">Min
-                                                P</label>
-                                            <span class="text-xs text-indigo-400 font-mono setting-value-display"
-                                                data-for="setting-min-p">0.0</span>
-                                        </div>
-                                        <input type="range"
-                                            class="setting-input w-full h-1 bg-gray-700 rounded-lg appearance-none cursor-pointer"
-                                            data-setting="MODEL_MIN_P" min="0" max="1" step="0.01" value="0.0">
-                                    </div>
-
-                                    <!-- Top A -->
-                                    <div class="setting-group">
-                                        <div class="flex justify-between mb-1">
-                                            <label class="text-xs text-gray-400 cursor-help"
-                                                title="Dynamic truncation based on the confidence of the top token. Higher Top A = more truncation when confident.">Top
-                                                A</label>
-                                            <span class="text-xs text-indigo-400 font-mono setting-value-display"
-                                                data-for="setting-top-a">0.0</span>
-                                        </div>
-                                        <input type="range"
-                                            class="setting-input w-full h-1 bg-gray-700 rounded-lg appearance-none cursor-pointer"
-                                            data-setting="MODEL_TOP_A" min="0" max="1" step="0.01" value="0.0">
-                                    </div>
-
-                                    <!-- Seed -->
-                                    <div class="setting-group">
-                                        <div class="flex justify-between mb-1">
-                                            <label class="text-xs text-gray-400 cursor-help"
-                                                title="Integer seed for deterministic generation. 0 = random.">Seed</label>
-                                            <span class="text-xs text-indigo-400 font-mono setting-value-display"
-                                                data-for="setting-seed">0</span>
-                                        </div>
-                                        <input type="number"
-                                            class="setting-input w-full bg-gray-800 border border-gray-600 rounded px-2 py-1 text-xs focus:ring-1 focus:ring-indigo-500"
-                                            data-setting="MODEL_SEED" step="1" value="0">
-                                    </div>
-
-                                    <!-- Reasoning Effort -->
-                                    <div class="setting-group">
-                                        <div class="flex justify-between mb-1">
-                                            <label class="text-xs text-gray-400 cursor-help"
-                                                title="Controls how much time/effort the model spends on reasoning (o1/o3/thinking models).">Reasoning
-                                                Effort</label>
-                                            <span class="text-xs text-indigo-400 font-mono setting-value-display hidden"
-                                                data-for="setting-reasoning-effort">default</span>
-                                        </div>
-                                        <select
-                                            class="setting-input w-full bg-gray-800 border border-gray-600 rounded px-2 py-1 text-xs focus:ring-1 focus:ring-indigo-500"
-                                            data-setting="MODEL_REASONING_EFFORT">
-                                            <option value="default">Default</option>
-                                            <option value="high">High</option>
-                                            <option value="medium">Medium</option>
-                                            <option value="low">Low</option>
-                                            <option value="none">None (Disabled)</option>
-                                        </select>
-                                    </div>
-
-                                    <!-- Reasoning Max Tokens -->
-                                    <div class="setting-group">
-                                        <div class="flex justify-between mb-1">
-                                            <label class="text-xs text-gray-400 cursor-help"
-                                                title="Maximum tokens dedicated to reasoning/thinking. 0 = model default/disabled.">Reasoning
-                                                Tokens</label>
-                                            <span class="text-xs text-indigo-400 font-mono setting-value-display"
-                                                data-for="setting-reasoning-max-tokens">0</span>
-                                        </div>
-                                        <input type="number"
-                                            class="setting-input w-full bg-gray-800 border border-gray-600 rounded px-2 py-1 text-xs focus:ring-1 focus:ring-indigo-500"
-                                            data-setting="MODEL_REASONING_MAX_TOKENS" min="0" step="1" value="0">
-                                    </div>
+                            <textarea id="global-prompt" class="input-primary custom-scrollbar" rows="4"></textarea>
+                        </div>
+                        <div class="prompt-field-wrapper">
+                            <div class="flex justify-between items-center mb-2">
+                                <label for="suggestion-prompt" class="text-lg font-semibold text-indigo-300">Item
+                                    Suggestion Prompt</label>
+                                <div class="flex items-center gap-2">
+                                    <span
+                                        class="prompt-status-badge badge-default text-xs px-2 py-0.5 rounded-full">Default</span>
+                                    <button type="button"
+                                        class="reset-prompt-btn hidden text-xs text-gray-400 hover:text-white underline"
+                                        onclick="UI.handleResetPrompt('suggest')">Reset</button>
                                 </div>
-                            </details>
+                            </div>
+                            <textarea id="suggestion-prompt" class="input-primary custom-scrollbar" rows="4"></textarea>
                         </div>
-
-                        <div
-                            class="tip-box hidden bg-blue-900/20 border border-blue-800/50 rounded p-3 text-sm text-blue-200">
-                            <strong>Tip:</strong> <span class="tip-text"></span>
-                        </div>
-                </div>
-                </template>
-                <details class="bg-gray-900/50 rounded-lg border border-gray-700 mt-6">
-                    <summary class="p-4 cursor-pointer font-semibold text-indigo-300 flex justify-between items-center">
-                        <span>Advanced Configuration</span>
-                        <span class="arrow-down transition-transform duration-300"><svg class="h-6 w-6" fill="none"
-                                viewBox="0 0 24 24" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                    d="M19 9l-7 7-7-7"></path>
-                            </svg></span>
-                    </summary>
-                    <div class="p-4 border-t border-gray-700 grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <div>
-                            <label for="config-history-limit"
-                                class="block text-sm font-medium text-gray-300 mb-1">History Limit</label>
-                            <input type="number" id="config-history-limit"
-                                class="w-full bg-gray-700 border border-gray-600 rounded-md p-2 text-sm focus:ring-indigo-500 focus:border-indigo-500"
-                                placeholder="e.g., 20">
-                            <p class="text-xs text-gray-400 mt-1">Max number of undo steps. Reload required.</p>
-                        </div>
-                        <div>
-                            <label for="config-search-debounce"
-                                class="block text-sm font-medium text-gray-300 mb-1">Search Debounce Delay
-                                (ms)</label>
-                            <input type="number" id="config-search-debounce"
-                                class="w-full bg-gray-700 border border-gray-600 rounded-md p-2 text-sm focus:ring-indigo-500 focus:border-indigo-500"
-                                placeholder="e.g., 300">
-                            <p class="text-xs text-gray-400 mt-1">Delay before search is triggered. Reload required.
-                            </p>
-                        </div>
-                        <div>
-                            <label for="config-storage-key" class="block text-sm font-medium text-gray-300 mb-1">State
-                                Storage Key</label>
-                            <input type="text" id="config-storage-key"
-                                class="w-full bg-gray-700 border border-gray-600 rounded-md p-2 text-sm focus:ring-indigo-500 focus:border-indigo-500">
-                            <p class="text-xs text-gray-400 mt-1">LocalStorage key for app state. Change with
-                                caution. Reload required.</p>
-                        </div>
-                        <div>
-                            <label for="config-history-key" class="block text-sm font-medium text-gray-300 mb-1">History
-                                Storage Key</label>
-                            <input type="text" id="config-history-key"
-                                class="w-full bg-gray-700 border border-gray-600 rounded-md p-2 text-sm focus:ring-indigo-500 focus:border-indigo-500">
-                            <p class="text-xs text-gray-400 mt-1">LocalStorage key for history. Change with caution.
-                                Reload required.</p>
-                        </div>
-                        <div>
-                            <label for="config-mindmap-node-size"
-                                class="block text-sm font-medium text-gray-300 mb-1">Mindmap Node Size (px)</label>
-                            <input type="number" id="config-mindmap-node-size"
-                                class="w-full bg-gray-700 border border-gray-600 rounded-md p-2 text-sm focus:ring-indigo-500 focus:border-indigo-500"
-                                placeholder="e.g., 24">
-                        </div>
-                        <div>
-                            <label for="config-mindmap-category-size"
-                                class="block text-sm font-medium text-gray-300 mb-1">Mindmap Category Size (px)</label>
-                            <input type="number" id="config-mindmap-category-size"
-                                class="w-full bg-gray-700 border border-gray-600 rounded-md p-2 text-sm focus:ring-indigo-500 focus:border-indigo-500"
-                                placeholder="e.g., 32">
+                        <div class="prompt-field-wrapper">
+                            <div class="flex justify-between items-center mb-2">
+                                <label for="template-prompt" class="text-lg font-semibold text-indigo-300">Template
+                                    System Prompt</label>
+                                <div class="flex items-center gap-2">
+                                    <span
+                                        class="prompt-status-badge badge-default text-xs px-2 py-0.5 rounded-full">Default</span>
+                                    <button type="button"
+                                        class="reset-prompt-btn hidden text-xs text-gray-400 hover:text-white underline"
+                                        onclick="UI.handleResetPrompt('template')">Reset</button>
+                                </div>
+                            </div>
+                            <textarea id="template-prompt" class="input-primary custom-scrollbar" rows="4"></textarea>
                         </div>
                     </div>
-                </details>
-            </div>
-            <!-- Settings Modal Footer -->
-            <div class="p-5 border-t border-gray-700/50 flex flex-wrap gap-3 justify-between bg-gray-900/30">
-                <div class="flex gap-2">
-                    <button id="load-settings-btn"
-                        class="bg-gray-700 hover:bg-gray-600 text-white text-sm font-medium py-2 px-4 rounded-md transition-colors flex items-center gap-2">
-                        📥 Load Settings
-                    </button>
-                    <button id="export-settings-btn"
-                        class="bg-gray-700 hover:bg-gray-600 text-white text-sm font-medium py-2 px-4 rounded-md transition-colors flex items-center gap-2">
-                        📤 Export Settings
-                    </button>
+
+                    <!-- Tab: Model Parameters -->
+                    <div id="settings-tab-model" class="settings-tab-content hidden">
+                        <p class="text-sm text-gray-400 mb-4">Configure AI model generation parameters. These apply as
+                            defaults across all providers.</p>
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            <!-- Temperature -->
+                            <div class="setting-group bg-gray-800/50 p-3 rounded-lg border border-gray-700/50">
+                                <div class="flex justify-between mb-1">
+                                    <label class="text-sm text-gray-300 cursor-help"
+                                        title="Controls randomness: Higher values (e.g., 1.0+) make output more random and creative. Lower values (e.g., 0.2) make it more focused and deterministic.">Temperature</label>
+                                    <span class="text-sm text-indigo-400 font-mono" id="model-temp-display">0.7</span>
+                                </div>
+                                <input type="range" id="config-model-temperature"
+                                    class="w-full h-2 bg-gray-700 rounded-lg appearance-none cursor-pointer accent-indigo-500"
+                                    data-setting="MODEL_TEMPERATURE" min="0" max="2" step="0.1" value="0.7">
+                            </div>
+                            <!-- Max Tokens -->
+                            <div class="setting-group bg-gray-800/50 p-3 rounded-lg border border-gray-700/50">
+                                <div class="flex justify-between mb-1">
+                                    <label class="text-sm text-gray-300 cursor-help"
+                                        title="The maximum number of tokens to generate.">Max Tokens</label>
+                                </div>
+                                <input type="number" id="config-model-max-tokens"
+                                    class="w-full bg-gray-800 border border-gray-600 rounded px-3 py-1.5 text-sm focus:ring-1 focus:ring-indigo-500"
+                                    data-setting="MODEL_MAX_TOKENS" min="1" step="1" value="1000">
+                            </div>
+                            <!-- Top P -->
+                            <div class="setting-group bg-gray-800/50 p-3 rounded-lg border border-gray-700/50">
+                                <div class="flex justify-between mb-1">
+                                    <label class="text-sm text-gray-300 cursor-help"
+                                        title="Nucleus Sampling: Limits the model to the top P percentage of probability mass.">Top
+                                        P</label>
+                                    <span class="text-sm text-indigo-400 font-mono" id="model-top-p-display">1.0</span>
+                                </div>
+                                <input type="range" id="config-model-top-p"
+                                    class="w-full h-2 bg-gray-700 rounded-lg appearance-none cursor-pointer accent-indigo-500"
+                                    data-setting="MODEL_TOP_P" min="0" max="1" step="0.01" value="1.0">
+                            </div>
+                            <!-- Top K -->
+                            <div class="setting-group bg-gray-800/50 p-3 rounded-lg border border-gray-700/50">
+                                <div class="flex justify-between mb-1">
+                                    <label class="text-sm text-gray-300 cursor-help"
+                                        title="Limits the model to the top K most likely tokens. 0 = disabled.">Top
+                                        K</label>
+                                </div>
+                                <input type="number" id="config-model-top-k"
+                                    class="w-full bg-gray-800 border border-gray-600 rounded px-3 py-1.5 text-sm focus:ring-1 focus:ring-indigo-500"
+                                    data-setting="MODEL_TOP_K" min="0" step="1" value="0">
+                            </div>
+                            <!-- Frequency Penalty -->
+                            <div class="setting-group bg-gray-800/50 p-3 rounded-lg border border-gray-700/50">
+                                <div class="flex justify-between mb-1">
+                                    <label class="text-sm text-gray-300 cursor-help"
+                                        title="Penalizes tokens based on frequency. Positive values decrease repetition.">Frequency
+                                        Penalty</label>
+                                    <span class="text-sm text-indigo-400 font-mono"
+                                        id="model-freq-penalty-display">0.0</span>
+                                </div>
+                                <input type="range" id="config-model-freq-penalty"
+                                    class="w-full h-2 bg-gray-700 rounded-lg appearance-none cursor-pointer accent-indigo-500"
+                                    data-setting="MODEL_FREQUENCY_PENALTY" min="-2" max="2" step="0.1" value="0.0">
+                            </div>
+                            <!-- Presence Penalty -->
+                            <div class="setting-group bg-gray-800/50 p-3 rounded-lg border border-gray-700/50">
+                                <div class="flex justify-between mb-1">
+                                    <label class="text-sm text-gray-300 cursor-help"
+                                        title="Penalizes tokens based on whether they appeared. Encourages new topics.">Presence
+                                        Penalty</label>
+                                    <span class="text-sm text-indigo-400 font-mono"
+                                        id="model-pres-penalty-display">0.0</span>
+                                </div>
+                                <input type="range" id="config-model-pres-penalty"
+                                    class="w-full h-2 bg-gray-700 rounded-lg appearance-none cursor-pointer accent-indigo-500"
+                                    data-setting="MODEL_PRESENCE_PENALTY" min="-2" max="2" step="0.1" value="0.0">
+                            </div>
+                            <!-- Repetition Penalty -->
+                            <div class="setting-group bg-gray-800/50 p-3 rounded-lg border border-gray-700/50">
+                                <div class="flex justify-between mb-1">
+                                    <label class="text-sm text-gray-300 cursor-help"
+                                        title="Penalty for exact repetition. 1.0 = no penalty.">Repetition
+                                        Penalty</label>
+                                    <span class="text-sm text-indigo-400 font-mono"
+                                        id="model-rep-penalty-display">1.0</span>
+                                </div>
+                                <input type="range" id="config-model-rep-penalty"
+                                    class="w-full h-2 bg-gray-700 rounded-lg appearance-none cursor-pointer accent-indigo-500"
+                                    data-setting="MODEL_REPETITION_PENALTY" min="0" max="2" step="0.01" value="1.0">
+                            </div>
+                            <!-- Seed -->
+                            <div class="setting-group bg-gray-800/50 p-3 rounded-lg border border-gray-700/50">
+                                <div class="flex justify-between mb-1">
+                                    <label class="text-sm text-gray-300 cursor-help"
+                                        title="Integer seed for deterministic generation. 0 = random.">Seed</label>
+                                </div>
+                                <input type="number" id="config-model-seed"
+                                    class="w-full bg-gray-800 border border-gray-600 rounded px-3 py-1.5 text-sm focus:ring-1 focus:ring-indigo-500"
+                                    data-setting="MODEL_SEED" min="0" step="1" value="0">
+                            </div>
+                            <!-- Reasoning Effort -->
+                            <div class="setting-group bg-gray-800/50 p-3 rounded-lg border border-gray-700/50">
+                                <div class="flex justify-between mb-1">
+                                    <label class="text-sm text-gray-300 cursor-help"
+                                        title="Controls reasoning effort for thinking models (o1/o3).">Reasoning
+                                        Effort</label>
+                                </div>
+                                <select id="config-model-reasoning-effort"
+                                    class="w-full bg-gray-800 border border-gray-600 rounded px-3 py-1.5 text-sm focus:ring-1 focus:ring-indigo-500"
+                                    data-setting="MODEL_REASONING_EFFORT">
+                                    <option value="default">Default</option>
+                                    <option value="high">High</option>
+                                    <option value="medium">Medium</option>
+                                    <option value="low">Low</option>
+                                    <option value="none">None (Disabled)</option>
+                                </select>
+                            </div>
+                            <!-- Reasoning Max Tokens -->
+                            <div class="setting-group bg-gray-800/50 p-3 rounded-lg border border-gray-700/50">
+                                <div class="flex justify-between mb-1">
+                                    <label class="text-sm text-gray-300 cursor-help"
+                                        title="Maximum tokens for reasoning. 0 = model default.">Reasoning
+                                        Tokens</label>
+                                </div>
+                                <input type="number" id="config-model-reasoning-tokens"
+                                    class="w-full bg-gray-800 border border-gray-600 rounded px-3 py-1.5 text-sm focus:ring-1 focus:ring-indigo-500"
+                                    data-setting="MODEL_REASONING_MAX_TOKENS" min="0" step="1" value="0">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Tab: Display & UI -->
+                    <div id="settings-tab-display" class="settings-tab-content hidden">
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <!-- Preferred View -->
+                            <div class="setting-group bg-gray-800/50 p-4 rounded-lg border border-gray-700/50">
+                                <label for="config-preferred-view"
+                                    class="block text-sm font-medium text-gray-300 mb-2">Preferred View</label>
+                                <select id="config-preferred-view"
+                                    class="w-full bg-gray-800 border border-gray-600 rounded-md p-2 text-sm focus:ring-indigo-500 focus:border-indigo-500">
+                                    <option value="list">List View</option>
+                                    <option value="mindmap">Mindmap View</option>
+                                    <option value="dual">Dual View</option>
+                                </select>
+                                <p class="text-xs text-gray-400 mt-1">Default view mode on startup.</p>
+                            </div>
+                            <!-- Theme -->
+                            <div class="setting-group bg-gray-800/50 p-4 rounded-lg border border-gray-700/50">
+                                <label class="block text-sm font-medium text-gray-300 mb-2">Theme</label>
+                                <div class="flex items-center gap-3">
+                                    <button id="config-theme-toggle"
+                                        class="flex items-center gap-2 px-4 py-2 rounded-lg bg-gray-700 hover:bg-gray-600 transition-colors">
+                                        <span id="theme-icon">🌙</span>
+                                        <span id="theme-label">Dark</span>
+                                    </button>
+                                </div>
+                                <p class="text-xs text-gray-400 mt-2">Toggle between light and dark mode.</p>
+                            </div>
+                            <!-- Default Wildcards Visible -->
+                            <div class="setting-group bg-gray-800/50 p-4 rounded-lg border border-gray-700/50">
+                                <label class="block text-sm font-medium text-gray-300 mb-2">Mindmap Wildcards</label>
+                                <label class="checkbox-label">
+                                    <input type="checkbox" id="config-default-wildcards-visible" class="checkbox-input"
+                                        checked>
+                                    <span>Show wildcards by default in mindmap</span>
+                                </label>
+                            </div>
+                            <!-- Enable Animations -->
+                            <div class="setting-group bg-gray-800/50 p-4 rounded-lg border border-gray-700/50">
+                                <label class="block text-sm font-medium text-gray-300 mb-2">Animations</label>
+                                <label class="checkbox-label">
+                                    <input type="checkbox" id="config-enable-animations" class="checkbox-input" checked>
+                                    <span>Enable UI animations</span>
+                                </label>
+                                <p class="text-xs text-gray-400 mt-1">Disable for reduced motion preference.</p>
+                            </div>
+                            <!-- Compact Card Mode -->
+                            <div class="setting-group bg-gray-800/50 p-4 rounded-lg border border-gray-700/50">
+                                <label class="block text-sm font-medium text-gray-300 mb-2">Card Display</label>
+                                <label class="checkbox-label">
+                                    <input type="checkbox" id="config-compact-mode" class="checkbox-input">
+                                    <span>Compact card mode</span>
+                                </label>
+                                <p class="text-xs text-gray-400 mt-1">Denser card layout with less padding.</p>
+                            </div>
+                            <!-- Mindmap Node Size -->
+                            <div class="setting-group bg-gray-800/50 p-4 rounded-lg border border-gray-700/50">
+                                <label for="config-mindmap-node-size"
+                                    class="block text-sm font-medium text-gray-300 mb-2">Mindmap Node Size (px)</label>
+                                <input type="number" id="config-mindmap-node-size"
+                                    class="w-full bg-gray-800 border border-gray-600 rounded-md p-2 text-sm focus:ring-indigo-500 focus:border-indigo-500"
+                                    placeholder="e.g., 24">
+                            </div>
+                            <!-- Mindmap Category Size -->
+                            <div class="setting-group bg-gray-800/50 p-4 rounded-lg border border-gray-700/50">
+                                <label for="config-mindmap-category-size"
+                                    class="block text-sm font-medium text-gray-300 mb-2">Mindmap Category Size
+                                    (px)</label>
+                                <input type="number" id="config-mindmap-category-size"
+                                    class="w-full bg-gray-800 border border-gray-600 rounded-md p-2 text-sm focus:ring-indigo-500 focus:border-indigo-500"
+                                    placeholder="e.g., 32">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Tab: Advanced -->
+                    <div id="settings-tab-advanced" class="settings-tab-content hidden">
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <!-- History Limit -->
+                            <div class="setting-group bg-gray-800/50 p-4 rounded-lg border border-gray-700/50">
+                                <label for="config-history-limit"
+                                    class="block text-sm font-medium text-gray-300 mb-2">History Limit</label>
+                                <input type="number" id="config-history-limit"
+                                    class="w-full bg-gray-800 border border-gray-600 rounded-md p-2 text-sm focus:ring-indigo-500 focus:border-indigo-500"
+                                    placeholder="e.g., 20">
+                                <p class="text-xs text-gray-400 mt-1">Max number of undo steps. Reload required.</p>
+                            </div>
+                            <!-- Search Debounce -->
+                            <div class="setting-group bg-gray-800/50 p-4 rounded-lg border border-gray-700/50">
+                                <label for="config-search-debounce"
+                                    class="block text-sm font-medium text-gray-300 mb-2">Search Debounce Delay
+                                    (ms)</label>
+                                <input type="number" id="config-search-debounce"
+                                    class="w-full bg-gray-800 border border-gray-600 rounded-md p-2 text-sm focus:ring-indigo-500 focus:border-indigo-500"
+                                    placeholder="e.g., 300">
+                                <p class="text-xs text-gray-400 mt-1">Delay before search is triggered.</p>
+                            </div>
+                            <!-- Auto-Save Interval -->
+                            <div class="setting-group bg-gray-800/50 p-4 rounded-lg border border-gray-700/50">
+                                <label for="config-auto-save"
+                                    class="block text-sm font-medium text-gray-300 mb-2">Auto-Save Interval (ms)</label>
+                                <input type="number" id="config-auto-save"
+                                    class="w-full bg-gray-800 border border-gray-600 rounded-md p-2 text-sm focus:ring-indigo-500 focus:border-indigo-500"
+                                    placeholder="0 = disabled">
+                                <p class="text-xs text-gray-400 mt-1">0 = disabled. Auto-save data periodically.</p>
+                            </div>
+                        </div>
+
+                        <!-- AI Cleanup Settings -->
+                        <div class="mt-6">
+                            <h3 class="text-lg font-semibold text-indigo-300 mb-3">AI Cleanup Settings</h3>
+                            <p class="text-sm text-gray-400 mb-3">Configure AI-powered duplicate cleanup. Also available
+                                in the duplicate finder dialog.</p>
+                            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                <div class="setting-group bg-gray-800/50 p-3 rounded-lg border border-gray-700/50">
+                                    <label for="config-ai-batch-size"
+                                        class="block text-sm font-medium text-gray-300 mb-1">Batch Size</label>
+                                    <input type="number" id="config-ai-batch-size"
+                                        class="w-full bg-gray-800 border border-gray-600 rounded px-3 py-1.5 text-sm"
+                                        value="10" min="1">
+                                    <p class="text-xs text-gray-400 mt-1">Items per AI request</p>
+                                </div>
+                                <div class="setting-group bg-gray-800/50 p-3 rounded-lg border border-gray-700/50">
+                                    <label for="config-ai-parallel"
+                                        class="block text-sm font-medium text-gray-300 mb-1">Parallel Requests</label>
+                                    <input type="number" id="config-ai-parallel"
+                                        class="w-full bg-gray-800 border border-gray-600 rounded px-3 py-1.5 text-sm"
+                                        value="1" min="1">
+                                    <p class="text-xs text-gray-400 mt-1">Concurrent API calls</p>
+                                </div>
+                                <div class="setting-group bg-gray-800/50 p-3 rounded-lg border border-gray-700/50">
+                                    <label for="config-ai-cooldown"
+                                        class="block text-sm font-medium text-gray-300 mb-1">Cooldown (ms)</label>
+                                    <input type="number" id="config-ai-cooldown"
+                                        class="w-full bg-gray-800 border border-gray-600 rounded px-3 py-1.5 text-sm"
+                                        value="0" min="0">
+                                    <p class="text-xs text-gray-400 mt-1">Delay between batches</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Tab: Data Management -->
+                    <div id="settings-tab-data" class="settings-tab-content hidden">
+                        <!-- Storage Profiles -->
+                        <div class="bg-gray-800/50 p-4 rounded-lg border border-gray-700/50 mb-6">
+                            <h3 class="text-lg font-semibold text-indigo-300 mb-3 flex items-center gap-2">
+                                <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4m0 5c0 2.21-3.582 4-8 4s-8-1.79-8-4" />
+                                </svg>
+                                Storage Profiles
+                            </h3>
+                            <p class="text-sm text-gray-400 mb-4">Manage separate data profiles. Each profile stores its
+                                own wildcards, history, and settings.</p>
+
+                            <div class="flex gap-3 items-center mb-4">
+                                <label class="text-sm text-gray-300">Current Profile:</label>
+                                <select id="storage-profile-select"
+                                    class="bg-gray-800 border border-gray-600 rounded-md px-3 py-1.5 text-sm focus:ring-indigo-500 flex-grow max-w-xs">
+                                    <option value="default">Default</option>
+                                </select>
+                                <button id="new-profile-btn"
+                                    class="px-3 py-1.5 text-sm bg-indigo-600 hover:bg-indigo-700 rounded-md transition-colors">+
+                                    New</button>
+                                <button id="delete-profile-btn"
+                                    class="px-3 py-1.5 text-sm bg-red-900/30 hover:bg-red-900/50 text-red-300 border border-red-800/50 rounded-md transition-colors">Delete</button>
+                            </div>
+
+                            <div class="bg-gray-900/50 p-3 rounded border border-gray-700/50 text-sm">
+                                <div class="flex items-center gap-2 text-gray-300">
+                                    <span class="text-gray-500">Storage Key:</span>
+                                    <code id="current-storage-key"
+                                        class="text-xs bg-gray-800 px-2 py-0.5 rounded font-mono">wildcardGeneratorState_v12</code>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Import/Export -->
+                        <div class="bg-gray-800/50 p-4 rounded-lg border border-gray-700/50 mb-6">
+                            <h3 class="text-lg font-semibold text-indigo-300 mb-3">Import / Export</h3>
+                            <div class="flex flex-wrap gap-3">
+                                <button id="load-settings-btn"
+                                    class="bg-gray-700 hover:bg-gray-600 text-white text-sm font-medium py-2 px-4 rounded-md transition-colors flex items-center gap-2">
+                                    📥 Import Settings
+                                </button>
+                                <button id="export-settings-btn"
+                                    class="bg-gray-700 hover:bg-gray-600 text-white text-sm font-medium py-2 px-4 rounded-md transition-colors flex items-center gap-2">
+                                    📤 Export Settings
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Danger Zone -->
+                        <div class="bg-red-900/10 p-4 rounded-lg border border-red-800/50">
+                            <h3 class="text-lg font-semibold text-red-400 mb-3 flex items-center gap-2">
+                                <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                                </svg>
+                                Danger Zone
+                            </h3>
+                            <p class="text-sm text-gray-400 mb-3">These actions cannot be undone.</p>
+                            <button id="reset-settings-btn"
+                                class="bg-red-900/30 hover:bg-red-900/50 text-red-300 hover:text-red-200 border border-red-800/50 text-sm font-medium py-2 px-4 rounded-md transition-colors flex items-center gap-2">
+                                🗑️ Reset All Settings
+                            </button>
+                        </div>
+                    </div>
                 </div>
-                <button id="reset-settings-btn"
-                    class="bg-red-900/30 hover:bg-red-900/50 text-red-300 hover:text-red-200 border border-red-800/50 text-sm font-medium py-2 px-4 rounded-md transition-colors flex items-center gap-2">
-                    🗑️ Reset Settings
-                </button>
             </div>
             <input type="file" id="settings-file-input" accept=".json" class="hidden">
     </div>
@@ -589,7 +734,8 @@
                     class="text-sm font-mono text-green-400 bg-gray-900/50 px-2 py-1 rounded border border-gray-700">--
                     ms</span>
                 <span id="api-test-json"
-                    class="text-sm font-bold bg-gray-900/50 px-2 py-1 rounded border border-gray-700">JSON: --</span>
+                    class="text-sm font-bold bg-gray-900/50 px-2 py-1 rounded border border-gray-700">JSON:
+                    --</span>
                 <button id="api-test-close-btn"
                     class="p-1 rounded-full hover:bg-white/10 text-gray-400 hover:text-white transition-colors"
                     title="Close">
@@ -724,7 +870,8 @@
                 </button>
                 <div id="overflow-menu-dropdown"
                     class="hidden absolute right-0 mt-2 w-56 bg-gray-800 border border-gray-700 rounded-lg shadow-xl z-50">
-                    <div class="dropdown-label text-xs text-gray-500 px-3 py-1 uppercase tracking-wider">Import & Export
+                    <div class="dropdown-label text-xs text-gray-500 px-3 py-1 uppercase tracking-wider">Import &
+                        Export
                     </div>
                     <button id="export-yaml" class="dropdown-item" title="Export all wildcards to YAML">
                         ⬇️ Export YAML
@@ -736,7 +883,8 @@
                         📦 Download ZIP
                     </button>
                     <div class="border-t border-gray-700 my-1"></div>
-                    <div class="dropdown-label text-xs text-gray-500 px-3 py-1 uppercase tracking-wider">History</div>
+                    <div class="dropdown-label text-xs text-gray-500 px-3 py-1 uppercase tracking-wider">History
+                    </div>
                     <button id="undo-btn" class="dropdown-item" title="Undo last action (Ctrl+Z)">
                         ↩️ Undo <span class="text-gray-500 text-xs ml-auto">Ctrl+Z</span>
                     </button>
@@ -744,7 +892,8 @@
                         ↪️ Redo <span class="text-gray-500 text-xs ml-auto">Ctrl+Y</span>
                     </button>
                     <div class="border-t border-gray-700 my-1"></div>
-                    <div class="dropdown-label text-xs text-gray-500 px-3 py-1 uppercase tracking-wider">Data Management
+                    <div class="dropdown-label text-xs text-gray-500 px-3 py-1 uppercase tracking-wider">Data
+                        Management
                     </div>
                     <button id="reload-default-data" class="dropdown-item" title="Reload the default wildcard data">
                         🔄 Restore Default Wildcards

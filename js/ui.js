@@ -144,6 +144,104 @@ export const UI = {
                 this.elements.overflowMenuDropdown.classList.add('hidden');
             });
         }
+
+        // Settings Tab Switching
+        const settingsTabs = document.querySelectorAll('.settings-tab');
+        const settingsTabContents = document.querySelectorAll('.settings-tab-content');
+
+        settingsTabs.forEach(tab => {
+            tab.addEventListener('click', () => {
+                const tabId = tab.dataset.tab;
+
+                // Update tab buttons
+                settingsTabs.forEach(t => t.classList.remove('active'));
+                tab.classList.add('active');
+
+                // Update tab contents
+                settingsTabContents.forEach(content => {
+                    if (content.id === `settings-tab-${tabId}`) {
+                        content.classList.remove('hidden');
+                    } else {
+                        content.classList.add('hidden');
+                    }
+                });
+            });
+        });
+
+        // Settings Search Filter
+        const settingsSearchInput = document.getElementById('settings-search-input');
+        if (settingsSearchInput) {
+            settingsSearchInput.addEventListener('input', (e) => {
+                const query = /** @type {HTMLInputElement} */ (e.target).value.toLowerCase().trim();
+                this.filterSettings(query);
+            });
+        }
+
+        // Display & UI Settings Handlers
+        // Preferred View
+        document.getElementById('config-preferred-view')?.addEventListener('change', (e) => {
+            Config.PREFERRED_VIEW = /** @type {HTMLSelectElement} */ (e.target).value;
+            saveConfig();
+        });
+
+        // Theme Toggle (in settings)
+        document.getElementById('config-theme-toggle')?.addEventListener('click', () => {
+            const html = document.documentElement;
+            const isLight = html.classList.contains('light');
+            const newTheme = isLight ? 'dark' : 'light';
+            html.classList.toggle('light', !isLight);
+            localStorage.setItem('wildcards-theme', newTheme);
+            this.updateThemeToggleUI();
+        });
+
+        // Default Wildcards Visible
+        document.getElementById('config-default-wildcards-visible')?.addEventListener('change', (e) => {
+            Config.DEFAULT_WILDCARDS_VISIBLE = /** @type {HTMLInputElement} */ (e.target).checked;
+            saveConfig();
+        });
+
+        // Enable Animations
+        document.getElementById('config-enable-animations')?.addEventListener('change', (e) => {
+            Config.ENABLE_ANIMATIONS = /** @type {HTMLInputElement} */ (e.target).checked;
+            saveConfig();
+            document.body.classList.toggle('reduce-motion', !Config.ENABLE_ANIMATIONS);
+        });
+
+        // Compact Card Mode
+        document.getElementById('config-compact-mode')?.addEventListener('change', (e) => {
+            Config.COMPACT_CARD_MODE = /** @type {HTMLInputElement} */ (e.target).checked;
+            saveConfig();
+            document.body.classList.toggle('compact-cards', Config.COMPACT_CARD_MODE);
+        });
+
+        // Auto-Save Interval
+        document.getElementById('config-auto-save')?.addEventListener('change', (e) => {
+            const val = parseInt(/** @type {HTMLInputElement} */(e.target).value) || 0;
+            Config.AUTO_SAVE_INTERVAL = val;
+            saveConfig();
+            this.setupAutoSave(val);
+        });
+
+        // History Limit
+        document.getElementById('config-history-limit')?.addEventListener('change', (e) => {
+            const val = parseInt(/** @type {HTMLInputElement} */(e.target).value);
+            if (!isNaN(val) && val > 0) {
+                Config.HISTORY_LIMIT = val;
+                saveConfig();
+            }
+        });
+
+        // Search Debounce
+        document.getElementById('config-search-debounce')?.addEventListener('change', (e) => {
+            const val = parseInt(/** @type {HTMLInputElement} */(e.target).value);
+            if (!isNaN(val) && val >= 0) {
+                Config.SEARCH_DEBOUNCE_DELAY = val;
+                saveConfig();
+            }
+        });
+
+        // Storage Profiles
+        this.initStorageProfiles();
     },
 
     bindGlobalEvents() {
@@ -421,6 +519,7 @@ export const UI = {
     },
 
     renderAdvancedSettings() {
+        // Mindmap Font Sizes
         /** @type {HTMLInputElement|null} */
         // @ts-ignore
         const nodeSizeInput = document.getElementById('config-mindmap-node-size');
@@ -435,8 +534,71 @@ export const UI = {
             catSizeInput.value = String(Config.MINDMAP_CATEGORY_FONT_SIZE || 32);
         }
 
+        // Display & UI Settings
+        /** @type {HTMLSelectElement|null} */
+        // @ts-ignore
+        const preferredViewSelect = document.getElementById('config-preferred-view');
+        if (preferredViewSelect) {
+            preferredViewSelect.value = Config.PREFERRED_VIEW || 'list';
+        }
+
+        /** @type {HTMLInputElement|null} */
+        // @ts-ignore
+        const defaultWildcardsVisible = document.getElementById('config-default-wildcards-visible');
+        if (defaultWildcardsVisible) {
+            defaultWildcardsVisible.checked = Config.DEFAULT_WILDCARDS_VISIBLE !== false;
+        }
+
+        /** @type {HTMLInputElement|null} */
+        // @ts-ignore
+        const enableAnimations = document.getElementById('config-enable-animations');
+        if (enableAnimations) {
+            enableAnimations.checked = Config.ENABLE_ANIMATIONS !== false;
+        }
+
+        /** @type {HTMLInputElement|null} */
+        // @ts-ignore
+        const compactMode = document.getElementById('config-compact-mode');
+        if (compactMode) {
+            compactMode.checked = Config.COMPACT_CARD_MODE === true;
+        }
+
+        // Advanced Tab Settings
+        /** @type {HTMLInputElement|null} */
+        // @ts-ignore
+        const historyLimitInput = document.getElementById('config-history-limit');
+        if (historyLimitInput) {
+            historyLimitInput.value = String(Config.HISTORY_LIMIT || 20);
+        }
+
+        /** @type {HTMLInputElement|null} */
+        // @ts-ignore
+        const searchDebounceInput = document.getElementById('config-search-debounce');
+        if (searchDebounceInput) {
+            searchDebounceInput.value = String(Config.SEARCH_DEBOUNCE_DELAY || 300);
+        }
+
+        /** @type {HTMLInputElement|null} */
+        // @ts-ignore
+        const autoSaveInput = document.getElementById('config-auto-save');
+        if (autoSaveInput) {
+            autoSaveInput.value = String(Config.AUTO_SAVE_INTERVAL || 0);
+        }
+
+        // Update theme toggle UI
+        this.updateThemeToggleUI();
+
         // Apply styles
         this.updateMindmapStyles();
+
+        // Apply body classes for initial state
+        document.body.classList.toggle('reduce-motion', Config.ENABLE_ANIMATIONS === false);
+        document.body.classList.toggle('compact-cards', Config.COMPACT_CARD_MODE === true);
+
+        // Setup auto-save if configured
+        if (Config.AUTO_SAVE_INTERVAL > 0) {
+            this.setupAutoSave(Config.AUTO_SAVE_INTERVAL);
+        }
     },
 
     updateMindmapStyles() {
@@ -444,6 +606,304 @@ export const UI = {
         root.style.setProperty('--mindmap-node-size', `${Config.MINDMAP_NODE_FONT_SIZE || 24}px`);
         root.style.setProperty('--mindmap-category-size', `${Config.MINDMAP_CATEGORY_FONT_SIZE || 32}px`);
     },
+
+    /**
+     * Update the theme toggle button UI to reflect current theme
+     */
+    updateThemeToggleUI() {
+        const themeToggle = document.getElementById('config-theme-toggle');
+        if (themeToggle) {
+            const isLight = document.documentElement.classList.contains('light');
+            const icon = themeToggle.querySelector('.theme-icon');
+            const label = themeToggle.querySelector('.theme-label');
+            if (icon) icon.textContent = isLight ? '☀️' : '🌙';
+            if (label) label.textContent = isLight ? 'Light Mode' : 'Dark Mode';
+        }
+    },
+
+    /**
+     * Filter settings based on search query
+     * @param {string} query - The search query
+     */
+    filterSettings(query) {
+        const settingsGroups = document.querySelectorAll('.setting-group');
+        const tabContents = document.querySelectorAll('.settings-tab-content');
+        const tabs = document.querySelectorAll('.settings-tab');
+
+        if (!query) {
+            // Show all, restore normal tab behavior
+            settingsGroups.forEach(g => g.classList.remove('hidden', 'settings-search-highlight'));
+            tabContents.forEach(tc => {
+                if (!tc.classList.contains('active-search')) {
+                    tc.classList.add('hidden');
+                }
+            });
+            // Show only active tab
+            const activeTab = document.querySelector('.settings-tab.active');
+            if (activeTab) {
+                const activeTabId = /** @type {HTMLElement} */ (activeTab).dataset.tab;
+                tabContents.forEach(tc => {
+                    tc.classList.toggle('hidden', tc.id !== `settings-tab-${activeTabId}`);
+                });
+            }
+            return;
+        }
+
+        // Filter mode: show all matching settings across all tabs
+        let matchCount = 0;
+        const tabMatches = new Map();
+
+        settingsGroups.forEach(group => {
+            const text = group.textContent?.toLowerCase() || '';
+            const matches = text.includes(query);
+            group.classList.toggle('hidden', !matches);
+            group.classList.toggle('settings-search-highlight', matches && query.length > 1);
+
+            if (matches) {
+                matchCount++;
+                // Track which tab this setting belongs to
+                const tabContent = group.closest('.settings-tab-content');
+                if (tabContent) {
+                    const tabId = tabContent.id.replace('settings-tab-', '');
+                    tabMatches.set(tabId, (tabMatches.get(tabId) || 0) + 1);
+                }
+            }
+        });
+
+        // Show all tabs that have matches
+        tabContents.forEach(tc => {
+            const tabId = tc.id.replace('settings-tab-', '');
+            tc.classList.toggle('hidden', !tabMatches.has(tabId));
+        });
+
+        // Highlight tabs with matches
+        tabs.forEach(tab => {
+            const tabId = /** @type {HTMLElement} */ (tab).dataset.tab;
+            const hasMatches = tabMatches.has(tabId);
+            tab.classList.toggle('has-matches', hasMatches);
+        });
+    },
+
+    /**
+     * Auto-save timer reference
+     * @type {number|null}
+     */
+    _autoSaveTimer: null,
+
+    /**
+     * Setup or clear the auto-save interval
+     * @param {number} intervalMs - Interval in milliseconds, 0 to disable
+     */
+    setupAutoSave(intervalMs) {
+        if (this._autoSaveTimer) {
+            clearInterval(this._autoSaveTimer);
+            this._autoSaveTimer = null;
+        }
+
+        if (intervalMs > 0) {
+            this._autoSaveTimer = setInterval(() => {
+                // Trigger state save without notification
+                if (typeof State !== 'undefined' && State.state) {
+                    State.save(true); // silently save
+                    console.log('[UI] Auto-save triggered');
+                }
+            }, intervalMs);
+        }
+    },
+
+    /**
+     * Get list of storage profiles from localStorage
+     * @returns {string[]} Array of profile names
+     */
+    getStorageProfiles() {
+        const saved = localStorage.getItem('wildcards_storage_profiles');
+        if (saved) {
+            try {
+                return JSON.parse(saved);
+            } catch (e) {
+                return ['default'];
+            }
+        }
+        return ['default'];
+    },
+
+    /**
+     * Save storage profiles list to localStorage
+     * @param {string[]} profiles - Array of profile names
+     */
+    saveStorageProfiles(profiles) {
+        localStorage.setItem('wildcards_storage_profiles', JSON.stringify(profiles));
+    },
+
+    /**
+     * Initialize Storage Profiles UI and logic
+     */
+    initStorageProfiles() {
+        const profileSelect = /** @type {HTMLSelectElement|null} */ (document.getElementById('storage-profile-select'));
+        const newProfileBtn = document.getElementById('new-profile-btn');
+        const deleteProfileBtn = document.getElementById('delete-profile-btn');
+        const currentStorageKeyEl = document.getElementById('current-storage-key');
+
+        if (!profileSelect) return;
+
+        // Populate profile dropdown
+        const profiles = this.getStorageProfiles();
+        profileSelect.innerHTML = '';
+        profiles.forEach(profile => {
+            const option = document.createElement('option');
+            option.value = profile;
+            option.textContent = profile === 'default' ? 'Default' : profile;
+            profileSelect.appendChild(option);
+        });
+
+        // Set current profile
+        profileSelect.value = Config.STORAGE_PROFILE || 'default';
+        this.updateStorageKeyDisplay(currentStorageKeyEl);
+
+        // Profile change handler
+        profileSelect.addEventListener('change', () => {
+            const newProfile = profileSelect.value;
+            if (newProfile !== Config.STORAGE_PROFILE) {
+                this.switchStorageProfile(newProfile);
+            }
+        });
+
+        // New profile handler
+        newProfileBtn?.addEventListener('click', () => {
+            this.showNotification('Enter a name for the new profile:', true, null, false, [
+                {
+                    text: 'Create',
+                    class: 'bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 px-4 rounded',
+                    onClick: () => {
+                        const input = document.querySelector('#notification-dialog input');
+                        const name = /** @type {HTMLInputElement} */ (input)?.value?.trim();
+                        if (name && name.length > 0) {
+                            this.createStorageProfile(name);
+                        }
+                        this.elements.dialog.close();
+                    }
+                },
+                {
+                    text: 'Cancel',
+                    class: 'bg-gray-600 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded',
+                    onClick: () => {
+                        this.elements.dialog.close();
+                    }
+                }
+            ], true); // show input field
+        });
+
+        // Delete profile handler
+        deleteProfileBtn?.addEventListener('click', () => {
+            const currentProfile = Config.STORAGE_PROFILE || 'default';
+            if (currentProfile === 'default') {
+                this.showToast('Cannot delete the default profile.', 'warning');
+                return;
+            }
+
+            this.showNotification(`Are you sure you want to delete profile "${currentProfile}"? This will remove all data stored in this profile.`, true, null, false, [
+                {
+                    text: 'Delete',
+                    class: 'bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded',
+                    onClick: () => {
+                        this.deleteStorageProfile(currentProfile);
+                        this.elements.dialog.close();
+                    }
+                },
+                {
+                    text: 'Cancel',
+                    class: 'bg-gray-600 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded',
+                    onClick: () => {
+                        this.elements.dialog.close();
+                    }
+                }
+            ]);
+        });
+    },
+
+    /**
+     * Update the storage key display
+     * @param {HTMLElement|null} element
+     */
+    updateStorageKeyDisplay(element) {
+        if (element) {
+            const profile = Config.STORAGE_PROFILE || 'default';
+            const baseKey = Config.STORAGE_KEY || 'wildcardGeneratorState_v12';
+            const key = profile === 'default' ? baseKey : `${baseKey}_${profile}`;
+            element.textContent = key;
+        }
+    },
+
+    /**
+     * Switch to a different storage profile
+     * @param {string} profileName
+     */
+    switchStorageProfile(profileName) {
+        // Save current profile data first
+        if (typeof State !== 'undefined') {
+            State.save();
+        }
+
+        // Update config and reload
+        Config.STORAGE_PROFILE = profileName;
+        saveConfig();
+
+        // Reload the page to load new profile data
+        this.showToast(`Switching to profile "${profileName}"...`, 'info');
+        setTimeout(() => {
+            window.location.reload();
+        }, 500);
+    },
+
+    /**
+     * Create a new storage profile
+     * @param {string} name - Profile name
+     */
+    createStorageProfile(name) {
+        const profiles = this.getStorageProfiles();
+        const sanitizedName = name.toLowerCase().replace(/[^a-z0-9_-]/g, '_');
+
+        if (profiles.includes(sanitizedName)) {
+            this.showToast(`Profile "${sanitizedName}" already exists.`, 'warning');
+            return;
+        }
+
+        profiles.push(sanitizedName);
+        this.saveStorageProfiles(profiles);
+
+        // Update dropdown
+        const profileSelect = /** @type {HTMLSelectElement|null} */ (document.getElementById('storage-profile-select'));
+        if (profileSelect) {
+            const option = document.createElement('option');
+            option.value = sanitizedName;
+            option.textContent = sanitizedName;
+            profileSelect.appendChild(option);
+        }
+
+        // Switch to new profile
+        this.switchStorageProfile(sanitizedName);
+    },
+
+    /**
+     * Delete a storage profile
+     * @param {string} name - Profile name
+     */
+    deleteStorageProfile(name) {
+        if (name === 'default') return;
+
+        const profiles = this.getStorageProfiles().filter(p => p !== name);
+        this.saveStorageProfiles(profiles);
+
+        // Clear profile data from localStorage
+        const baseKey = Config.STORAGE_KEY || 'wildcardGeneratorState_v12';
+        const profileKey = `${baseKey}_${name}`;
+        localStorage.removeItem(profileKey);
+        localStorage.removeItem(`${profileKey}_history`);
+
+        // Switch back to default
+        this.switchStorageProfile('default');
+    },
+
 
     /**
      * Handle batch of state changes from undo/redo operations.
