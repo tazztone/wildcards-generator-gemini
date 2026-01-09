@@ -556,34 +556,30 @@ const State = {
 
     /**
      * Build a path map from selected paths for template generation.
-     * Uses A-Z (26), then AA-ZZ (676) = 702 max paths.
-     * Paths are sorted for deterministic code assignment.
+     * Uses leaf category names as keys for better LLM semantic context.
      * @param {string[]} selectedPaths
-     * @returns {Object<string, string>} Map of codes to paths
+     * @returns {Object<string, string>} Map of leaf names to full paths
      */
     buildPathMap(selectedPaths) {
-        const MAX = 702;
-        let paths = [...selectedPaths].sort();
-        if (paths.length > MAX) {
-            console.warn(`Template path map capped at ${MAX} paths (had ${paths.length})`);
-            paths = paths.slice(0, MAX);
-        }
-
-        const L = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
-        const encode = (n) => {
-            if (n < 26) return L[n];
-            const first = Math.floor((n - 26) / 26);
-            const second = (n - 26) % 26;
-            return L[first] + L[second];
-        };
-
         const map = {};
-        paths.forEach((path, i) => {
-            map[encode(i)] = path;
+        const usedNames = new Set();
+
+        selectedPaths.forEach(path => {
+            let leafName = path.split('/').pop();
+
+            // Handle duplicate leaf names by appending parent context
+            if (usedNames.has(leafName)) {
+                const parts = path.split('/');
+                if (parts.length > 1) {
+                    leafName = `${parts[parts.length - 2]}_${leafName}`;
+                }
+            }
+
+            usedNames.add(leafName);
+            map[leafName] = path;
         });
         return map;
     }
 };
 
 export { State };
-

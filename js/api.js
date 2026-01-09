@@ -199,19 +199,18 @@ export const Api = {
 
     /**
      * Generate prompt templates by combining wildcard category paths.
-     * Uses path mapping to optimize token usage.
-     * @param {Object<string, string>} pathMap - Mapping of short codes to full paths
+     * Sends leaf category names for better LLM context, then reconstructs full paths.
+     * @param {Object<string, string>} pathMap - Mapping of leaf names to full paths
      * @param {string} instructions - Custom instructions for template style
      * @param {string} templatePrompt - The system prompt for template generation
      * @returns {Promise<string[]>} Array of generated template strings with full paths
      */
     async generateTemplates(pathMap, instructions, templatePrompt) {
-        // Build readable path context for LLM
-        const pathContext = Object.entries(pathMap)
-            .map(([code, path]) => `${code} = "${path.replace(/\//g, ' > ').replace(/_/g, ' ')}"`)
-            .join('\n');
+        // Build list of leaf names for LLM (semantic context without full path clutter)
+        const leafNames = Object.keys(pathMap);
+        const leafList = leafNames.map(name => `~~${name}~~`).join(', ');
 
-        const userPrompt = `PATH MAP:\n${pathContext}\n\nINSTRUCTIONS: ${instructions}`;
+        const userPrompt = `AVAILABLE WILDCARD CATEGORIES:\n${leafList}\n\nINSTRUCTIONS: ${instructions}`;
         const generationConfig = {
             responseMimeType: "application/json",
             responseSchema: { type: "ARRAY", items: { type: "STRING" } }
@@ -220,8 +219,8 @@ export const Api = {
         const { result } = await this._makeRequest(templatePrompt, userPrompt, generationConfig);
         let templates = this._parseResponse(result);
 
-        // Validation BEFORE expansion (codes are still A, B, AA format)
-        const validCodes = new Set(Object.keys(pathMap));
+        // Validation BEFORE expansion (leaf names are used directly)
+        const validLeaves = new Set(leafNames);
         const seen = new Set();
 
         templates = templates.filter(t => {
@@ -229,26 +228,26 @@ export const Api = {
             if (!t || seen.has(t)) return false;
             seen.add(t);
 
-            // Find all __CODE__ placeholders (uppercase letters only)
-            const placeholders = t.match(/__([A-Z]+)__/g) || [];
+            // Find all ~~LeafName~~ placeholders
+            const placeholders = t.match(/~~([^~]+)~~/g) || [];
 
-            // Require at least 2 different codes per template
+            // Require at least 2 different categories per template
             if (placeholders.length < 2) return false;
 
-            // All codes must be in our valid set
+            // All leaf names must be in our valid set
             const allValid = placeholders.every(p => {
-                const code = p.replace(/__/g, '');
-                return validCodes.has(code);
+                const leafName = p.replace(/~~/g, '');
+                return validLeaves.has(leafName);
             });
             return allValid;
         });
 
-        // NOW expand valid templates to full paths
+        // NOW expand valid templates: ~~LeafName~~ -> ~~FullPath~~
         return templates.map(t => {
             let expanded = t;
-            for (const [code, path] of Object.entries(pathMap)) {
-                // Use exact stored path (no case normalization)
-                expanded = expanded.replace(new RegExp(`__${code}__`, 'g'), `__${path}__`);
+            for (const [leafName, fullPath] of Object.entries(pathMap)) {
+                // Replace leaf name with full path
+                expanded = expanded.replace(new RegExp(`~~${leafName}~~`, 'g'), `~~${fullPath}~~`);
             }
             return expanded;
         });
