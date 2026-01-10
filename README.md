@@ -13,8 +13,9 @@ A powerful, standalone **Single Page Application (SPA)** for organizing, managin
 - **📂 Hierarchical Organization**: unlimited nested folders and drag-and-drop management.
 - **🗺️ Mindmap View**: Visualize and manage your collection as an interactive mindmap.
 - **⚡ Batch Operations**: Generate, move, or delete items across multiple folders at once.
-- **🎨 Template Architect**: Create complex prompt templates by combining existing categories (e.g., `~~Creature~~` in `~~Environment~~` style).
+- **🎨 Hybrid Template Generation**: Semantic analysis engine identifies category roles (Subject, Location, etc.) to generate structured, natural prompts.
 - **🔍 Smart Search & Deduplication**: Instantly find terms and cleanup duplicate entries with AI assistance.
+- **📂 Stable Organization**: Every category has a persistent ID, ensuring your tags and metadata stay safe even when moving folders.
 - **📱 Responsive & Fast**: Runs entirely in the browser with no build step required for basic usage. PWA-ready.
 
 ## 🚀 Quick Start

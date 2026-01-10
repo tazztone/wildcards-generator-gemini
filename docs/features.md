@@ -20,7 +20,19 @@ This document details the features of the Wildcard Generator application.
 
 ## Advanced Features
 
-### v2.20 Features (Current)
+### v2.21 Features (Current)
+
+- **Hybrid Template Generation**:
+  - **Semantic Category Analysis**: New two-stage tagger (Heuristics + AI) identifies category roles like Subject, Location, Style, and Modifier.
+  - **Stable Node Identity**: Every category now has a persistent `_id`, ensuring tags and metadata survive renames or moves.
+  - **Intelligent Template Engine**: Generates cohesive prompts using weighted patterns (e.g., "Subject at Location in Style") instead of random combinations.
+  - **Smart Phrases**: Transparently adds natural language context (e.g., "wearing {Wearable}", "surrounded by {Location}") into templates.
+  - **Flexible Generation Modes**:
+    - **Wildcard**: Outputs `~~path/to/category~~` syntax for use in other tools.
+    - **Strict**: Real-time expansion into final literal prompt text.
+  - **Status Badge Tracking**: Real-time "Outdated" badge alerts when structural changes need a new analysis run.
+
+### v2.20 Features 
 
 - **UI/UX Polish**:
   - **Glassmorphism Aesthetic**: Modern, semi-transparent frosted-glass design for cards, inputs, and panels.

@@ -254,6 +254,94 @@ export const Api = {
     },
 
     /**
+     * Analyze category paths and assign semantic roles using LLM.
+     * Called for categories that heuristics couldn't classify.
+     * @param {Array<{nodeId: string, path: string}>} unknownCategories
+     * @param {function({processed: number}): void} [onProgress]
+     * @returns {Promise<Object<string, {role: string, type: string, confidence: number}>>}
+     */
+    async analyzeCategories(unknownCategories, onProgress) {
+        if (!unknownCategories || unknownCategories.length === 0) return {};
+
+        const results = {};
+        const batchSize = 20; // Process in batches to avoid token limits
+
+        // System prompt for category classification
+        const systemPrompt = `You are a semantic classifier for image generation prompt categories.
+Classify each category path into ONE of these roles:
+- Subject: People, characters, creatures, beings (living things)
+- Location: Places, environments, scenes, backgrounds
+- Style: Art styles, techniques, aesthetics, artists
+- Modifier: Colors, moods, lighting, weather, time periods
+- Wearable: Clothing, outfits, accessories, armor
+- Object: Items, props, vehicles, food
+- Action: Poses, expressions, activities
+
+Return a JSON array with your classifications. Be concise.`;
+
+        const generationConfig = {
+            responseMimeType: "application/json",
+            responseSchema: {
+                type: "ARRAY",
+                items: {
+                    type: "OBJECT",
+                    properties: {
+                        nodeId: { type: "STRING", description: "The category node ID" },
+                        role: { type: "STRING", description: "One of: Subject, Location, Style, Modifier, Wearable, Object, Action" },
+                        type: { type: "STRING", description: "Subtype like Person, Creature, Indoor, Artistic, etc." }
+                    },
+                    required: ["nodeId", "role"]
+                }
+            }
+        };
+
+        // Process in batches
+        for (let i = 0; i < unknownCategories.length; i += batchSize) {
+            const batch = unknownCategories.slice(i, i + batchSize);
+
+            // Build user prompt with path context
+            const categoryList = batch.map(({ nodeId, path }) =>
+                `- ID: ${nodeId} | Path: ${path.replace(/\//g, ' > ').replace(/_/g, ' ')}`
+            ).join('\n');
+
+            const userPrompt = `Classify these ${batch.length} category paths:\n\n${categoryList}`;
+
+            try {
+                const { result } = await this._makeRequest(systemPrompt, userPrompt, generationConfig);
+                const parsed = this._parseResponse(result);
+
+                // Validate and store results
+                if (Array.isArray(parsed)) {
+                    for (const item of parsed) {
+                        if (item.nodeId && item.role) {
+                            // Validate role is one of the allowed values
+                            const validRoles = ['Subject', 'Location', 'Style', 'Modifier', 'Wearable', 'Object', 'Action'];
+                            const normalizedRole = validRoles.find(r => r.toLowerCase() === item.role.toLowerCase());
+
+                            if (normalizedRole) {
+                                results[item.nodeId] = {
+                                    role: normalizedRole,
+                                    type: item.type || 'General',
+                                    confidence: 0.75 // LLM confidence
+                                };
+                            }
+                        }
+                    }
+                }
+
+                if (onProgress) {
+                    onProgress({ processed: Math.min(i + batchSize, unknownCategories.length) });
+                }
+            } catch (error) {
+                console.error('Category analysis batch failed:', error);
+                // Continue with next batch
+            }
+        }
+
+        return results;
+    },
+
+    /**
      * Use AI to pick the best category for each duplicate wildcard.
      * Processes duplicates in configurable batches with optional parallelism and cooldown.
      * @param {Array} duplicates - Array of {normalized, locations, count} from findDuplicates

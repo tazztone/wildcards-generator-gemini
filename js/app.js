@@ -7,6 +7,7 @@ import { DragDrop } from './modules/drag-drop.js';
 import { ImportExport } from './modules/import-export.js';
 import { Settings } from './modules/settings.js';
 import { Mindmap } from './modules/mindmap.js';
+import { TemplateEngine } from './template-engine.js';
 
 export const App = {
     draggedPath: null,
@@ -550,6 +551,64 @@ export const App = {
                     window.location.reload();
                 });
             }
+            // Analyze Categories (Hybrid Template System)
+            if (target.matches('#analyze-categories-btn')) {
+                const btn = target;
+                const iconEl = document.getElementById('analyze-btn-icon');
+                const textEl = document.getElementById('analyze-btn-text');
+
+                btn.disabled = true;
+                iconEl.textContent = '⏳';
+                textEl.textContent = 'Analyzing...';
+
+                State.analyzeAllCategories((progress) => {
+                    if (progress.stage === 'heuristics') {
+                        textEl.textContent = 'Applying heuristics...';
+                    } else if (progress.stage === 'llm') {
+                        textEl.textContent = `LLM: ${progress.current}/${progress.total}`;
+                    }
+                }).then((result) => {
+                    iconEl.textContent = '✅';
+                    textEl.textContent = 'Analysis Complete';
+                    document.getElementById('tags-count').textContent = `${result.heuristicCount + result.llmCount} tagged`;
+                    document.getElementById('tags-status-badge')?.classList.add('hidden');
+                    UI.showToast(`Analyzed ${result.totalCategories} categories (${result.heuristicCount} heuristic, ${result.llmCount} LLM)`, 'success');
+
+                    setTimeout(() => {
+                        iconEl.textContent = '🔍';
+                        textEl.textContent = 'Analyze Categories';
+                        btn.disabled = false;
+                    }, 2000);
+                }).catch(err => {
+                    console.error('Analysis failed:', err);
+                    iconEl.textContent = '❌';
+                    textEl.textContent = 'Analysis Failed';
+                    UI.showToast('Category analysis failed', 'error');
+                    btn.disabled = false;
+                });
+            }
+            // Test Hybrid Template Generation
+            if (target.matches('#test-hybrid-gen-btn')) {
+                const previewEl = document.getElementById('hybrid-gen-preview');
+                const modeSelect = /** @type {HTMLSelectElement} */ (document.getElementById('config-template-mode'));
+                const mode = modeSelect?.value || 'wildcard';
+
+                const readiness = TemplateEngine.checkReadiness();
+                if (!readiness.canGenerate) {
+                    previewEl.textContent = `⚠️ Cannot generate: Missing required roles. Run "Analyze Categories" first.\nMissing: ${readiness.missingRoles.join(', ')}`;
+                    previewEl.classList.add('text-yellow-400');
+                    return;
+                }
+
+                const templates = TemplateEngine.generate(5, mode);
+                if (templates.length > 0) {
+                    previewEl.textContent = templates.join('\n');
+                    previewEl.classList.remove('text-yellow-400');
+                } else {
+                    previewEl.textContent = 'No templates generated. Check if categories are tagged.';
+                    previewEl.classList.add('text-yellow-400');
+                }
+            }
             // Legacy reset button (if exists)
             if (target.matches('#reset-btn')) {
                 UI.showNotification('Are you sure you want to reset everything?', true, () => State.resetState());
@@ -561,7 +620,7 @@ export const App = {
                         const key = name.trim().replace(/\s+/g, '_');
                         if (State.state.wildcards[key]) { UI.showToast('Category already exists', 'error'); return; }
                         State.saveStateToHistory();
-                        State.state.wildcards[key] = { instruction: '' };
+                        State.state.wildcards[key] = { _id: crypto.randomUUID().slice(0, 8), instruction: '' };
                         UI.showToast(`Created "${name.trim()}"`, 'success');
                     }
                 }, true);
@@ -1402,7 +1461,9 @@ export const App = {
             if (parent[key]) { UI.showToast('Exists already', 'error'); return; }
 
             State.saveStateToHistory();
-            parent[key] = type === 'list' ? { instruction: '', wildcards: [] } : { instruction: '' };
+            parent[key] = type === 'list'
+                ? { _id: crypto.randomUUID().slice(0, 8), instruction: '', wildcards: [] }
+                : { _id: crypto.randomUUID().slice(0, 8), instruction: '' };
             UI.showToast(`Created "${name.trim()}"`, 'success');
         }, true);
     },

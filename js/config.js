@@ -57,7 +57,10 @@ export async function loadConfig() {
             COMPACT_CARD_MODE: false,
             AUTO_SAVE_INTERVAL: 0, // 0 = disabled, ms between auto-saves
             // Storage Profile
-            STORAGE_PROFILE: 'default'
+            STORAGE_PROFILE: 'default',
+            // Hybrid Template Engine
+            USE_HYBRID_ENGINE: false,
+            TEMPLATE_MODE: 'wildcard'  // 'wildcard' | 'strict' | 'hybrid'
         };
 
         Object.assign(Config, defaultConfig, userDefaults, savedConfig ? JSON.parse(savedConfig) : {});
@@ -135,7 +138,9 @@ export async function saveConfig() {
             ENABLE_ANIMATIONS: true,
             COMPACT_CARD_MODE: false,
             AUTO_SAVE_INTERVAL: 0,
-            STORAGE_PROFILE: 'default'
+            STORAGE_PROFILE: 'default',
+            USE_HYBRID_ENGINE: false,
+            TEMPLATE_MODE: 'wildcard'
         };
         const allDefaults = { ...CONFIG_CONSTANTS, ...userDefaults };
 
@@ -157,7 +162,8 @@ export async function saveConfig() {
                     'MODEL_TEMPERATURE', 'MODEL_MAX_TOKENS', 'MODEL_TOP_P', 'MODEL_TOP_K', 'MODEL_FREQUENCY_PENALTY', 'MODEL_PRESENCE_PENALTY', 'MODEL_REPETITION_PENALTY', 'MODEL_MIN_P', 'MODEL_TOP_A', 'MODEL_SEED',
                     'MODEL_REASONING_EFFORT', 'MODEL_REASONING_MAX_TOKENS',
                     'MINDMAP_FONT_SIZE_CATEGORY', 'MINDMAP_FONT_SIZE_LIST', 'MINDMAP_FONT_SIZE_WILDCARD',
-                    'DEFAULT_WILDCARDS_VISIBLE', 'ENABLE_ANIMATIONS', 'COMPACT_CARD_MODE', 'AUTO_SAVE_INTERVAL', 'STORAGE_PROFILE'
+                    'DEFAULT_WILDCARDS_VISIBLE', 'ENABLE_ANIMATIONS', 'COMPACT_CARD_MODE', 'AUTO_SAVE_INTERVAL', 'STORAGE_PROFILE',
+                    'USE_HYBRID_ENGINE', 'TEMPLATE_MODE'
                 ].includes(key)) {
                     changedConfig[key] = Config[key];
                 }

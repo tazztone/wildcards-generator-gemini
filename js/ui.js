@@ -259,11 +259,12 @@ export const UI = {
         // Advanced Configuration Handlers - Mindmap Font Sizes
 
 
-        // Layout settings (compact mode, animations, default wildcards visible)
+        // Layout settings (compact mode, animations, default wildcards visible, hybrid engine)
         const layoutInputs = {
             'config-compact-mode': 'COMPACT_CARD_MODE',
             'config-default-wildcards-visible': 'DEFAULT_WILDCARDS_VISIBLE',
-            'config-enable-animations': 'ENABLE_ANIMATIONS'
+            'config-enable-animations': 'ENABLE_ANIMATIONS',
+            'config-use-hybrid-engine': 'USE_HYBRID_ENGINE'
         };
 
         Object.entries(layoutInputs).forEach(([id, configKey]) => {
@@ -620,6 +621,21 @@ export const UI = {
         if (Config.AUTO_SAVE_INTERVAL > 0) {
             this.setupAutoSave(Config.AUTO_SAVE_INTERVAL);
         }
+
+        // Hybrid Template Engine settings
+        /** @type {HTMLInputElement|null} */
+        // @ts-ignore
+        const useHybridEngine = document.getElementById('config-use-hybrid-engine');
+        if (useHybridEngine) {
+            useHybridEngine.checked = Config.USE_HYBRID_ENGINE === true;
+        }
+
+        /** @type {HTMLSelectElement|null} */
+        // @ts-ignore
+        const templateMode = document.getElementById('config-template-mode');
+        if (templateMode) {
+            templateMode.value = Config.TEMPLATE_MODE || 'wildcard';
+        }
     },
 
     updateMindmapStyles() {
@@ -844,6 +860,12 @@ export const UI = {
                     }
                 }
             ]);
+        });
+
+        // Template Mode dropdown
+        document.getElementById('config-template-mode')?.addEventListener('change', (e) => {
+            Config.TEMPLATE_MODE = /** @type {HTMLSelectElement} */ (e.target).value;
+            saveConfig();
         });
     },
 

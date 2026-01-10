@@ -665,6 +665,87 @@
                                 </div>
                             </div>
                         </div>
+
+                        <!-- Hybrid Template Generation -->
+                        <div class="mt-6">
+                            <h3 class="text-lg font-semibold text-indigo-300 mb-3 flex items-center gap-2"
+                                title="Enables semantic tagging of categories (e.g., Subject, Location) to generate intelligent, structured prompt templates instead of random wildcards.">
+                                🎯 Hybrid Template Generation
+                                <span id="tags-status-badge"
+                                    class="hidden text-xs px-2 py-0.5 rounded-full bg-yellow-900/50 text-yellow-300 border border-yellow-700/50"
+                                    title="Structural changes (moves/renames) detected since last analysis. Re-run analysis to ensure template generation accuracy.">Outdated</span>
+                            </h3>
+                            <p class="text-sm text-gray-400 mb-3">Analyze categories to enable intelligent template
+                                generation based on semantic roles (Subject, Location, Style, etc.).</p>
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                                <!-- Analyze Button -->
+                                <div class="setting-group bg-gray-800/50 p-4 rounded-lg border border-gray-700/50"
+                                    title="Scans your entire wildcard library to determine what kind of data each category contains. Essential for the template engine to 'know' what it's picking.">
+                                    <div class="flex items-center justify-between mb-2">
+                                        <label class="block text-sm font-medium text-gray-300">Category Analysis</label>
+                                        <span id="tags-count" class="text-xs text-gray-500"
+                                            title="Number of categories currently identified with a semantic role.">0
+                                            tagged</span>
+                                    </div>
+                                    <button id="analyze-categories-btn"
+                                        class="w-full bg-purple-600 hover:bg-purple-700 text-white font-medium py-2 px-4 rounded-md transition-colors shadow-sm flex items-center justify-center gap-2"
+                                        title="Starts the tagging process: first using keyword heuristics (instant), then using AI for unknown paths.">
+                                        <span id="analyze-btn-icon">🔍</span>
+                                        <span id="analyze-btn-text">Analyze Categories</span>
+                                    </button>
+                                    <p class="text-xs text-gray-400 mt-2">Runs heuristics first, then LLM for unknown
+                                        categories.</p>
+                                </div>
+                                <!-- Generation Mode -->
+                                <div class="setting-group bg-gray-800/50 p-4 rounded-lg border border-gray-700/50"
+                                    title="Controls the output format of the generated templates.">
+                                    <label for="config-template-mode"
+                                        class="block text-sm font-medium text-gray-300 mb-2">Generation Mode</label>
+                                    <select id="config-template-mode"
+                                        class="w-full bg-gray-800 border border-gray-600 rounded-md p-2 text-sm focus:ring-indigo-500 focus:border-indigo-500"
+                                        title="Wildcard: Uses ~~category/path~~ syntax for external scripts.&#10;Strict: Pulls actual random items from categories for literal prompts.&#10;Hybrid: A mix of both for balanced prompting.">
+                                        <option value="wildcard" title="Outputs category paths in ~~ ~~ brackets.">
+                                            Wildcard (~~path~~)</option>
+                                        <option value="strict"
+                                            title="Outputs final prompt text by selecting random items.">Strict (literal
+                                            text)</option>
+                                        <option value="hybrid"
+                                            title="EXPERIMENTAL: A balanced mix of wildcards and text.">Hybrid (mixed)
+                                        </option>
+                                    </select>
+                                    <p class="text-xs text-gray-400 mt-2">How slots are filled in generated templates.
+                                    </p>
+                                </div>
+                            </div>
+                            <!-- Use Hybrid Engine Toggle -->
+                            <label
+                                class="flex items-center gap-3 mt-4 p-3 bg-purple-900/20 rounded-lg border border-purple-700/30 cursor-pointer hover:bg-purple-900/30 transition-colors"
+                                title="When enabled, clicking 'Generate' in 0_TEMPLATES uses local semantic patterns instead of calling the AI API.">
+                                <input type="checkbox" id="config-use-hybrid-engine"
+                                    class="rounded bg-gray-700 border-gray-600 text-purple-500 focus:ring-purple-500 focus:ring-offset-gray-900 w-5 h-5">
+                                <div>
+                                    <span class="text-sm font-medium text-purple-300">Use Hybrid Engine for
+                                        0_TEMPLATES</span>
+                                    <p class="text-xs text-gray-400 mt-0.5">Generates templates locally using semantic
+                                        roles instead of AI calls.</p>
+                                </div>
+                            </label>
+                            <!-- Test Generation -->
+                            <div class="bg-gray-900/50 p-3 rounded border border-gray-700/50"
+                                title="Quickly preview how the current tags and selected mode will generate prompts. Useful for verifying analysis results.">
+                                <div class="flex items-center justify-between mb-2">
+                                    <span class="text-sm text-gray-300">Test Generation</span>
+                                    <button id="test-hybrid-gen-btn"
+                                        class="text-xs bg-gray-700 hover:bg-gray-600 text-white px-3 py-1 rounded transition-colors"
+                                        title="Generates 5 sample prompts using the weighted template patterns.">
+                                        Generate 5 Templates
+                                    </button>
+                                </div>
+                                <div id="hybrid-gen-preview"
+                                    class="text-xs text-gray-500 font-mono overflow-x-auto whitespace-pre-wrap max-h-20 overflow-y-auto custom-scrollbar">
+                                    Click "Generate" to preview templates...</div>
+                            </div>
+                        </div>
                     </div>
 
                     <!-- Tab: Data Management -->

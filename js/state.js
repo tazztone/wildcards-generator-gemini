@@ -1,6 +1,65 @@
 import { Config, saveConfig } from './config.js';
 import YAML from 'https://cdn.jsdelivr.net/npm/yaml@2.8.2/browser/index.js'; // Keep import consistent
 
+// Reserved keys that should be skipped during traversal (not user data)
+const RESERVED_KEYS = new Set(['instruction', '_id', 'wildcards']);
+
+/** Generate a unique ID for category nodes */
+function generateNodeId() {
+    // Use crypto.randomUUID if available, fallback to timestamp + random
+    if (typeof crypto !== 'undefined' && crypto.randomUUID) {
+        return crypto.randomUUID().slice(0, 8); // Short 8-char ID
+    }
+    return Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
+}
+
+/**
+ * Heuristic rules for deterministic category tagging.
+ * Checked in order; first match wins.
+ */
+const HEURISTIC_RULES = [
+    // Subject types (people, creatures, characters)
+    { pattern: /character|person|people|hero|villain|protagonist|antagonist|npc/i, role: 'Subject', type: 'Person' },
+    { pattern: /creature|animal|beast|monster|mythical|fantasy/i, role: 'Subject', type: 'Creature' },
+    { pattern: /robot|android|mech|cyborg|ai_entity/i, role: 'Subject', type: 'Synthetic' },
+
+    // Locations
+    { pattern: /location|place|environment|scene|background|setting|landscape|terrain/i, role: 'Location', type: 'Environment' },
+    { pattern: /interior|room|indoor/i, role: 'Location', type: 'Indoor' },
+    { pattern: /exterior|outdoor|nature/i, role: 'Location', type: 'Outdoor' },
+    { pattern: /city|urban|street|building/i, role: 'Location', type: 'Urban' },
+
+    // Styles
+    { pattern: /style|art|painter|artist|technique|aesthetic|movement/i, role: 'Style', type: 'Artistic' },
+    { pattern: /render|3d|cgi|digital/i, role: 'Style', type: 'Digital' },
+    { pattern: /photo|realistic|photography/i, role: 'Style', type: 'Photographic' },
+
+    // Modifiers
+    { pattern: /color|colour|palette|hue/i, role: 'Modifier', type: 'Color' },
+    { pattern: /mood|emotion|atmosphere|feeling|tone/i, role: 'Modifier', type: 'Mood' },
+    { pattern: /lighting|light|shadow|illumination/i, role: 'Modifier', type: 'Lighting' },
+    { pattern: /weather|rain|snow|storm|sunny/i, role: 'Modifier', type: 'Weather' },
+    { pattern: /time|era|period|decade|century/i, role: 'Modifier', type: 'TimePeriod' },
+
+    // Wearables
+    { pattern: /outfit|clothing|costume|dress|wear|fashion/i, role: 'Wearable', type: 'Clothing' },
+    { pattern: /accessory|accessories|jewelry|hat|glasses/i, role: 'Wearable', type: 'Accessory' },
+    { pattern: /armor|weapon|gear|equipment/i, role: 'Wearable', type: 'Equipment' },
+
+    // Objects
+    { pattern: /object|item|prop|thing|artifact/i, role: 'Object', type: 'General' },
+    { pattern: /vehicle|car|ship|plane|transport/i, role: 'Object', type: 'Vehicle' },
+    { pattern: /food|drink|cuisine|meal/i, role: 'Object', type: 'Food' },
+
+    // Actions/Poses
+    { pattern: /action|pose|posture|gesture|activity/i, role: 'Action', type: 'Pose' },
+    { pattern: /expression|face|facial/i, role: 'Action', type: 'Expression' }
+];
+
+/** Valid role names for validation */
+const VALID_ROLES = new Set(['Subject', 'Location', 'Style', 'Modifier', 'Wearable', 'Object', 'Action']);
+
+
 // Helper to create a deep proxy that knows its path
 function createDeepProxy(target, path = [], onChange) {
     if (typeof target !== 'object' || target === null) {
@@ -110,11 +169,16 @@ const State = {
     history: [],
     historyIndex: -1,
 
+    // Category tags for hybrid template generation (stored separately from history)
+    categoryTags: {},
+    tagVersion: 0, // Incremented on structural changes to wildcards
+
     // Event Target for dispatching custom events
     events: new EventTarget(),
 
     async init() {
         this.loadState();
+        this.loadCategoryTags(); // Load tags from separate storage
 
         // Check if we actually have wildcards data, not just an empty state from a failed load
         const hasData = localStorage.getItem(Config.STORAGE_KEY);
@@ -142,11 +206,22 @@ const State = {
                 target.sort((a, b) => String(a || '').localeCompare(String(b || '')));
             }
 
-            // 1. Save to LocalStorage (debouncing could be added here if needed, but synchronous is safer for now)
+            // 1. Detect structural changes for tagVersion increment
+            // Structural = adding/removing/renaming categories (not wildcard items)
+            if (path[0] === 'wildcards' && path.length >= 2) {
+                const isWildcardsArray = path.includes('wildcards') && path[path.length - 1] !== 'wildcards';
+                const isMetaKey = path[path.length - 1] === 'instruction' || path[path.length - 1] === '_id';
+                // If NOT editing inside wildcards array and NOT meta keys, it's structural
+                if (!isWildcardsArray && !isMetaKey && (type === 'set' || type === 'delete')) {
+                    this.tagVersion++;
+                    this.saveCategoryTags(); // Persist version change
+                }
+            }
+
+            // 2. Save to LocalStorage
             this._saveToLocalStorage();
 
-            // 2. Dispatch Custom Event
-            // Path is array e.g. ['wildcards', 'Characters', 'wildcards', '0']
+            // 3. Dispatch Custom Event
             const event = new CustomEvent('state-updated', {
                 detail: {
                     path: path,
@@ -364,11 +439,12 @@ const State = {
                 const processedValue = this.processYamlNode(valueNode);
                 if (typeof processedValue === 'object' && processedValue !== null && !Array.isArray(processedValue)) {
                     processedValue.instruction = instruction;
+                    processedValue._id = generateNodeId(); // Add stable ID
                     result[key] = processedValue;
                 } else if (Array.isArray(processedValue)) {
-                    result[key] = { instruction, wildcards: processedValue };
+                    result[key] = { _id: generateNodeId(), instruction, wildcards: processedValue };
                 } else {
-                    result[key] = { instruction, wildcards: [String(processedValue)] };
+                    result[key] = { _id: generateNodeId(), instruction, wildcards: [String(processedValue)] };
                 }
             });
             return result;
@@ -388,7 +464,7 @@ const State = {
         const wildcardMap = new Map();
 
         const scanData = (data, path) => {
-            Object.keys(data).filter(k => k !== 'instruction').forEach(key => {
+            Object.keys(data).filter(k => !RESERVED_KEYS.has(k)).forEach(key => {
                 const item = data[key];
                 const currentPath = path ? `${path}/${key}` : key;
 
@@ -534,7 +610,7 @@ const State = {
         const paths = [];
         const traverse = (obj, currentPath) => {
             for (const [key, value] of Object.entries(obj)) {
-                if (key === 'instruction') continue;
+                if (RESERVED_KEYS.has(key)) continue;
                 const path = currentPath ? `${currentPath}/${key}` : key;
                 // Skip 0_TEMPLATES category itself
                 if (path.startsWith('0_TEMPLATES')) continue;
@@ -579,6 +655,278 @@ const State = {
             map[leafName] = path;
         });
         return map;
+    },
+
+    // =========================================================================
+    // Category Tags (Hybrid Template Generation)
+    // Stored separately from history to avoid bloating undo/redo
+    // =========================================================================
+
+    /**
+     * Load category tags from localStorage
+     */
+    loadCategoryTags() {
+        try {
+            const saved = localStorage.getItem('wildcardsTags');
+            if (saved) {
+                const data = JSON.parse(saved);
+                this.categoryTags = data.tags || {};
+                this.tagVersion = data.version || 0;
+            }
+        } catch (e) {
+            console.error('Failed to load category tags:', e);
+            this.categoryTags = {};
+            this.tagVersion = 0;
+        }
+    },
+
+    /**
+     * Save category tags to localStorage
+     */
+    saveCategoryTags() {
+        try {
+            localStorage.setItem('wildcardsTags', JSON.stringify({
+                tags: this.categoryTags,
+                version: this.tagVersion
+            }));
+        } catch (e) {
+            console.error('Failed to save category tags:', e);
+        }
+    },
+
+    /**
+     * Get the _id for a given path
+     * @param {string} path
+     * @returns {string|undefined}
+     */
+    getNodeIdByPath(path) {
+        const obj = this.getObjectByPath(path);
+        return obj?._id;
+    },
+
+    /**
+     * Get path by nodeId (searches the tree)
+     * @param {string} nodeId
+     * @returns {string|undefined}
+     */
+    getPathByNodeId(nodeId) {
+        const search = (obj, currentPath) => {
+            for (const [key, value] of Object.entries(obj)) {
+                if (RESERVED_KEYS.has(key)) continue;
+                const path = currentPath ? `${currentPath}/${key}` : key;
+                if (value?._id === nodeId) return path;
+                if (typeof value === 'object' && value !== null && !Array.isArray(value)) {
+                    const found = search(value, path);
+                    if (found) return found;
+                }
+            }
+            return undefined;
+        };
+        return search(this.state?.wildcards || {}, '');
+    },
+
+    /**
+     * Ensure all categories have _id (for existing data without IDs)
+     */
+    ensureNodeIds() {
+        let modified = false;
+        const traverse = (obj) => {
+            for (const [key, value] of Object.entries(obj)) {
+                if (RESERVED_KEYS.has(key)) continue;
+                if (typeof value === 'object' && value !== null && !Array.isArray(value)) {
+                    if (!value._id) {
+                        value._id = generateNodeId();
+                        modified = true;
+                    }
+                    traverse(value);
+                }
+            }
+        };
+        traverse(this._rawData.wildcards);
+        if (modified) {
+            this._saveToLocalStorage();
+        }
+        return modified;
+    },
+
+    /**
+     * Check if tags are outdated (structure changed since last analysis)
+     * @returns {boolean}
+     */
+    areTagsOutdated() {
+        const savedVersion = this.categoryTags._lastAnalyzedVersion;
+        return savedVersion === undefined || savedVersion < this.tagVersion;
+    },
+
+    /**
+     * Get a tag for a nodeId
+     * @param {string} nodeId
+     * @returns {object|undefined}
+     */
+    getTagByNodeId(nodeId) {
+        return this.categoryTags[nodeId];
+    },
+
+    /**
+     * Set a tag for a nodeId
+     * @param {string} nodeId
+     * @param {object} tag - {role, type, confidence, source}
+     */
+    setTag(nodeId, tag) {
+        this.categoryTags[nodeId] = {
+            ...tag,
+            updatedAt: Date.now()
+        };
+        this.saveCategoryTags();
+    },
+
+    /**
+     * Mark tags as analyzed at current version
+     */
+    markTagsAnalyzed() {
+        this.categoryTags._lastAnalyzedVersion = this.tagVersion;
+        this.saveCategoryTags();
+    },
+
+    // =========================================================================
+    // Two-Stage Tagger (Heuristics + LLM)
+    // =========================================================================
+
+    /**
+     * Apply heuristic tag to a single category based on its path
+     * @param {string} path - Full path like "CREATURES/Mythical"
+     * @returns {{role: string, type: string, confidence: number}|null}
+     */
+    applyHeuristicTag(path) {
+        // Use the full path for matching (more context)
+        const pathLower = path.toLowerCase().replace(/_/g, ' ');
+
+        for (const rule of HEURISTIC_RULES) {
+            if (rule.pattern.test(pathLower)) {
+                return {
+                    role: rule.role,
+                    type: rule.type || 'General',
+                    confidence: 0.9 // Heuristics are fairly confident
+                };
+            }
+        }
+        return null; // No match
+    },
+
+    /**
+     * Apply heuristic tags to all categories that don't have user-set tags
+     * @returns {{tagged: number, unknown: Array<{nodeId: string, path: string}>}}
+     */
+    applyHeuristicTags() {
+        const paths = this.getAllWildcardPaths();
+        let tagged = 0;
+        const unknown = [];
+
+        for (const { path } of paths) {
+            const nodeId = this.getNodeIdByPath(path);
+            if (!nodeId) continue;
+
+            // Skip if already tagged by user
+            const existing = this.categoryTags[nodeId];
+            if (existing && existing.source === 'user') continue;
+
+            const heuristicTag = this.applyHeuristicTag(path);
+            if (heuristicTag) {
+                this.categoryTags[nodeId] = {
+                    ...heuristicTag,
+                    source: 'heuristic',
+                    updatedAt: Date.now()
+                };
+                tagged++;
+            } else {
+                unknown.push({ nodeId, path });
+            }
+        }
+
+        this.saveCategoryTags();
+        return { tagged, unknown };
+    },
+
+    /**
+     * Analyze all categories: heuristics first, then batch unknowns for LLM
+     * @param {function} [onProgress] - Progress callback ({stage, current, total})
+     * @returns {Promise<{heuristicCount: number, llmCount: number, totalCategories: number}>}
+     */
+    async analyzeAllCategories(onProgress) {
+        // Ensure all categories have IDs first
+        this.ensureNodeIds();
+
+        // Stage 1: Apply heuristics
+        if (onProgress) onProgress({ stage: 'heuristics', current: 0, total: 1 });
+        const { tagged: heuristicCount, unknown } = this.applyHeuristicTags();
+        if (onProgress) onProgress({ stage: 'heuristics', current: 1, total: 1 });
+
+        // Stage 2: Send unknowns to LLM (if any)
+        let llmCount = 0;
+        if (unknown.length > 0) {
+            try {
+                // Dynamically import Api to avoid circular dependency
+                const { Api } = await import('./api.js');
+
+                if (onProgress) onProgress({ stage: 'llm', current: 0, total: unknown.length });
+
+                const llmTags = await Api.analyzeCategories(unknown, (progress) => {
+                    if (onProgress) onProgress({ stage: 'llm', current: progress.processed, total: unknown.length });
+                });
+
+                // Apply LLM tags
+                for (const [nodeId, tag] of Object.entries(llmTags)) {
+                    if (tag && VALID_ROLES.has(tag.role)) {
+                        this.categoryTags[nodeId] = {
+                            role: tag.role,
+                            type: tag.type || 'General',
+                            confidence: tag.confidence || 0.7,
+                            source: 'llm',
+                            updatedAt: Date.now()
+                        };
+                        llmCount++;
+                    }
+                }
+                this.saveCategoryTags();
+            } catch (error) {
+                console.error('LLM analysis failed:', error);
+                // Continue without LLM tags - heuristics are still applied
+            }
+        }
+
+        // Mark as analyzed
+        this.markTagsAnalyzed();
+
+        const totalCategories = this.getAllWildcardPaths().length;
+        return { heuristicCount, llmCount, totalCategories };
+    },
+
+    /**
+     * Get the RoleIndex: mapping of roles to nodeIds
+     * @returns {Object<string, Array<{nodeId: string, path: string, type: string}>>}
+     */
+    buildRoleIndex() {
+        const index = {};
+        for (const role of VALID_ROLES) {
+            index[role] = [];
+        }
+
+        const paths = this.getAllWildcardPaths();
+        for (const { path } of paths) {
+            const nodeId = this.getNodeIdByPath(path);
+            if (!nodeId) continue;
+
+            const tag = this.categoryTags[nodeId];
+            if (tag && tag.role && index[tag.role]) {
+                index[tag.role].push({
+                    nodeId,
+                    path,
+                    type: tag.type || 'General'
+                });
+            }
+        }
+
+        return index;
     }
 };
 
