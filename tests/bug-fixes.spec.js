@@ -63,19 +63,26 @@ test.describe('Bug Fix Tests', () => {
         });
     });
 
-    test.describe('Overflow Menu Actions', () => {
-        test('reload default data shows confirmation dialog', async ({ page }) => {
-            // Open overflow menu
-            const overflowBtn = page.locator('#overflow-menu-btn');
-            await expect(overflowBtn).toBeVisible();
-            await overflowBtn.click();
+    test.describe('Settings Menu Data Actions', () => {
+        // Helper to navigate to Data tab in settings
+        const navigateToDataSettings = async (page) => {
+            const settingsBtn = page.locator('#settings-btn');
+            await expect(settingsBtn).toBeVisible();
+            await settingsBtn.click();
 
-            // Wait for dropdown to be visible
-            const dropdown = page.locator('#overflow-menu-dropdown');
-            await expect(dropdown).toBeVisible({ timeout: 3000 });
+            const modal = page.locator('#settings-dialog');
+            await expect(modal).toBeVisible();
+
+            const dataTab = page.locator('.settings-tab[data-tab="data"]');
+            await dataTab.click();
+            await expect(page.locator('#settings-tab-data')).toBeVisible();
+        };
+
+        test('reload default data shows confirmation dialog', async ({ page }) => {
+            await navigateToDataSettings(page);
 
             // Click reload default data
-            const reloadBtn = page.locator('#reload-default-data');
+            const reloadBtn = page.locator('#restore-defaults-btn');
             await expect(reloadBtn).toBeVisible();
             await reloadBtn.click();
 
@@ -89,17 +96,10 @@ test.describe('Bug Fix Tests', () => {
         });
 
         test('factory reset shows confirmation dialog', async ({ page }) => {
-            // Open overflow menu
-            const overflowBtn = page.locator('#overflow-menu-btn');
-            await expect(overflowBtn).toBeVisible();
-            await overflowBtn.click();
-
-            // Wait for dropdown
-            const dropdown = page.locator('#overflow-menu-dropdown');
-            await expect(dropdown).toBeVisible({ timeout: 3000 });
+            await navigateToDataSettings(page);
 
             // Click factory reset
-            const factoryResetBtn = page.locator('#factory-reset');
+            const factoryResetBtn = page.locator('#factory-reset-btn');
             await expect(factoryResetBtn).toBeVisible();
             await factoryResetBtn.click();
 
@@ -134,6 +134,9 @@ test.describe('Bug Fix Tests', () => {
             await input.fill(testCategoryName);
             await dialog.locator('#confirm-btn').click();
 
+            // Ensure dialog closes
+            await expect(dialog).toBeHidden();
+
             // Wait for toast confirmation
             await expect(page.locator('.toast')).toContainText('Created', { timeout: 3000 });
             await page.waitForTimeout(500);
@@ -142,20 +145,16 @@ test.describe('Bug Fix Tests', () => {
             const customCategory = page.locator(`details[data-path="${testCategoryName.replace(/\s+/g, '_')}"]`);
             await expect(customCategory).toBeVisible();
 
-            // Step 2: Open overflow menu
-            const overflowBtn = page.locator('#overflow-menu-btn');
-            await overflowBtn.click();
-
-            // Wait for dropdown
-            const dropdown = page.locator('#overflow-menu-dropdown');
-            await expect(dropdown).toBeVisible({ timeout: 3000 });
+            // Step 2: Navigate to Settings -> Data
+            await navigateToDataSettings(page);
 
             // Step 3: Click "Restore Default Wildcards"
-            const reloadBtn = page.locator('#reload-default-data');
+            const reloadBtn = page.locator('#restore-defaults-btn');
             await expect(reloadBtn).toBeVisible();
             await reloadBtn.click();
 
             // Step 4: Confirm the action
+            // Confirmation dialog is separate from settings modal
             await expect(dialog).toBeVisible({ timeout: 3000 });
             await expect(dialog).toContainText('Reload default wildcard data');
 
@@ -164,10 +163,14 @@ test.describe('Bug Fix Tests', () => {
             await confirmBtn.click();
 
             // Step 5: Wait for success toast
-            await expect(page.locator('.toast').last()).toContainText('Default data reloaded', { timeout: 5000 });
+            await expect(page.locator('.toast').filter({ hasText: 'Default data reloaded' })).toBeVisible({ timeout: 10000 });
 
-            // Step 6: Verify the overflow menu is closed
-            await expect(dropdown).toBeHidden();
+            // Step 6: Close Settings Modal
+            await page.evaluate(() => {
+                const d = document.getElementById('settings-dialog');
+                if (d) d.close();
+            });
+            await expect(page.locator('#settings-dialog')).toBeHidden();
 
             // Step 7: Verify the manually added category is gone
             await page.waitForTimeout(500);
