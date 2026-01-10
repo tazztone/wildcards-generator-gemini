@@ -280,26 +280,36 @@ export const Api = {
             if (!t || seen.has(t)) return false;
             seen.add(t);
 
-            // Find all ~~LeafName~~ placeholders
-            const placeholders = t.match(/~~([^~]+)~~/g) || [];
+            // Find all ~~LeafName~~ or __LeafName__ placeholders
+            const placeholders = t.match(/~~([^~]+)~~|__([^_]+)__/g) || [];
 
             // Require at least 2 different categories per template
-            if (placeholders.length < 2) return false;
+            if (placeholders.length < 2) {
+                console.warn(`Template rejected (fewer than 2 placeholders): "${t}"`);
+                return false;
+            }
 
             // All leaf names must be in our valid set
             const allValid = placeholders.every(p => {
-                const leafName = p.replace(/~~/g, '');
-                return validLeaves.has(leafName);
+                // Remove delimiters (~~ or __)
+                const leafName = p.replace(/~~|__/g, '');
+                const isValid = validLeaves.has(leafName);
+                if (!isValid) {
+                    console.warn(`Template rejected (invalid placeholder '${leafName}'): "${t}" - Valid leaves:`, Array.from(validLeaves));
+                }
+                return isValid;
             });
             return allValid;
         });
 
-        // NOW expand valid templates: ~~LeafName~~ -> ~~FullPath~~
+        // NOW expand valid templates: ~~LeafName~~ -> ~~FullPath~~ (and normalize to ~~)
         return templates.map(t => {
             let expanded = t;
             for (const [leafName, fullPath] of Object.entries(pathMap)) {
-                // Replace leaf name with full path
-                expanded = expanded.replace(new RegExp(`~~${leafName}~~`, 'g'), `~~${fullPath}~~`);
+                // Replace leaf name with full path, handling both delimiter styles
+                // We normalize to ~~ syntax for the final output
+                const regex = new RegExp(`(?:~~|__)${leafName}(?:~~|__)`, 'g');
+                expanded = expanded.replace(regex, `~~${fullPath}~~`);
             }
             return expanded;
         });
@@ -1133,8 +1143,8 @@ Return a JSON array with your classifications. Be concise.`;
 
             const parsed = this._parseTestResponse(provider, result);
             const isValidArray = Array.isArray(parsed) && parsed.length > 0;
-            // Check if templates contain __X__ format codes
-            const hasValidTemplates = isValidArray && parsed.some(t => /__[A-Z]+__/.test(String(t)));
+            // Check if templates contain __X__ or ~~X~~ format codes
+            const hasValidTemplates = isValidArray && parsed.some(t => /__[A-Z]+__|~~[A-Z]+~~/.test(String(t)));
 
             return {
                 success: true,
