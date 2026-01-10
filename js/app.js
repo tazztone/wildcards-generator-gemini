@@ -1529,7 +1529,8 @@ export const App = {
             const { suggestions, request } = await Api.suggestItems(
                 parentPath,
                 existingStructure,
-                State.state.suggestItemPrompt || Config.DEFAULT_SUGGEST_ITEM_PROMPT
+                State.state.suggestItemPrompt || Config.DEFAULT_SUGGEST_ITEM_PROMPT,
+                (parent && parent.instruction) || ''
             );
 
             if (!suggestions || suggestions.length === 0) {

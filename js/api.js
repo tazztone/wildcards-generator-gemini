@@ -220,10 +220,16 @@ export const Api = {
         return this._parseResponse(result);
     },
 
-    async suggestItems(parentPath, structure, suggestItemPrompt) {
+    async suggestItems(parentPath, structure, suggestItemPrompt, parentInstruction = '') {
         const readablePath = parentPath ? parentPath.replace(/\//g, ' > ').replace(/_/g, ' ') : 'Top-Level';
         const globalPrompt = suggestItemPrompt.replace('{parentPath}', readablePath);
-        const userPrompt = `For context, here are the existing sibling items at the same level:\n${JSON.stringify(structure, null, 2)}\n\nPlease provide new suggestions for the '${readablePath}' category.`;
+
+        let contextInfo = `For context, here are the existing sibling items at the same level:\n${JSON.stringify(structure, null, 2)}`;
+        if (parentInstruction) {
+            contextInfo = `Parent Category: "${readablePath}"\nInstructions: "${parentInstruction}"\n\n${contextInfo}`;
+        }
+
+        const userPrompt = `${contextInfo}\n\nPlease provide new suggestions for the '${readablePath}' category.`;
         const generationConfig = {
             responseMimeType: "application/json",
             responseSchema: {
