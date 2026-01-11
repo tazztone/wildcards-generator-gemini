@@ -23,6 +23,7 @@ This document details the features of the Wildcard Generator application.
 ### v2.21 Features (Current)
 
 - **Hybrid Template Generation**:
+  - **Special Folder Discovery**: Lists inside a folder named **`0_TEMPLATES`** are treated as reusable prompt templates.
   - **Semantic Category Analysis**: New two-stage tagger (Heuristics + AI) identifies category roles like Subject, Location, Style, and Modifier.
   - **Stable Node Identity**: Every category now has a persistent `_id`, ensuring tags and metadata survive renames or moves.
   - **Intelligent Template Engine**: Generates cohesive prompts using weighted patterns (e.g., "Subject at Location in Style") instead of random combinations.
@@ -55,12 +56,13 @@ This document details the features of the Wildcard Generator application.
 
 ### v2.18 Features
 
-- **Template Architect (0_TEMPLATES)**:
-  - **Context-Aware Generation**: Wildcard lists inside `0_TEMPLATES` use a special template generation mode.
-  - **Category Selection Dialog**: Before generation, choose which wildcard categories to include as template sources.
+- **Template Architect (`0_TEMPLATES`)**:
+  - **Special Folder Magic**: Wildcard lists placed inside the `0_TEMPLATES` folder use a special template generation mode.
+  - **Discovery**: This folder is your "Architect's Workshop" where you define how wildcards are combined.
+  - **Context-Aware Generation**: Choose which wildcard categories to include as template sources before generating.
   - **Semantic Context**: Sends actual category names (e.g., "Mythical_Fantasy") to the AI for better context, instead of abstract codes.
   - **Template Syntax**: Generated templates use `~~category/path~~` syntax for wildcard references.
-  - **Customizable Button**: Button shows "Generate Templates" instead of "Generate More" in template context.
+  - **Customizable Button**: The button text changes to "Generate Templates" when working inside this special folder.
 
 ### v2.17 Features
 

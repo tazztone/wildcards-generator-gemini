@@ -19,7 +19,6 @@ export const App = {
         this.bindEvents();
 
         // Initial Theme
-        // Initial Theme
         const theme = localStorage.getItem('wildcards-theme') || 'dark';
         document.documentElement.className = theme;
         this.updateThemeIcon(theme);
@@ -36,6 +35,17 @@ export const App = {
         if (preferredView !== 'list') {
             // Defer to allow DOM to fully load
             setTimeout(() => Mindmap.setView(preferredView), 100);
+        }
+
+        // First Run Experience
+        const hasVisited = localStorage.getItem('wildcards-visited');
+        if (!hasVisited) {
+            localStorage.setItem('wildcards-visited', 'true');
+            // Trigger help dialog after a short delay to ensure UI is ready
+            setTimeout(() => {
+                const helpBtn = document.getElementById('help-btn');
+                if (helpBtn) helpBtn.click();
+            }, 1500);
         }
     },
 
@@ -463,43 +473,56 @@ export const App = {
             // Help Button
             if (target.matches('#help-btn')) {
                 UI.showNotification(`
-<div class="text-left space-y-2 max-w-lg">
-    <h3 class="text-xl font-bold text-indigo-300 flex items-center gap-2">🚀 Getting Started</h3>
-    <ul class="list-none space-y-1 text-sm">
-        <li class="flex items-start gap-2">
-            <span class="text-indigo-400">⚙️</span>
-            <span><strong>Settings:</strong> Configure API keys via the gear icon in the toolbar</span>
-        </li>
-        <li class="flex items-start gap-2">
-            <span class="text-green-400">📁</span>
-            <span><strong>Categories:</strong> Click to expand, drag to reorder or nest</span>
-        </li>
-        <li class="flex items-start gap-2">
-            <span class="text-purple-400">✨</span>
-            <span><strong>Generate:</strong> Use AI to create new wildcards for any list</span>
-        </li>
-        <li class="flex items-start gap-2">
-            <span class="text-blue-400">💾</span>
-            <span><strong>Export/Import:</strong> Save and load your entire setup as YAML or ZIP</span>
-        </li>
-    </ul>
+<div class="text-left space-y-4 max-w-lg custom-scrollbar max-h-[70vh] overflow-y-auto pr-2">
+    <section>
+        <h3 class="text-xl font-bold text-indigo-300 flex items-center gap-2 mb-2">🚀 Getting Started</h3>
+        <p class="text-xs text-gray-400 mb-3">Welcome to Wildcards Generator! This tool helps you manage and expand complex prompt libraries for AI image and text generation.</p>
+        <ul class="list-none space-y-2 text-sm">
+            <li class="flex items-start gap-2">
+                <span class="text-indigo-400 mt-0.5">⚙️</span>
+                <span><strong>API Setup:</strong> Click the gear icon to configure your AI provider (OpenRouter, Gemini, or Custom). You'll need an API key to use generation features.</span>
+            </li>
+            <li class="flex items-start gap-2">
+                <span class="text-green-400 mt-0.5">📁</span>
+                <span><strong>Organize:</strong> Click categories to expand them. You can drag and drop to reorder, nest categories, or move wildcards between lists.</span>
+            </li>
+            <li class="flex items-start gap-2">
+                <span class="text-purple-400 mt-0.5">✨</span>
+                <span><strong>AI Generation:</strong> Click the "Sparkle" button on any list to have the AI suggest new terms based on the existing ones.</span>
+            </li>
+        </ul>
+    </section>
 
-    <h3 class="text-lg font-bold text-indigo-300 mt-2">⌨️ Keyboard Shortcuts</h3>
-    <div class="grid grid-cols-2 gap-1 text-sm bg-gray-800/50 rounded-lg p-2">
-        <div><kbd class="px-2 py-1 bg-gray-700 rounded text-xs">Ctrl+S</kbd></div><div class="text-gray-400">Auto-save reminder</div>
-        <div><kbd class="px-2 py-1 bg-gray-700 rounded text-xs">Ctrl+Z</kbd></div><div class="text-gray-400">Undo</div>
-        <div><kbd class="px-2 py-1 bg-gray-700 rounded text-xs">Ctrl+Y</kbd></div><div class="text-gray-400">Redo</div>
-        <div><kbd class="px-2 py-1 bg-gray-700 rounded text-xs">Escape</kbd></div><div class="text-gray-400">Collapse all</div>
-        <div><kbd class="px-2 py-1 bg-gray-700 rounded text-xs">↑ / ↓</kbd></div><div class="text-gray-400">Navigate categories</div>
-    </div>
+    <section class="border-t border-indigo-500/20 pt-3">
+        <h3 class="text-lg font-bold text-indigo-300 flex items-center gap-2 mb-2">🧩 Templates & Automation</h3>
+        <p class="text-xs text-gray-400 mb-2">The <code class="text-indigo-400">0_TEMPLATES</code> category is special. It powers the <strong>Hybrid Template System</strong>:</p>
+        <ul class="text-sm text-gray-300 list-disc list-inside space-y-1">
+            <li>Items here can use <code class="text-indigo-400">~~wildcard_name~~</code> syntax to reference other lists.</li>
+            <li>Use the <strong>Analyze Categories</strong> button in settings to let AI tag your lists (e.g., "Subject", "Location").</li>
+            <li>The system can then generate complex prompts by intelligently picking items from matching categories.</li>
+        </ul>
+    </section>
 
-    <h3 class="text-lg font-bold text-indigo-300 mt-2">💡 Tips</h3>
-    <ul class="text-sm text-gray-300 list-disc list-inside space-y-0.5">
-        <li>Click any title to rename it inline</li>
-        <li>Use "Dupe Finder" to find and manage repeated entries</li>
-        <li>Pin frequently used categories to keep them at the top</li>
-        <li>Use the overflow menu (⋮) for reset options and config export</li>
-    </ul>
+    <section class="border-t border-indigo-500/20 pt-3">
+        <h3 class="text-lg font-bold text-indigo-300 mb-2">⌨️ Keyboard Shortcuts</h3>
+        <div class="grid grid-cols-2 gap-2 text-sm bg-gray-900/40 rounded-lg p-3 border border-gray-800">
+            <div><kbd class="px-2 py-1 bg-gray-700 rounded text-xs">Ctrl+S</kbd> <span class="text-gray-500 ml-1">Save info</span></div>
+            <div><kbd class="px-2 py-1 bg-gray-700 rounded text-xs">Ctrl+Z</kbd> <span class="text-gray-500 ml-1">Undo</span></div>
+            <div><kbd class="px-2 py-1 bg-gray-700 rounded text-xs">Ctrl+Y</kbd> <span class="text-gray-500 ml-1">Redo</span></div>
+            <div><kbd class="px-2 py-1 bg-gray-700 rounded text-xs">Escape</kbd> <span class="text-gray-500 ml-1">Collapse All</span></div>
+            <div><kbd class="px-2 py-1 bg-gray-700 rounded text-xs">↑ / ↓</kbd> <span class="text-gray-500 ml-1">Navigate</span></div>
+        </div>
+    </section>
+
+    <section class="border-t border-indigo-500/20 pt-3">
+        <h3 class="text-lg font-bold text-indigo-300 mb-2">💡 Pro Tips</h3>
+        <ul class="text-sm text-gray-300 list-disc list-inside space-y-1">
+            <li><strong>Double-click</strong> any title or item to rename it instantly.</li>
+            <li>Use <strong>Dupe Finder</strong> (toolbar) to find and merge repeated entries across your collection.</li>
+            <li><strong>Pin</strong> categories via their header to keep your most-used lists at the top.</li>
+            <li>Export your collection as <strong>ZIP</strong> to get a portable structure ready for use in Stable Diffusion.</li>
+        </ul>
+    </section>
 </div>
 `);
             }

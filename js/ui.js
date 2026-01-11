@@ -1937,7 +1937,7 @@ export const UI = {
             const chipsHtml = wildcards.length > 0
                 ? wildcards.map((wc, i) => this.createChip(wc, i)).join('')
                 : this.getEmptyListHtml();
-            const addBtnHtml = `<button class="add-chip-btn chip chip-base text-xs px-1.5 py-0.5 rounded flex items-center gap-1 bg-green-600/50 hover:bg-green-600 cursor-pointer" title="Add new item">+</button>`;
+            const addBtnHtml = `<button class="add-chip-btn chip chip-base text-xs px-1.5 py-0.5 rounded flex items-center gap-1 btn-action btn-green" title="Add new item">+</button>`;
             chipContainer.innerHTML = addBtnHtml + chipsHtml;
         }
     },
@@ -2040,8 +2040,8 @@ export const UI = {
             <div class="p-4 flex flex-wrap justify-between items-center gap-4">
                 <h2 class="text-xl sm:text-2xl font-semibold text-accent">Add New Top-Level Category</h2>
                 <div class="flex items-center gap-2">
-                    <button id="add-category-placeholder-btn" class="add-category-btn bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded-md" aria-label="Add new top-level category">+</button>
-                    <button id="suggest-toplevel-btn" class="bg-purple-600 hover:bg-purple-700 text-white font-bold py-2 px-4 rounded-md">Suggest</button>
+                    <button id="add-category-placeholder-btn" class="add-category-btn btn-action btn-green py-2 px-4 rounded-md" aria-label="Add new top-level category">+</button>
+                    <button id="suggest-toplevel-btn" class="btn-action btn-purple py-2 px-4 rounded-md">Suggest</button>
                 </div>
             </div>`;
         return div;
@@ -2053,8 +2053,8 @@ export const UI = {
         div.innerHTML = `
             <span class="text-gray-400 font-medium">Add new subcategory</span>
             <div class="flex gap-2">
-                <button class="add-subcategory-btn bg-green-600 hover:bg-green-700 text-white font-bold py-1 px-3 rounded-md" aria-label="Add new subcategory">+</button>
-                <button class="suggest-subcategory-btn bg-purple-600 hover:bg-purple-700 text-white font-bold py-1 px-3 rounded-md">Suggest</button>
+                <button class="add-subcategory-btn btn-action btn-green py-1 px-3 rounded-md" aria-label="Add new subcategory">+</button>
+                <button class="suggest-subcategory-btn btn-action btn-purple py-1 px-3 rounded-md">Suggest</button>
             </div>
         `;
         return div;
@@ -2066,8 +2066,8 @@ export const UI = {
         div.innerHTML = `
             <span class="text-gray-400 text-sm font-medium">Add list</span>
             <div class="flex gap-2">
-                 <button class="add-wildcard-list-btn bg-green-600 hover:bg-green-700 text-white font-bold py-1 px-3 rounded-md" aria-label="Add new wildcard list">+</button>
-                 <button class="suggest-wildcard-list-btn bg-purple-600 hover:bg-purple-700 text-white text-sm font-medium py-1 px-3 rounded-md">Suggest</button>
+                 <button class="add-wildcard-list-btn btn-action btn-green py-1 px-3 rounded-md" aria-label="Add new wildcard list">+</button>
+                 <button class="suggest-wildcard-list-btn btn-action btn-purple py-1 px-3 rounded-md">Suggest</button>
             </div>`;
         return div;
     },

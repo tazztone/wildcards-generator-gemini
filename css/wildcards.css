@@ -90,8 +90,10 @@
         }
 
         /* Hierarchy Levels */
-        .level-0 {
+        .level-0,
+        .placeholder-category {
             margin-top: 1rem;
+            margin-inline: 1rem;
         }
 
         .level-1,
@@ -580,6 +582,45 @@
             background: transparent;
             color: var(--text-primary);
             border: 1px solid var(--border-primary);
+        }
+
+        /* Action Buttons (Add/Suggest) */
+        .btn-action {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s ease;
+            border: 1px solid transparent;
+            cursor: pointer;
+            font-weight: 600;
+        }
+
+        .btn-green {
+            background-color: rgba(22, 163, 74, 0.25);
+            color: #4ade80;
+            /* green-400 */
+            border-color: rgba(22, 163, 74, 0.4);
+        }
+
+        .btn-green:hover {
+            background-color: rgba(22, 163, 74, 1);
+            color: #ffffff;
+            border-color: rgba(22, 163, 74, 1);
+            box-shadow: 0 0 12px rgba(22, 163, 74, 0.4);
+        }
+
+        .btn-purple {
+            background-color: rgba(147, 51, 234, 0.25);
+            color: #c084fc;
+            /* purple-400 */
+            border-color: rgba(147, 51, 234, 0.4);
+        }
+
+        .btn-purple:hover {
+            background-color: rgba(147, 51, 234, 1);
+            color: #ffffff;
+            border-color: rgba(147, 51, 234, 1);
+            box-shadow: 0 0 12px rgba(147, 51, 234, 0.4);
         }
 
         /* Toast Notifications */

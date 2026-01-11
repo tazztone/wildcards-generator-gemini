@@ -118,7 +118,8 @@
             <div
                 class="flex items-center gap-3 bg-gray-800/40 backdrop-blur-md p-1.5 rounded-full border border-gray-700/50 shadow-lg">
                 <button id="theme-toggle" class="p-2 rounded-full hover:bg-white/10 text-gray-300 transition-colors"
-                    title="Toggle light/dark mode" aria-label="Toggle light/dark mode">
+                    title="Switch between Light and Dark visual themes. Your preference is saved locally."
+                    aria-label="Toggle Theme">
                     <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                             d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
@@ -126,7 +127,8 @@
                 </button>
                 <div class="w-px h-6 bg-gray-700"></div>
                 <button id="settings-btn" class="p-2 rounded-full hover:bg-white/10 text-gray-300 transition-colors"
-                    title="Global Settings" aria-label="Global Settings">
+                    title="Open the global configuration panel to manage API providers, keys, prompts, and display settings."
+                    aria-label="Global Settings">
                     <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                             d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
@@ -1285,12 +1287,12 @@
                         onclick="event.stopPropagation();">
                 </div>
                 <div class="flex items-center gap-2 ml-auto flex-shrink-0">
-                    <button
-                        class="add-subcategory-btn bg-green-600 hover:bg-green-700 text-white font-bold py-1 px-2 text-sm rounded-md"
-                        title="Add new folder">+</button>
-                    <button
-                        class="suggest-subcategory-btn bg-purple-600 hover:bg-purple-700 text-white font-bold py-1 px-2 text-sm rounded-md"
-                        title="Suggest new items for this category">Suggest</button>
+                    <button class="add-subcategory-btn btn-action btn-green py-1 px-2 text-sm rounded-md"
+                        title="Create a new folder inside this category to further organize your wildcards."
+                        aria-label="Add Subcategory">+</button>
+                    <button class="suggest-subcategory-btn btn-action btn-purple py-1 px-2 text-sm rounded-md"
+                        title="Have AI analyze this folder's name and instructions to suggest relevant new subcategories or wildcard lists."
+                        aria-label="Suggest New Items">Suggest</button>
                     <span class="arrow-down transition-transform duration-300 text-indigo-400"><svg class="h-6 w-6"
                             fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7">
@@ -1310,7 +1312,8 @@
                         class="wildcard-count text-gray-400 text-sm ml-2"></span></h3>
                 <button
                     class="delete-btn text-red-400 hover:text-red-300 transition-all duration-200 p-1 rounded hover:bg-red-400/10"
-                    title="Delete this card" aria-label="Delete this card">
+                    title="Permentantly delete this wildcard card and all contained terms from your collection."
+                    aria-label="Delete This Card">
                     <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                             d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
@@ -1325,26 +1328,32 @@
             <div class="flex gap-2 mt-2">
                 <input type="text" placeholder="Add new wildcard (Press Enter)"
                     class="add-wildcard-input flex-grow bg-gray-800 border border-gray-600 rounded-md px-2 py-1 text-sm">
-                <button
-                    class="add-wildcard-btn bg-indigo-600 hover:bg-indigo-700 text-white font-bold px-3 rounded-md">+</button>
+                <button class="add-wildcard-btn bg-indigo-600 hover:bg-indigo-700 text-white font-bold px-3 rounded-md"
+                    title="Add the term entered above to this wildcard list." aria-label="Add Wildcard">+</button>
             </div>
             <div class="flex justify-between items-center mt-3 flex-wrap gap-2">
                 <button
-                    class="generate-btn bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold py-2 px-3 rounded-md flex items-center gap-2"><span
-                        class="btn-text">Generate More</span>
+                    class="generate-btn bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold py-2 px-3 rounded-md flex items-center gap-2"
+                    title="Generate more wildcards for this list using AI. This uses your active model and category context."
+                    aria-label="Generate More AI Wildcards"><span class="btn-text">Generate More</span>
                     <div class="loader hidden"></div>
                 </button>
-                <button class="copy-btn text-gray-400 hover:text-white" title="Copy all wildcards"
-                    aria-label="Copy all wildcards"><svg width="20" height="20" viewBox="0 0 24 24" fill="none"
+                <button class="copy-btn text-gray-400 hover:text-white"
+                    title="Copy all terms in this wildcard list to your clipboard as a plain text list."
+                    aria-label="Copy All Wildcards"><svg width="20" height="20" viewBox="0 0 24 24" fill="none"
                         stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                         <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
                         <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
                     </svg></button>
                 <button
-                    class="select-all-btn bg-gray-600 hover:bg-gray-700 text-white text-xs font-bold py-2 px-3 rounded-md">Select
+                    class="select-all-btn bg-gray-600 hover:bg-gray-700 text-white text-xs font-bold py-2 px-3 rounded-md"
+                    title="Select or deselect all items in this wildcard list for batch operations."
+                    aria-label="Select All Items">Select
                     All</button>
                 <button
-                    class="batch-delete-btn bg-red-600 hover:bg-red-700 text-white text-xs font-bold py-2 px-3 rounded-md">Delete
+                    class="batch-delete-btn bg-red-600 hover:bg-red-700 text-white text-xs font-bold py-2 px-3 rounded-md"
+                    title="Instantly delete all currently selected items from this list."
+                    aria-label="Delete Selected Items">Delete
                     Selected</button>
             </div>
         </div>
@@ -1357,10 +1366,12 @@
                 <div class="flex gap-4">
                     <button
                         class="add-wildcard-list-btn bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded-md text-2xl"
-                        title="Add new wildcard list">+</button>
+                        title="Create a new, empty wildcard list in this category."
+                        aria-label="Add New Wildcard List">+</button>
                     <button
                         class="suggest-wildcard-list-btn bg-purple-600 hover:bg-purple-700 text-white font-bold py-2 px-4 rounded-md"
-                        title="Suggest new wildcard list">Suggest</button>
+                        title="Have AI suggest new wildcard lists that would fit well within this category."
+                        aria-label="Suggest New Wildcard List">Suggest</button>
                 </div>
             </div>
         </div>
