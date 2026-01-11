@@ -1967,7 +1967,7 @@ export const UI = {
         return `
             <summary class="flex justify-between items-center p-2 cursor-pointer gap-2 group/catheader" title="${sanitize(tooltipText)}">
                 <div class="flex items-center gap-2 flex-grow min-w-0">
-                    <input type="checkbox" aria-label="Select category" class="category-batch-checkbox w-3.5 h-3.5 text-indigo-600 bg-gray-700 border-gray-500 rounded focus:ring-indigo-500 flex-shrink-0" onclick="event.stopPropagation();">
+                    <input type="checkbox" aria-label="Select category and all contents" title="Select category and all contents" class="category-batch-checkbox w-3.5 h-3.5 text-indigo-600 bg-gray-700 border-gray-500 rounded focus:ring-indigo-500 flex-shrink-0">
                     <h2 class="text-lg font-semibold text-accent select-none editable-wrapper flex-shrink-0"><span class="editable-name category-name outline-none rounded px-0.5" tabindex="0">${name.replace(/_/g, ' ')}</span><span class="edit-icon">✏️</span></h2>${templateBadge}
                     <input type="text" 
                         class="custom-instructions-input editable-input text-sm text-gray-500 bg-transparent border-0 outline-none ml-2 flex-grow min-w-[100px] focus:text-gray-300 focus:bg-gray-800/50 rounded px-1 transition-colors truncate hidden sm:block cursor-pointer read-only:cursor-pointer" 
@@ -1998,7 +1998,7 @@ export const UI = {
         return `
             <!-- Compact Header: Title + Action Icons -->
             <div class="flex items-center gap-2 mb-1 group/header" title="${sanitize(tooltipText)}">
-                <input type="checkbox" aria-label="Select list" class="card-batch-checkbox w-3.5 h-3.5 text-indigo-600 bg-gray-700 border-gray-500 rounded focus:ring-indigo-500 flex-shrink-0" onclick="event.stopPropagation();">
+                <input type="checkbox" aria-label="Select list" title="Select list" class="card-batch-checkbox w-3.5 h-3.5 text-indigo-600 bg-gray-700 border-gray-500 rounded focus:ring-indigo-500 flex-shrink-0">
                 <h3 class="font-bold text-sm text-gray-100 editable-wrapper flex-shrink-0"><span class="editable-name wildcard-name outline-none rounded px-0.5" tabindex="0">${name.replace(/_/g, ' ')}</span><span class="edit-icon">✏️</span></h3>
                 <input type="text" 
                     class="custom-instructions-input editable-input text-xs text-gray-500 bg-transparent border-0 outline-none flex-grow min-w-[50px] focus:text-gray-300 focus:bg-gray-800/50 rounded px-1 transition-colors truncate hidden sm:block cursor-pointer read-only:cursor-pointer" 

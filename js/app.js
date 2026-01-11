@@ -11,6 +11,7 @@ import { TemplateEngine } from './template-engine.js';
 
 export const App = {
     draggedPath: null,
+    lastCheckedBatch: null,
 
     async init() {
         UI.init();
@@ -711,13 +712,8 @@ export const App = {
         document.getElementById('batch-select-all')?.addEventListener('change', (e) => {
             const checked = /** @type {HTMLInputElement} */ (e.target).checked;
             document.querySelectorAll('.category-batch-checkbox, .card-batch-checkbox').forEach(cb => /** @type {HTMLInputElement} */(cb).checked = checked);
+            this.lastCheckedBatch = null;
             this.updateBatchUI();
-        });
-        UI.elements.container.addEventListener('change', (e) => {
-            const containerTarget = /** @type {HTMLElement} */ (e.target);
-            if (containerTarget.matches('.category-batch-checkbox') || containerTarget.matches('.card-batch-checkbox')) {
-                this.updateBatchUI();
-            }
         });
 
         // Keyboard Shortcuts
@@ -942,7 +938,7 @@ export const App = {
 
             // Hide the bar
             batchOpsBar?.classList.add('hidden');
-
+            this.lastCheckedBatch = null;
             UI.showToast('Exited Batch Mode', 'info');
         }
 
@@ -978,13 +974,46 @@ export const App = {
         const pathElement = target.closest('[data-path]');
         const placeholderElement = target.closest('[data-parent-path]');
 
-        // Handle Placeholder Buttons
         if (placeholderElement) {
             const parentPath = placeholderElement.dataset.parentPath;
             if (target.matches('.add-wildcard-list-btn')) this.createItem(parentPath, 'list');
             if (target.matches('.add-subcategory-btn')) this.createItem(parentPath, 'folder');
             if (target.matches('.suggest-wildcard-list-btn')) this.suggestItems(parentPath, 'list');
             if (target.matches('.suggest-subcategory-btn')) this.suggestItems(parentPath, 'folder');
+            return;
+        }
+
+        // Handle Batch Checkbox clicks (Cascade & Range Selection)
+        if (target.matches('.category-batch-checkbox, .card-batch-checkbox')) {
+            e.stopPropagation(); // Prevent details toggle
+            const isChecked = target.checked;
+
+            // Cascade logic for folders
+            if (target.classList.contains('category-batch-checkbox')) {
+                const details = target.closest('details');
+                if (details) {
+                    details.querySelectorAll('.category-batch-checkbox, .card-batch-checkbox').forEach(cb => {
+                        /** @type {HTMLInputElement} */(cb).checked = isChecked;
+                    });
+                }
+            }
+
+            // Range selection logic (SHIFT+Click)
+            if (e.shiftKey && this.lastCheckedBatch && this.lastCheckedBatch !== target) {
+                const allCheckboxes = Array.from(document.querySelectorAll('.category-batch-checkbox:not(.hidden), .card-batch-checkbox:not(.hidden)'));
+                const startIdx = allCheckboxes.indexOf(this.lastCheckedBatch);
+                const endIdx = allCheckboxes.indexOf(target);
+
+                if (startIdx !== -1 && endIdx !== -1) {
+                    const [min, max] = [Math.min(startIdx, endIdx), Math.max(startIdx, endIdx)];
+                    for (let i = min; i <= max; i++) {
+                        /** @type {HTMLInputElement} */(allCheckboxes[i]).checked = isChecked;
+                    }
+                }
+            }
+
+            this.lastCheckedBatch = target;
+            this.updateBatchUI();
             return;
         }
 
