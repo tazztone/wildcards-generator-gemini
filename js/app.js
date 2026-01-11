@@ -528,15 +528,15 @@ export const App = {
 `);
             }
             // Dupe Finder Mode
-            if (target.matches('#dupe-finder-btn')) {
+            if (target.closest('#dupe-finder-btn')) {
                 UI.enterDupeFinderMode();
             }
             // Batch Select Mode Toggle
-            if (target.matches('#batch-mode-btn')) {
+            if (target.closest('#batch-mode-btn')) {
                 this.toggleBatchSelectMode(true);
             }
             // Exit Batch Select Mode
-            if (target.matches('#exit-batch-mode-btn')) {
+            if (target.closest('#exit-batch-mode-btn')) {
                 this.toggleBatchSelectMode(false);
             }
             // Reset Options
@@ -696,12 +696,12 @@ export const App = {
             }
 
             // Batch Operations
-            if (target.matches('#batch-expand')) this.handleBatchAction('expand');
-            if (target.matches('#batch-collapse')) this.handleBatchAction('collapse');
-            if (target.matches('#batch-delete')) this.handleBatchAction('delete');
-            if (target.matches('#batch-generate')) this.handleBatchAction('generate');
-            if (target.matches('#batch-suggest-folders')) this.handleBatchAction('suggest-folders');
-            if (target.matches('#batch-suggest-lists')) this.handleBatchAction('suggest-lists');
+            if (target.closest('#batch-expand')) this.handleBatchAction('expand');
+            if (target.closest('#batch-collapse')) this.handleBatchAction('collapse');
+            if (target.closest('#batch-delete')) this.handleBatchAction('delete');
+            if (target.closest('#batch-generate')) this.handleBatchAction('generate');
+            if (target.closest('#batch-suggest-folders')) this.handleBatchAction('suggest-folders');
+            if (target.closest('#batch-suggest-lists')) this.handleBatchAction('suggest-lists');
         });
 
         // Settings File Input Handler
@@ -856,51 +856,34 @@ export const App = {
     updateBatchUI() {
         const selected = document.querySelectorAll('.category-batch-checkbox:checked, .card-batch-checkbox:checked');
         const count = selected.length;
-        document.getElementById('batch-count').textContent = `(${count} selected)`;
+        const countEl = document.getElementById('batch-count');
+        if (countEl) countEl.textContent = `(${count} selected)`;
+
         const hasSelection = count > 0;
 
-        // Enhancement #2: Add explanatory tooltips for disabled buttons
-        const expandBtn = /** @type {HTMLButtonElement|null} */ (document.getElementById('batch-expand'));
-        const collapseBtn = /** @type {HTMLButtonElement|null} */ (document.getElementById('batch-collapse'));
-        const deleteBtn = /** @type {HTMLButtonElement|null} */ (document.getElementById('batch-delete'));
-        const generateBtn = /** @type {HTMLButtonElement|null} */ (document.getElementById('batch-generate'));
-        const suggestFoldersBtn = /** @type {HTMLButtonElement|null} */ (document.getElementById('batch-suggest-folders'));
-        const suggestListsBtn = /** @type {HTMLButtonElement|null} */ (document.getElementById('batch-suggest-lists'));
+        // Button states
+        const btns = {
+            expand: /** @type {HTMLButtonElement|null} */ (document.getElementById('batch-expand')),
+            collapse: /** @type {HTMLButtonElement|null} */ (document.getElementById('batch-collapse')),
+            delete: /** @type {HTMLButtonElement|null} */ (document.getElementById('batch-delete')),
+            generate: /** @type {HTMLButtonElement|null} */ (document.getElementById('batch-generate')),
+            suggestFolders: /** @type {HTMLButtonElement|null} */ (document.getElementById('batch-suggest-folders')),
+            suggestLists: /** @type {HTMLButtonElement|null} */ (document.getElementById('batch-suggest-lists'))
+        };
 
-        if (expandBtn) expandBtn.disabled = !hasSelection;
-        if (collapseBtn) collapseBtn.disabled = !hasSelection;
-        if (deleteBtn) deleteBtn.disabled = !hasSelection;
-        if (generateBtn) generateBtn.disabled = !hasSelection;
-        if (suggestFoldersBtn) suggestFoldersBtn.disabled = !hasSelection;
-        if (suggestListsBtn) suggestListsBtn.disabled = !hasSelection;
+        Object.values(btns).forEach(btn => { if (btn) btn.disabled = !hasSelection; });
 
-        // Update titles to explain state
-        if (hasSelection) {
-            if (expandBtn) expandBtn.title = `Expand ${count} selected categories`;
-            if (collapseBtn) collapseBtn.title = `Collapse ${count} selected categories`;
-            if (deleteBtn) deleteBtn.title = `Delete ${count} selected categories`;
-            if (generateBtn) generateBtn.title = `Generate content for wildcards inside ${count} categories`;
-            if (suggestFoldersBtn) suggestFoldersBtn.title = `Suggest subfolders for ${count} categories`;
-            if (suggestListsBtn) suggestListsBtn.title = `Suggest wildcard lists for ${count} categories`;
-        } else {
-            if (expandBtn) expandBtn.title = 'Select categories to expand';
-            if (collapseBtn) collapseBtn.title = 'Select categories to collapse';
-            if (deleteBtn) deleteBtn.title = 'Select categories to delete';
-            if (generateBtn) generateBtn.title = 'Select categories to generate content';
-            if (suggestFoldersBtn) suggestFoldersBtn.title = 'Select categories to suggest subfolders';
-            if (suggestListsBtn) suggestListsBtn.title = 'Select categories to suggest lists';
-        }
+        // Update titles to explain state (especially important for icons)
+        if (btns.expand) btns.expand.title = hasSelection ? `Expand ${count} selected categories` : 'Select categories to expand';
+        if (btns.collapse) btns.collapse.title = hasSelection ? `Collapse ${count} selected categories` : 'Select categories to collapse';
+        if (btns.delete) btns.delete.title = hasSelection ? `Delete ${count} selected categories` : 'Select categories to delete';
+        if (btns.generate) btns.generate.title = hasSelection ? `Generate content for wildcards inside ${count} categories` : 'Select categories to generate content';
+        if (btns.suggestFolders) btns.suggestFolders.title = hasSelection ? `Suggest subfolders for ${count} categories` : 'Select categories to suggest subfolders';
+        if (btns.suggestLists) btns.suggestLists.title = hasSelection ? `Suggest wildcard lists for ${count} categories` : 'Select categories to suggest lists';
 
-        document.getElementById('batch-ops-bar').classList.toggle('hidden', !hasSelection && !document.body.classList.contains('batch-select-mode'));
-
-        // Show batch prompt only when in explicit batch mode with no selection yet
-        const batchPrompt = document.querySelector('.batch-prompt');
-        if (batchPrompt) {
-            const inBatchMode = document.body.classList.contains('batch-select-mode');
-            batchPrompt.classList.toggle('hidden', hasSelection || !inBatchMode);
-        }
+        // The bar is shown/hidden by toggleBatchSelectMode, but we ensure it's visible if there's a selection
+        if (hasSelection) document.getElementById('batch-ops-bar')?.classList.remove('hidden');
     },
-
     /**
      * Toggle batch select mode on/off
      * @param {boolean} enable - true to enter batch mode, false to exit
@@ -911,22 +894,19 @@ export const App = {
         const batchOpsBar = document.getElementById('batch-ops-bar');
 
         if (enable) {
-            // Enter batch select mode
             body.classList.add('batch-select-mode');
             batchModeBtn?.classList.add('active');
-
-            // Show the bar immediately with instructions
             batchOpsBar?.classList.remove('hidden');
 
             // Clear any previous selection
             document.querySelectorAll('.category-batch-checkbox, .card-batch-checkbox').forEach(cb => {
                 /** @type {HTMLInputElement} */(cb).checked = false;
             });
-            /** @type {HTMLInputElement|null} */(document.getElementById('batch-select-all')).checked = false;
+            const selectAll = /** @type {HTMLInputElement|null} */(document.getElementById('batch-select-all'));
+            if (selectAll) selectAll.checked = false;
 
             UI.showToast('Batch Mode: Select categories for AI operations', 'info');
         } else {
-            // Exit batch select mode
             body.classList.remove('batch-select-mode');
             batchModeBtn?.classList.remove('active');
 
@@ -934,9 +914,9 @@ export const App = {
             document.querySelectorAll('.category-batch-checkbox, .card-batch-checkbox').forEach(cb => {
                 /** @type {HTMLInputElement} */(cb).checked = false;
             });
-            /** @type {HTMLInputElement|null} */(document.getElementById('batch-select-all')).checked = false;
+            const selectAll = /** @type {HTMLInputElement|null} */(document.getElementById('batch-select-all'));
+            if (selectAll) selectAll.checked = false;
 
-            // Hide the bar
             batchOpsBar?.classList.add('hidden');
             this.lastCheckedBatch = null;
             UI.showToast('Exited Batch Mode', 'info');

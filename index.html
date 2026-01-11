@@ -1213,43 +1213,87 @@
 
     <!-- Batch Operations Bar -->
     <div id="batch-ops-bar"
-        class="fixed bottom-8 left-1/2 transform -translate-x-1/2 z-50 flex flex-wrap items-center gap-4 bg-gray-900/95 backdrop-blur border border-gray-700 p-3 rounded-xl shadow-2xl hidden transition-all duration-300">
-        <span class="batch-prompt hidden"><strong>Batch Mode:</strong> Select categories for AI operations</span>
-        <label class="flex items-center gap-2 cursor-pointer text-sm">
-            <input type="checkbox" id="batch-select-all"
-                class="w-4 h-4 text-indigo-600 bg-gray-700 border-gray-500 rounded focus:ring-indigo-500">
-            <span class="text-gray-300">Select All Categories</span>
-        </label>
-        <span id="batch-count" class="text-sm text-gray-400">(0 selected)</span>
-        <div class="flex gap-2 ml-auto">
-            <button id="batch-suggest-folders"
-                class="bg-purple-600 hover:bg-purple-700 text-white text-sm py-1 px-3 rounded disabled:opacity-50"
-                title="Suggest subcategories for selected" disabled>Suggest Folders</button>
-            <button id="batch-suggest-lists"
-                class="bg-purple-600 hover:bg-purple-700 text-white text-sm py-1 px-3 rounded disabled:opacity-50"
-                title="Suggest wildcard lists for selected" disabled>Suggest Lists</button>
-            <div class="w-px h-6 bg-gray-600 mx-1"></div>
-            <button id="batch-generate"
-                class="bg-green-600 hover:bg-green-700 text-white text-sm py-1 px-3 rounded disabled:opacity-50"
-                title="Generate wildcards for all lists in selected categories" disabled>Generate Content</button>
-            <div class="w-px h-6 bg-gray-600 mx-1"></div>
-            <button id="batch-expand"
-                class="bg-indigo-600 hover:bg-indigo-700 text-white text-sm py-1 px-3 rounded disabled:opacity-50"
-                title="Expand all selected categories" disabled>Expand</button>
-            <button id="batch-collapse"
-                class="bg-gray-600 hover:bg-gray-700 text-white text-sm py-1 px-3 rounded disabled:opacity-50"
-                title="Collapse all selected categories" disabled>Collapse</button>
-            <button id="batch-delete"
-                class="bg-red-600 hover:bg-red-700 text-white text-sm py-1 px-3 rounded disabled:opacity-50"
-                title="Delete all selected categories" disabled>Delete</button>
-            <div class="w-px h-6 bg-gray-600 mx-1"></div>
-            <button id="exit-batch-mode-btn"
-                class="bg-gray-700 hover:bg-gray-600 text-white text-sm py-1 px-3 rounded flex items-center gap-1"
-                title="Exit Batch Select Mode">
-                <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        class="fixed bottom-8 left-1/2 transform -translate-x-1/2 z-50 flex flex-col gap-3 bg-gray-900/95 backdrop-blur border border-gray-700 p-4 rounded-xl shadow-2xl hidden transition-all duration-300 min-w-[400px]">
+
+        <!-- Row 1: Status & Selection -->
+        <div class="flex items-center justify-between border-b border-gray-800 pb-2">
+            <div class="flex items-center gap-3">
+                <span class="text-xs font-bold text-indigo-400 uppercase tracking-wider">Batch Mode</span>
+                <label class="flex items-center gap-2 cursor-pointer text-sm">
+                    <input type="checkbox" id="batch-select-all"
+                        class="w-4 h-4 text-indigo-600 bg-gray-700 border-gray-500 rounded focus:ring-indigo-500">
+                    <span class="text-gray-300">Select All</span>
+                </label>
+            </div>
+            <span id="batch-count" class="text-sm font-mono text-gray-400 bg-gray-800 px-2 py-0.5 rounded">(0
+                selected)</span>
+            <button id="exit-batch-mode-btn" class="text-gray-500 hover:text-white transition-colors"
+                title="Exit Batch Mode">
+                <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
                 </svg>
-                Exit
+            </button>
+        </div>
+
+        <!-- Row 2: Action Buttons -->
+        <div class="flex items-center gap-2">
+            <!-- Suggest Group -->
+            <div class="flex bg-gray-800 rounded-lg p-1 gap-1">
+                <button id="batch-suggest-folders"
+                    class="p-1.5 hover:bg-purple-600/20 rounded transition-colors disabled:opacity-30"
+                    title="Suggest subcategories for selected">
+                    <svg class="w-5 h-5 text-purple-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M9 13h6m-3-3v6m-9 1V7a2 2 0 012-2h6l2 2h6a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2z" />
+                    </svg>
+                </button>
+                <button id="batch-suggest-lists"
+                    class="p-1.5 hover:bg-purple-600/20 rounded transition-colors disabled:opacity-30"
+                    title="Suggest wildcard lists for selected">
+                    <svg class="w-5 h-5 text-purple-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
+                    </svg>
+                </button>
+            </div>
+
+            <!-- View Group -->
+            <div class="flex bg-gray-800 rounded-lg p-1 gap-1">
+                <button id="batch-expand"
+                    class="p-1.5 hover:bg-indigo-600/20 rounded transition-colors disabled:opacity-30"
+                    title="Expand selected">
+                    <svg class="w-5 h-5 text-indigo-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                    </svg>
+                </button>
+                <button id="batch-collapse"
+                    class="p-1.5 hover:bg-indigo-600/20 rounded transition-colors disabled:opacity-30"
+                    title="Collapse selected">
+                    <svg class="w-5 h-5 text-indigo-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 15l7-7 7 7" />
+                    </svg>
+                </button>
+            </div>
+
+            <!-- Generate (Primary) -->
+            <button id="batch-generate"
+                class="flex-grow bg-green-600 hover:bg-green-700 text-white text-xs font-bold py-2 px-3 rounded-lg flex items-center justify-center gap-2 disabled:opacity-50 transition-all shadow-lg shadow-green-900/20"
+                title="Generate content for all lists in selected categories">
+                <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M13 10V3L4 14h7v7l9-11h-7z" />
+                </svg>
+                Generate
+            </button>
+
+            <!-- Delete -->
+            <button id="batch-delete"
+                class="p-2 bg-red-600/10 hover:bg-red-600 text-red-400 hover:text-white rounded-lg transition-all disabled:opacity-30"
+                title="Delete selected">
+                <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                </svg>
             </button>
         </div>
     </div>
