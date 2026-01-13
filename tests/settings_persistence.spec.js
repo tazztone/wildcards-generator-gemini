@@ -6,7 +6,10 @@ test.describe('Settings Persistence', () => {
     test.beforeEach(async ({ page }) => {
         // Clear localStorage before each test
         await page.goto('/');
-        await page.evaluate(() => localStorage.clear());
+        await page.evaluate(() => {
+            localStorage.clear();
+            localStorage.setItem('wildcards-visited', 'true');
+        });
         await page.reload();
         await page.waitForLoadState('networkidle');
     });
@@ -14,7 +17,7 @@ test.describe('Settings Persistence', () => {
     test.describe('Model Name Persistence', () => {
         test('model name persists after page reload', async ({ page }) => {
             // Open settings
-            await page.locator('button[title="Global Settings"]').click();
+            await page.locator('#settings-btn').click();
             await expect(page.locator('#settings-dialog')).toBeVisible();
 
             // Change model name for OpenRouter
@@ -28,12 +31,12 @@ test.describe('Settings Persistence', () => {
             await page.waitForLoadState('networkidle');
 
             // Reopen settings and verify
-            await page.locator('button[title="Global Settings"]').click();
+            await page.locator('#settings-btn').click();
             await expect(page.locator('#openrouter-model-name')).toHaveValue('test-model-name');
         });
 
         test('each provider model name persists independently', async ({ page }) => {
-            await page.locator('button[title="Global Settings"]').click();
+            await page.locator('#settings-btn').click();
 
             // Set OpenRouter model
             await page.locator('#openrouter-model-name').fill('openrouter-test');
@@ -50,7 +53,7 @@ test.describe('Settings Persistence', () => {
             await page.waitForLoadState('networkidle');
 
             // Verify both persisted
-            await page.locator('button[title="Global Settings"]').click();
+            await page.locator('#settings-btn').click();
             await expect(page.locator('#openrouter-model-name')).toHaveValue('openrouter-test');
 
             await page.locator('#api-endpoint').selectOption('gemini');
@@ -61,7 +64,7 @@ test.describe('Settings Persistence', () => {
     test.describe('API Provider Persistence', () => {
         test('active provider persists after reload', async ({ page }) => {
             // Open settings and switch provider
-            await page.locator('button[title="Global Settings"]').click();
+            await page.locator('#settings-btn').click();
             await page.locator('#api-endpoint').selectOption('gemini');
             await expect(page.locator('#settings-gemini')).toBeVisible();
 
@@ -71,7 +74,7 @@ test.describe('Settings Persistence', () => {
             await page.waitForLoadState('networkidle');
 
             // Verify Gemini is still selected
-            await page.locator('button[title="Global Settings"]').click();
+            await page.locator('#settings-btn').click();
             await expect(page.locator('#api-endpoint')).toHaveValue('gemini');
             await expect(page.locator('#settings-gemini')).toBeVisible();
         });
@@ -79,7 +82,7 @@ test.describe('Settings Persistence', () => {
 
     test.describe('Prompt Visibility', () => {
         test('global prompt textarea exists in settings', async ({ page }) => {
-            await page.locator('button[title="Global Settings"]').click();
+            await page.locator('#settings-btn').click();
             await expect(page.locator('#settings-dialog')).toBeVisible();
 
             // Check for prompt textarea - exact ID may vary

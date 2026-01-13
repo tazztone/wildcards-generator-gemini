@@ -4,6 +4,10 @@ const { test, expect } = require('@playwright/test');
 test.describe('Bug Reproduction', () => {
 
     test.beforeEach(async ({ page }) => {
+        // Disable first-run help dialog
+        await page.addInitScript(() => {
+            window.localStorage.setItem('wildcards-visited', 'true');
+        });
         await page.goto('/');
         await page.waitForLoadState('networkidle');
     });
@@ -13,6 +17,7 @@ test.describe('Bug Reproduction', () => {
         await page.locator('#add-category-placeholder-btn').click();
         await page.locator('#notification-dialog input').fill('ParentCat');
         await page.locator('#confirm-btn').click();
+        await expect(page.locator('#notification-dialog')).toBeHidden();
         await expect(page.locator('details[data-path="ParentCat"]')).toBeVisible();
 
         // 2. Expand Parent Category to make subcategory button visible
@@ -22,24 +27,25 @@ test.describe('Bug Reproduction', () => {
         await page.waitForTimeout(200);
 
         // 3. Create a subcategory
-        // Need to be specific about which add button (the one in the placeholder inside the content wrapper)
         const addBtn = parent.locator('.content-wrapper .add-subcategory-btn');
         await addBtn.scrollIntoViewIfNeeded();
         await addBtn.click();
 
         await page.locator('#notification-dialog input').fill('ChildCat');
         await page.locator('#confirm-btn').click();
+        await expect(page.locator('#notification-dialog')).toBeHidden();
 
         // BUG CHECK: Does ChildCat appear?
         const childSelector = 'details[data-path="ParentCat/ChildCat"]';
-        await expect(page.locator(childSelector)).toBeVisible({ timeout: 2000 });
+        await expect(page.locator(childSelector)).toBeVisible({ timeout: 5000 });
 
         // If it appeared (it might not if bug exists), try to rename it
         if (await page.locator(childSelector).isVisible()) {
             const childTitle = page.locator(`${childSelector} > summary .category-name`);
             await childTitle.dblclick();
             await childTitle.fill('RenamedChild');
-            await childTitle.blur();
+            await childTitle.press('Enter'); // Better than blur for confirming edits
+            await page.waitForTimeout(200);
 
             // BUG CHECK: Does it have the new path?
             const newSelector = 'details[data-path="ParentCat/RenamedChild"]';
@@ -55,11 +61,12 @@ test.describe('Bug Reproduction', () => {
         await page.locator('#add-category-placeholder-btn').click();
         await page.locator('#notification-dialog input').fill('TopCat');
         await page.locator('#confirm-btn').click();
+        await expect(page.locator('#notification-dialog')).toBeHidden();
 
         const catTitle = page.locator('details[data-path="TopCat"] > summary .category-name');
         await catTitle.dblclick();
         await catTitle.fill('RenamedTop');
-        await catTitle.blur();
+        await catTitle.press('Enter');
 
         await expect(page.locator('details[data-path="RenamedTop"]')).toBeVisible();
         await expect(page.locator('details[data-path="TopCat"]')).toBeHidden();

@@ -283,6 +283,17 @@ jobs:
   });
   ```
 
+### Controlling First-Run Experience
+- **Disable Help Dialog:** The application shows a help dialog on the first visit. This can block UI interactions in tests. Use `page.addInitScript` to pre-seed the visit flag before the page loads.
+  ```javascript
+  test.beforeEach(async ({ page }) => {
+      await page.addInitScript(() => {
+          localStorage.setItem('wildcards-visited', 'true');
+      });
+      await page.goto('/');
+  });
+  ```
+
 ### Mocking API Calls
 - **Avoid Real Requests:** For features like "Suggest" or "Test Model", mock the API response using `page.route()`. This makes tests faster and deterministic and avoids API rate limits or costs.
   ```javascript

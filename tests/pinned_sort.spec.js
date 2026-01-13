@@ -2,9 +2,16 @@
 import { test, expect } from '@playwright/test';
 
 test.describe('Pinned Categories', () => {
-    test('Pinned categories should be sorted first', async ({ page }) => {
-        // Load the page
+
+    test.beforeEach(async ({ page }) => {
+        await page.addInitScript(() => {
+            window.localStorage.setItem('wildcards-visited', 'true');
+        });
         await page.goto('/');
+        await page.waitForLoadState('networkidle');
+    });
+
+    test('Pinned categories should be sorted first', async ({ page }) => {
 
         // Wait for initial load
         await page.waitForSelector('.category-item');
@@ -20,11 +27,13 @@ test.describe('Pinned Categories', () => {
         await expect(page.locator('#notification-dialog')).toBeVisible();
         await page.fill('#notification-dialog input', 'Zeta');
         await page.click('#confirm-btn');
+        await expect(page.locator('#notification-dialog')).toBeHidden();
 
         await page.click('#add-category-placeholder-btn');
         await expect(page.locator('#notification-dialog')).toBeVisible();
         await page.fill('#notification-dialog input', 'Alpha');
         await page.click('#confirm-btn');
+        await expect(page.locator('#notification-dialog')).toBeHidden();
 
         // Initial Order: Alpha, Zeta (alphabetical)
         // Check order of categories in DOM

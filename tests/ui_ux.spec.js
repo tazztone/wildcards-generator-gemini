@@ -7,6 +7,10 @@ test.describe('UX Improvements', () => {
     // Grant clipboard permissions
     await context.grantPermissions(['clipboard-read', 'clipboard-write']);
 
+    await page.addInitScript(() => {
+      window.localStorage.setItem('wildcards-visited', 'true');
+    });
+
     // Go to the page
     await page.goto('/');
 

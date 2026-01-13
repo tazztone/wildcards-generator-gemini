@@ -4,6 +4,10 @@ const { test, expect } = require('@playwright/test');
 test.describe('Extended Coverage Tests', () => {
 
     test.beforeEach(async ({ page }) => {
+        // Disable first-run help dialog
+        await page.addInitScript(() => {
+            window.localStorage.setItem('wildcards-visited', 'true');
+        });
         await page.goto('/');
         await page.waitForLoadState('networkidle');
     });
@@ -19,7 +23,7 @@ test.describe('Extended Coverage Tests', () => {
                 body: 'Internal Server Error'
             }));
 
-            await page.locator('button[title="Global Settings"]').click();
+            await page.locator('#settings-btn').click();
 
             // Switch to Gemini to trigger a test connection or just click Test Connection if available
             // Note: Settings panel renders dynamically.
@@ -38,7 +42,7 @@ test.describe('Extended Coverage Tests', () => {
             // Mock Network Error
             await page.route('**/models*', route => route.abort('failed'));
 
-            await page.locator('button[title="Global Settings"]').click();
+            await page.locator('#settings-btn').click();
             const testBtn = page.locator('#settings-openrouter .test-conn-btn');
             await testBtn.click();
 

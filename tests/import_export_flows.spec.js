@@ -4,6 +4,10 @@ const { test, expect } = require('@playwright/test');
 test.describe('Import/Export Flows', () => {
 
     test.beforeEach(async ({ page }) => {
+        // Disable first-run help dialog
+        await page.addInitScript(() => {
+            window.localStorage.setItem('wildcards-visited', 'true');
+        });
         await page.goto('/');
         await page.waitForLoadState('networkidle');
     });
@@ -46,7 +50,7 @@ test.describe('Import/Export Flows', () => {
     test.describe('Settings Import/Export', () => {
         test('export settings button exists and triggers download', async ({ page }) => {
             // Open settings using the correct button
-            await page.locator('button[title="Global Settings"]').click();
+            await page.locator('#settings-btn').click();
             await expect(page.locator('#settings-dialog')).toBeVisible();
 
             // Look for export settings button
@@ -65,7 +69,7 @@ test.describe('Import/Export Flows', () => {
 
 
         test('reset settings button exists in settings', async ({ page }) => {
-            await page.locator('button[title="Global Settings"]').click();
+            await page.locator('#settings-btn').click();
             await expect(page.locator('#settings-dialog')).toBeVisible();
 
             // Find reset button - it may or may not exist

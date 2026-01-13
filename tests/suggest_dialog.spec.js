@@ -4,6 +4,10 @@ const { test, expect } = require('@playwright/test');
 test.describe('Suggest Dialog', () => {
 
     test.beforeEach(async ({ page }) => {
+        // Disable first-run help dialog
+        await page.addInitScript(() => {
+            window.localStorage.setItem('wildcards-visited', 'true');
+        });
         await page.goto('/');
         await page.waitForLoadState('networkidle');
     });

@@ -8,6 +8,10 @@ const { test, expect } = require('@playwright/test');
 test.describe('Wildcard Generator E2E Tests', () => {
 
     test.beforeEach(async ({ page }) => {
+        // Disable first-run help dialog
+        await page.addInitScript(() => {
+            window.localStorage.setItem('wildcards-visited', 'true');
+        });
         await page.goto('/');
         await page.waitForLoadState('networkidle');
     });
@@ -331,8 +335,7 @@ test.describe('Wildcard Generator E2E Tests', () => {
         });
 
         test('global settings panel toggles', async ({ page }) => {
-            const settingsBtn = page.locator('button[title="Global Settings"]');
-
+            const settingsBtn = page.locator('#settings-btn');
             await settingsBtn.click();
             await page.waitForTimeout(200);
 
@@ -341,7 +344,7 @@ test.describe('Wildcard Generator E2E Tests', () => {
 
         test('API endpoint dropdown has options', async ({ page }) => {
             // Open settings
-            await page.locator('button[title="Global Settings"]').click();
+            await page.locator('#settings-btn').click();
             await page.waitForTimeout(200);
 
             const dropdown = page.locator('#api-endpoint');
@@ -355,7 +358,7 @@ test.describe('Wildcard Generator E2E Tests', () => {
 
         test('switching API provider shows different settings panel', async ({ page }) => {
             // Open settings
-            await page.locator('button[title="Global Settings"]').click();
+            await page.locator('#settings-btn').click();
             await page.waitForTimeout(200);
 
             // Initially OpenRouter should be visible
