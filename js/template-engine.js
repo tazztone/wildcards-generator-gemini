@@ -261,9 +261,10 @@ export const TemplateEngine = {
 
         // Find all {Role} and {Role:phrase} placeholders
         const placeholders = result.match(/\{(\w+)(?::phrase)?\}/g) || [];
+        const placeholderRegex = /\{(\w+)(:phrase)?\}/;
 
         for (const placeholder of placeholders) {
-            const match = placeholder.match(/\{(\w+)(:phrase)?\}/);
+            const match = placeholder.match(placeholderRegex);
             if (!match) continue;
 
             const role = match[1];
