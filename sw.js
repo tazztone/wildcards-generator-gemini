@@ -1,8 +1,7 @@
 // Service Worker for AI-Powered Wildcard Generator
 
 // TODO: Implement versioned caching strategy with automatic cache invalidation
-// TODO: Add background sync for offline API request queuing
-// TODO: Implement push notifications for long-running batch operations
+
 // TODO: Add cache size monitoring and cleanup for storage management
 
 const CACHE_NAME = 'wildcards-v1';

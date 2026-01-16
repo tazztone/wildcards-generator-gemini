@@ -4,8 +4,7 @@
  */
 
 // TODO: Add periodic API key re-verification (check every 24 hours)
-// TODO: Implement API key usage tracking and rate limit warnings
-// TODO: Add support for multiple API keys per provider (for load balancing)
+
 // TODO: Show remaining API credits/balance where provider supports it
 
 import { Api } from '../api.js';

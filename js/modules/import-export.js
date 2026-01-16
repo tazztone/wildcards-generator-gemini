@@ -6,7 +6,7 @@
 // TODO: Add support for importing/exporting JSON format as alternative to YAML
 // TODO: Implement drag-and-drop file import on the main container
 // TODO: Add import validation with preview before applying changes
-// TODO: Consider cloud sync options (Google Drive, Dropbox integration)
+
 
 import { State } from '../state.js';
 import { UI } from '../ui.js';

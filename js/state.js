@@ -4,7 +4,7 @@ import YAML from 'https://cdn.jsdelivr.net/npm/yaml@2.8.2/browser/index.js'; // 
 
 // TODO: Consider implementing IndexedDB for larger datasets that exceed localStorage limits (~5MB)
 // TODO: Add data migration strategy for schema changes between versions
-// TODO: Implement data compression (e.g., LZ-string) for localStorage to handle larger collections
+
 
 // Reserved keys that should be skipped during traversal (not user data)
 const RESERVED_KEYS = new Set(['instruction', '_id', 'wildcards']);
@@ -62,7 +62,7 @@ const HEURISTIC_RULES = [
 ];
 
 /** Valid role names for validation */
-// TODO: Make roles configurable/extensible via settings for custom prompt engineering workflows
+
 // TODO: Add role descriptions and examples for better LLM classification accuracy
 const VALID_ROLES = new Set(['Subject', 'Location', 'Style', 'Modifier', 'Wearable', 'Object', 'Action']);
 
@@ -128,7 +128,7 @@ function deepDiff(oldObj, newObj, path = []) {
     // Handle arrays
     if (Array.isArray(oldObj) && Array.isArray(newObj)) {
         // TODO: Implement proper array diffing for better undo/redo granularity
-        // TODO: Consider using a library like 'fast-diff' for complex array changes
+
         // For simplicity, if arrays differ in length or content, treat as full replacement
         // This avoids complex array diffing for now
         const oldStr = JSON.stringify(oldObj);
@@ -347,7 +347,7 @@ const State = {
 
     _saveHistoryToStorage() {
         // TODO: Implement incremental history saving to reduce memory pressure
-        // TODO: Consider using Web Workers for history compression/serialization
+
         try {
             localStorage.setItem(Config.HISTORY_KEY, JSON.stringify(this.history));
         } catch (e) {
@@ -471,7 +471,7 @@ const State = {
      * Find duplicate wildcards across the entire dataset.
      * @returns {{duplicates: Array, duplicateMap: Set}}
      */
-    // TODO: Add option to find "similar" wildcards using fuzzy matching (Levenshtein distance)
+
     // TODO: Cache duplicate results and invalidate only on relevant changes
     findDuplicates() {
         const wildcardMap = new Map();

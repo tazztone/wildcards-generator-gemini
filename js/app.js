@@ -765,7 +765,7 @@ export const App = {
 
     handleKeyboardShortcuts(e) {
         // TODO: Add more keyboard shortcuts (Ctrl+F for search, Ctrl+N for new category)
-        // TODO: Make keyboard shortcuts configurable via settings
+
         // TODO: Add keyboard shortcut help overlay (show on '?')
         if (e.ctrlKey || e.metaKey) {
             switch (e.key.toLowerCase()) {
@@ -1692,8 +1692,7 @@ export const App = {
         UI.showNotification(`Found ${tasks.length} wildcard lists.\nGenerate content for all of them?`, true, async () => {
             UI.showToast('Starting batch generation...', 'info');
 
-            // TODO: Implement configurable rate limiting (requests per minute)
-            // TODO: Add pause/resume capability for batch operations
+
             // TODO: Show progress bar with estimated time remaining
             // Execute sequentially to be nice to API
             for (let i = 0; i < tasks.length; i++) {

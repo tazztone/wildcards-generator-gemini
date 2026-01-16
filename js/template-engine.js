@@ -7,7 +7,7 @@
 
 // TODO: Allow users to create and save custom template patterns
 // TODO: Add template pattern editor UI in settings
-// TODO: Implement template weight learning based on user selections
+
 // TODO: Add support for nested/conditional template patterns
 
 import { State } from './state.js';

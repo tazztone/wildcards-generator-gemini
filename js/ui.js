@@ -5,7 +5,7 @@ import { Api } from './api.js';
 
 // TODO: Implement virtual scrolling for large wildcard collections (1000+ items)
 // TODO: Add ARIA live regions for dynamic content updates (screen reader support)
-// TODO: Consider using Web Components for better encapsulation of complex UI elements
+
 // TODO: Add skeleton loading states for async operations
 
 export const UI = {
