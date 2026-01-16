@@ -1,8 +1,8 @@
 import { UI } from './ui.js';
+import { encrypt } from './crypto.js';
 
 // TODO: Add config schema validation on load to catch corrupted data
 // TODO: Implement config versioning with automatic migration on version bumps
-// TODO: Use Web Crypto API for proper API key encryption instead of btoa()
 // TODO: Add config diff/export for debugging user issues
 
 // Hardcoded defaults as Single Source of Truth for structure and prompts
@@ -204,15 +204,33 @@ export function updateConfigValue(key, value) {
     }
 }
 
-export function saveApiKey(provider, key, persist) {
-    // TODO: Implement proper encryption using Web Crypto API
+// Helper function to convert ArrayBuffer to Base64
+function arrayBufferToBase64(buffer) {
+    let binary = '';
+    const bytes = new Uint8Array(buffer);
+    const len = bytes.byteLength;
+    for (let i = 0; i < len; i++) {
+        binary += String.fromCharCode(bytes[i]);
+    }
+    return btoa(binary);
+}
+
+export async function saveApiKey(provider, key, persist) {
     // TODO: Add key format validation (e.g., OpenRouter keys start with 'sk-or-')
     const configKey = `API_KEY_${provider.toUpperCase()}`;
     Config[configKey] = key;
 
     const storageKey = `wildcards_api_key_${provider}`;
     if (persist) {
-        localStorage.setItem(storageKey, btoa(key)); // Simple obfuscation
+        const encryptedData = await encrypt(key);
+        if (encryptedData) {
+            // Store IV and encrypted data together
+            const dataToStore = {
+                iv: arrayBufferToBase64(encryptedData.iv),
+                encrypted: arrayBufferToBase64(encryptedData.encrypted),
+            };
+            localStorage.setItem(storageKey, JSON.stringify(dataToStore));
+        }
     } else {
         localStorage.removeItem(storageKey);
     }
